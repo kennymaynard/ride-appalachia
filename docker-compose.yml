@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ride_appalachia
+      POSTGRES_USER: ride
+      POSTGRES_PASSWORD: ride_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://ride:ride_dev_password@db:5432/ride_appalachia
+      FRONTEND_URL: http://localhost:3000
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ride-admin}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Appalachia Offroad <support@appalachiaoffroadapp.com>}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PRICE_LOCAL_BUSINESS: ${STRIPE_PRICE_LOCAL_BUSINESS:-}
+      STRIPE_PRICE_LODGING_PARTNER: ${STRIPE_PRICE_LODGING_PARTNER:-}
+      STRIPE_PRICE_FEATURED_PARTNER: ${STRIPE_PRICE_FEATURED_PARTNER:-}
+      STRIPE_PRICE_MONTHLY_SPONSOR: ${STRIPE_PRICE_MONTHLY_SPONSOR:-}
+      STRIPE_PRICE_CLEANER_PARTNER: ${STRIPE_PRICE_CLEANER_PARTNER:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    environment:
+      API_URL: http://backend:8000
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

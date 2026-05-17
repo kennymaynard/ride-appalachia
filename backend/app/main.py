@@ -1,0 +1,42 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.database import Base, SessionLocal, engine, get_settings
+from app.routes import admin, business, listings, reviews, subscriptions
+from app.schema_migrations import run_lightweight_migrations
+from app.seed import seed_database
+
+settings = get_settings()
+
+app = FastAPI(title="Appalachia Offroad API", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_url, "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    Base.metadata.create_all(bind=engine)
+    run_lightweight_migrations()
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+app.include_router(listings.router, prefix="/api")
+app.include_router(business.router, prefix="/api")
+app.include_router(admin.router, prefix="/api/admin")
+app.include_router(reviews.router, prefix="/api")
+app.include_router(subscriptions.router, prefix="/api")
