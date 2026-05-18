@@ -3,7 +3,7 @@ services:
     name: appalachia-offroad-backend
     env: docker
     rootDir: backend
-    plan: starter
+    plan: free
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
@@ -37,7 +37,7 @@ services:
     name: appalachia-offroad-frontend
     env: node
     rootDir: frontend
-    plan: starter
+    plan: free
     buildCommand: npm install && SKIP_API_DURING_BUILD=1 npm run build
     startCommand: npm run start
     envVars:
@@ -48,4 +48,4 @@ services:
 
 databases:
   - name: appalachia-offroad-db
-    plan: starter
+    plan: free
