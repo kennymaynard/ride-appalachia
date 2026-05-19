@@ -47,57 +47,68 @@ export default async function RideAreaDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="ride-area-detail-grid">
-        <article>
-          <p className="eyebrow">Best for</p>
-          <div className="ride-area-tags">
-            {area.bestFor.map((item) => (
-              <small key={item}>{item}</small>
+      <section className="page-section ride-area-control-panel">
+        <details className="ride-area-accordion" open>
+          <summary>
+            <span>Trails</span>
+            <strong>Trails near {area.name}</strong>
+          </summary>
+          <div className="trail-list">
+            {area.trails.map((trail) => (
+              <article key={trail.name}>
+                <div className="trail-list-topline">
+                  <span>{trail.type}</span>
+                  <strong>{trail.difficulty}</strong>
+                </div>
+                <h3>{trail.name}</h3>
+                <p>{trail.description}</p>
+                <div className="trail-access">
+                  <span>{trail.access}</span>
+                  <a href={trail.url} rel="noreferrer" target="_blank">
+                    Verify Access
+                  </a>
+                </div>
+              </article>
             ))}
           </div>
-        </article>
-        <article>
-          <p className="eyebrow">Nearby towns</p>
-          <div className="ride-area-tags">
-            {area.nearbyTowns.map((town) => (
-              <small key={town}>{town}</small>
-            ))}
-          </div>
-        </article>
-        <article>
-          <p className="eyebrow">Plan checklist</p>
-          <div className="ride-area-tags">
-            {area.checklist.map((item) => (
-              <small key={item}>{item}</small>
-            ))}
-          </div>
-        </article>
-      </section>
+        </details>
 
-      <RideAreaMap areas={rideAreas} activeSlug={area.slug} />
+        <details className="ride-area-accordion">
+          <summary>
+            <span>Map</span>
+            <strong>Open map for {area.name}</strong>
+          </summary>
+          <RideAreaMap areas={rideAreas} activeSlug={area.slug} compact />
+        </details>
 
-      <section className="page-section trail-list-section">
-        <div className="section-heading">
-          <p>Trails</p>
-          <h2>Trails near {area.name}</h2>
-        </div>
-        <div className="trail-list">
-          {area.trails.map((trail) => (
-            <article key={trail.name}>
-              <div className="trail-list-topline">
-                <span>{trail.type}</span>
-                <strong>{trail.difficulty}</strong>
-              </div>
-              <h3>{trail.name}</h3>
-              <p>{trail.description}</p>
-              <div className="trail-access">
-                <span>{trail.access}</span>
-                <a href={trail.url} rel="noreferrer" target="_blank">
-                  Verify Access
-                </a>
-              </div>
-            </article>
-          ))}
+        <div className="ride-area-detail-grid">
+          <details className="ride-area-info-card">
+            <summary>Best for</summary>
+            <div className="ride-area-tags">
+              {area.bestFor.map((item) => (
+                <small key={item}>{item}</small>
+              ))}
+            </div>
+          </details>
+          <details className="ride-area-info-card">
+            <summary>Nearby towns</summary>
+            <div className="ride-area-tags">
+              {area.nearbyTowns.map((town) => (
+                <small key={town}>{town}</small>
+              ))}
+            </div>
+          </details>
+          <article className="ride-area-info-card">
+            <p className="eyebrow">Plan checklist</p>
+            <div className="ride-area-checklist">
+              {area.checklist.map((item) => (
+                <label key={item}>
+                  <input type="checkbox" />
+                  <span>{item}</span>
+                </label>
+              ))}
+            </div>
+          </article>
         </div>
       </section>
 

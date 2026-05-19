@@ -4,6 +4,7 @@ import type { RideArea } from "../lib/types";
 type Props = {
   areas: RideArea[];
   activeSlug?: string;
+  compact?: boolean;
 };
 
 function getMapBounds(areas: RideArea[]) {
@@ -43,15 +44,17 @@ function getAreaSearch(area: RideArea, query: string) {
   )}`;
 }
 
-export function RideAreaMap({ areas, activeSlug }: Props) {
+export function RideAreaMap({ areas, activeSlug, compact = false }: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
 
   return (
-    <section className="trail-map-shell">
-      <div className="section-heading">
-        <p>Live trail map</p>
-        <h2>Zoom in on ride-area towns.</h2>
-      </div>
+    <section className={compact ? "trail-map-shell compact" : "trail-map-shell"}>
+      {!compact ? (
+        <div className="section-heading">
+          <p>Live trail map</p>
+          <h2>Zoom in on ride-area towns.</h2>
+        </div>
+      ) : null}
       <div className="trail-map-layout">
         <div className="trail-map" aria-label="Zoomable Appalachian ride-area map">
           <iframe
