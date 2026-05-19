@@ -259,8 +259,27 @@ p {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.75rem;
-  width: min(94rem, calc(100% - 2rem));
-  margin: 1rem auto 0;
+  margin-top: 0.85rem;
+}
+
+.category-menu {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.category-menu summary,
+.trail-map-list summary {
+  cursor: pointer;
+  color: var(--orange-soft);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.category-menu summary::marker,
+.trail-map-list summary::marker {
+  color: var(--orange);
 }
 
 .category-nav a {
@@ -277,6 +296,10 @@ p {
 .category-nav a:hover {
   border-color: rgba(242, 106, 27, 0.65);
   color: var(--orange-soft);
+}
+
+.marketplace-jump {
+  padding-bottom: clamp(1rem, 3vw, 1.5rem);
 }
 
 .page-section,
@@ -1342,9 +1365,14 @@ button.tier-card.is-selected {
 }
 
 .trail-map-list {
+  min-width: 0;
+}
+
+.trail-map-list-inner {
   display: grid;
   gap: 0.75rem;
-  max-height: 32rem;
+  max-height: 30rem;
+  margin-top: 0.75rem;
   overflow: auto;
 }
 
@@ -1429,7 +1457,7 @@ button.tier-card.is-selected {
 
 .ride-finder-controls {
   display: grid;
-  grid-template-columns: auto minmax(16rem, 1fr) auto;
+  grid-template-columns: minmax(16rem, 1fr) auto auto;
   gap: 0.75rem;
   align-items: end;
 }
@@ -1468,7 +1496,7 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
-.ride-finder-controls button:first-child {
+.ride-finder-controls button:last-child {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
@@ -1976,7 +2004,11 @@ button.tier-card.is-selected {
     min-height: 25rem;
   }
 
-  .trail-map-list {
+  .trail-map iframe {
+    height: 25rem;
+  }
+
+  .trail-map-list-inner {
     max-height: none;
   }
 
@@ -2013,12 +2045,15 @@ button.tier-card.is-selected {
     min-height: 21rem;
   }
 
-  .trail-map-pin {
-    width: 5.6rem;
+  .trail-map iframe {
+    height: 21rem;
   }
 
-  .trail-map-pin strong {
-    font-size: 0.62rem;
+  .trail-map-overlay {
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    padding: 0.65rem;
   }
 
   .brand span {

@@ -66,45 +66,48 @@ export function RideAreaMap({ areas, activeSlug }: Props) {
           </div>
         </div>
 
-        <div className="trail-map-list">
-          {areas.map((area) => (
-            <article className={area.slug === activeSlug ? "is-active" : ""} key={area.slug}>
-              <div>
-                <span>{area.state}</span>
-                <h3>{area.name}</h3>
-                <p>{area.headline}</p>
-              </div>
-              <div className="availability-tags" aria-label={`Available planning options for ${area.name}`}>
-                {area.checklist.map((item) => (
-                  <span key={item}>{item}</span>
-                ))}
-              </div>
-              <div className="ride-area-actions">
-                <Link href={`/ride-areas/${area.slug}`}>Details</Link>
-                <Link href={`/planner?area=${encodeURIComponent(area.locationQuery)}`}>
-                  Plan
-                </Link>
-                <Link href={`/lodging?area=${encodeURIComponent(area.locationQuery)}`}>
-                  Lodging
-                </Link>
-                <Link href={`/deals?area=${encodeURIComponent(area.locationQuery)}`}>
-                  Deals
-                </Link>
-              </div>
-              <div className="map-search-actions">
-                <a href={getAreaSearch(area, "food")} rel="noreferrer" target="_blank">
-                  Food map
-                </a>
-                <a href={getAreaSearch(area, "fuel")} rel="noreferrer" target="_blank">
-                  Fuel map
-                </a>
-                <a href={getAreaSearch(area, "ATV UTV repair")} rel="noreferrer" target="_blank">
-                  Repair map
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
+        <details className="trail-map-list" open>
+          <summary>Available ride areas</summary>
+          <div className="trail-map-list-inner">
+            {areas.map((area) => (
+              <article className={area.slug === activeSlug ? "is-active" : ""} key={area.slug}>
+                <div>
+                  <span>{area.state}</span>
+                  <h3>{area.name}</h3>
+                  <p>{area.headline}</p>
+                </div>
+                <div className="availability-tags" aria-label={`Available planning options for ${area.name}`}>
+                  {area.checklist.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+                <div className="ride-area-actions">
+                  <Link href={`/ride-areas/${area.slug}`}>Details</Link>
+                  <Link href={`/planner?area=${encodeURIComponent(area.locationQuery)}`}>
+                    Plan
+                  </Link>
+                  <Link href={`/lodging?area=${encodeURIComponent(area.locationQuery)}`}>
+                    Lodging
+                  </Link>
+                  <Link href={`/deals?area=${encodeURIComponent(area.locationQuery)}`}>
+                    Deals
+                  </Link>
+                </div>
+                <div className="map-search-actions">
+                  <a href={getAreaSearch(area, "food")} rel="noreferrer" target="_blank">
+                    Food map
+                  </a>
+                  <a href={getAreaSearch(area, "fuel")} rel="noreferrer" target="_blank">
+                    Fuel map
+                  </a>
+                  <a href={getAreaSearch(area, "ATV UTV repair")} rel="noreferrer" target="_blank">
+                    Repair map
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </details>
       </div>
     </section>
   );

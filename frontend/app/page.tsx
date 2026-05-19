@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MarketplaceGrid } from "../components/MarketplaceGrid";
 import { RideAreaFinder } from "../components/RideAreaFinder";
-import { RideAreaGrid } from "../components/RideAreaGrid";
 import { RideAreaMap } from "../components/RideAreaMap";
 import { categories, rideAreas } from "../lib/sample-data";
 import { getListings } from "../lib/api";
@@ -29,38 +28,24 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="launch-strip">
-        <article>
-          <strong>Now Building</strong>
-          <span>Founding partner spots are open for rider-friendly local businesses.</span>
-        </article>
-        <article>
-          <strong>For Riders</strong>
-          <span>Pick a ride area, check what you need, and turn it into a trip plan.</span>
-        </article>
-        <article>
-          <strong>For Businesses</strong>
-          <span>Claim a listing, add specials, and sponsor the towns riders are searching.</span>
-        </article>
-      </section>
-
       <RideAreaFinder areas={rideAreas} />
       <RideAreaMap areas={rideAreas} />
 
-      <section className="page-section">
+      <section className="page-section marketplace-jump">
         <div className="section-heading">
-          <p>Ride areas</p>
-          <h2>Where are you riding?</h2>
+          <p>Marketplace</p>
+          <h2>Find what you need near the ride.</h2>
         </div>
-        <RideAreaGrid areas={rideAreas.slice(0, 3)} />
-      </section>
-
-      <section className="category-nav" aria-label="Marketplace categories">
-        {categories.map((category) => (
-          <Link key={category.value} href={category.href}>
-            {category.label}
-          </Link>
-        ))}
+        <details className="category-menu">
+          <summary>Browse lodging, food, rentals, repair, fuel, and deals</summary>
+          <div className="category-nav" aria-label="Marketplace categories">
+            {categories.map((category) => (
+              <Link key={category.value} href={category.href}>
+                {category.label}
+              </Link>
+            ))}
+          </div>
+        </details>
       </section>
 
       <section className="page-section">

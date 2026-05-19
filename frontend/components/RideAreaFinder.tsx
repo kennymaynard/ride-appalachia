@@ -165,13 +165,10 @@ export function RideAreaFinder({ areas }: Props) {
       </div>
 
       <div className="ride-finder-controls">
-        <button type="button" onClick={useCurrentLocation}>
-          Use My Location
-        </button>
         <label>
-          Traveling to
+          Where are you traveling?
           <input
-            placeholder="Inez KY, Matewan WV, Harlan KY..."
+            placeholder="Rush KY, Inez KY, Matewan WV..."
             value={travelCity}
             onChange={(event) => setTravelCity(event.target.value)}
             onKeyDown={(event) => {
@@ -181,6 +178,9 @@ export function RideAreaFinder({ areas }: Props) {
         </label>
         <button type="button" onClick={searchTravelCity}>
           Search City
+        </button>
+        <button type="button" onClick={useCurrentLocation}>
+          Use My Location
         </button>
       </div>
 
