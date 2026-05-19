@@ -23,6 +23,24 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Northeast Kentucky trips", "Easy highway access", "Fuel planning", "Weekend staging"],
     nearbyTowns: ["Rush", "Ashland", "Cannonsburg", "Grayson", "Catlettsburg"],
     checklist: ["Fuel and supplies", "Food stops", "Place to stay", "Repair backup"],
+    trails: [
+      {
+        name: "Rush Off-Road",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Verify passes and open dates before hauling in.",
+        description: "Primary off-road destination for the Rush area with wooded routes, hills, mud, and weekend group riding.",
+        url: "https://www.google.com/search?q=Rush+Off-Road+Kentucky+ATV+trails",
+      },
+      {
+        name: "Northeast Kentucky connector towns",
+        type: "Planning area",
+        difficulty: "Mixed",
+        access: "Use local guidance for legal trail access.",
+        description: "Ashland, Cannonsburg, Grayson, and Catlettsburg are useful staging towns for lodging, fuel, food, and repairs.",
+        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Rush+KY",
+      },
+    ],
   },
   {
     slug: "inez-ky",
@@ -37,6 +55,24 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Weekend groups", "Cabin stays", "Local food stops", "Trailer-friendly planning"],
     nearbyTowns: ["Inez", "Louisa", "Paintsville", "Prestonsburg"],
     checklist: ["Place to stay", "Fuel and supplies", "Food stops", "Repair backup"],
+    trails: [
+      {
+        name: "Martin County ride area",
+        type: "Planning area",
+        difficulty: "Mixed",
+        access: "Confirm current legal routes locally before riding.",
+        description: "Inez works as a practical basecamp for eastern Kentucky riding with nearby towns for lodging, fuel, and food.",
+        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Inez+KY",
+      },
+      {
+        name: "Paintsville / Prestonsburg area routes",
+        type: "Nearby riding",
+        difficulty: "Mixed",
+        access: "Check trail status, permits, and local access rules.",
+        description: "Nearby eastern Kentucky towns riders commonly use for weekend staging, supplies, and backup services.",
+        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Paintsville+KY",
+      },
+    ],
   },
   {
     slug: "hatfield-ky",
@@ -51,6 +87,32 @@ export const rideAreas: RideArea[] = [
     bestFor: ["UTV rentals", "Group meals", "First-time visitors", "Short weekend trips"],
     nearbyTowns: ["Hatfield", "Pikeville", "South Williamson", "Belfry"],
     checklist: ["Machine rental", "Food stops", "Place to stay", "Claim any deals"],
+    trails: [
+      {
+        name: "Hatfield-McCoy Buffalo Mountain",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "A major Hatfield-McCoy system near Matewan and Williamson with mountain views and a wide mix of terrain.",
+        url: "https://trailsheaven.com/",
+      },
+      {
+        name: "Hatfield-McCoy Devil Anse",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "A popular connector-style Hatfield-McCoy system serving the Matewan and Williamson side of the region.",
+        url: "https://trailsheaven.com/",
+      },
+      {
+        name: "Pikeville area riding",
+        type: "Nearby riding",
+        difficulty: "Mixed",
+        access: "Verify route access before riding.",
+        description: "Useful nearby town area for riders planning lodging, food, fuel, and service stops around Pike County.",
+        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Pikeville+KY",
+      },
+    ],
   },
   {
     slug: "matewan-wv",
@@ -65,6 +127,32 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Fuel stops", "Historic town visits", "Supply runs", "Day rides"],
     nearbyTowns: ["Matewan", "Williamson", "Delbarton", "Bramwell"],
     checklist: ["Fuel and supplies", "Food stops", "Repair backup", "Place to stay"],
+    trails: [
+      {
+        name: "Hatfield-McCoy Buffalo Mountain",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "One of the strongest trail anchors for Matewan and Williamson, with mountain terrain and trail-town access.",
+        url: "https://trailsheaven.com/",
+      },
+      {
+        name: "Hatfield-McCoy Devil Anse",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "A key Hatfield-McCoy system for riders building a weekend around Matewan, Delbarton, and Williamson.",
+        url: "https://trailsheaven.com/",
+      },
+      {
+        name: "Hatfield-McCoy Rockhouse",
+        type: "Nearby trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "Nearby Hatfield-McCoy option for riders extending their trip beyond the immediate Matewan basecamp.",
+        url: "https://trailsheaven.com/",
+      },
+    ],
   },
   {
     slug: "harlan-ky",
@@ -79,6 +167,24 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Mountain views", "Advanced riders", "Long ride days", "Repair backup"],
     nearbyTowns: ["Harlan", "Evarts", "Cumberland", "Pineville"],
     checklist: ["Place to stay", "Repair backup", "Fuel and supplies", "Food stops"],
+    trails: [
+      {
+        name: "Black Mountain Off-Road Adventure Area",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "Large mountain trail area near Harlan and Evarts with rugged riding, views, and full-weekend terrain.",
+        url: "https://www.harlancountytrails.com/",
+      },
+      {
+        name: "Evarts trail access",
+        type: "Trail access town",
+        difficulty: "Mixed",
+        access: "Confirm trailhead and permit details before arrival.",
+        description: "Common staging area for Black Mountain riders needing lodging, fuel, food, and repair backup.",
+        url: "https://www.google.com/maps/search/?api=1&query=Evarts+KY+ATV+trailhead",
+      },
+    ],
   },
   {
     slug: "royal-blue-tn",
@@ -93,6 +199,32 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Large groups", "Long weekends", "Cabin planning", "Fuel and supply runs"],
     nearbyTowns: ["Pioneer", "Huntsville", "Oneida", "LaFollette"],
     checklist: ["Place to stay", "Fuel and supplies", "Food stops", "Machine rental"],
+    trails: [
+      {
+        name: "North Cumberland WMA / Royal Blue",
+        type: "Trail area",
+        difficulty: "Mixed",
+        access: "TWRA permit and current rules apply.",
+        description: "Large public riding area around Royal Blue with long-distance planning needs and multiple access points.",
+        url: "https://www.tn.gov/twra.html",
+      },
+      {
+        name: "Brimstone Recreation",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Private trail pass required.",
+        description: "Destination trail system near Huntsville with extensive trail mileage and strong group-trip planning demand.",
+        url: "https://www.brimstonerecreation.com/",
+      },
+      {
+        name: "Tackett Creek / Sundquist / New River areas",
+        type: "Nearby trail areas",
+        difficulty: "Mixed",
+        access: "Verify permits, closures, and legal access.",
+        description: "Nearby Tennessee riding areas often considered by Royal Blue groups planning a longer weekend.",
+        url: "https://www.google.com/maps/search/?api=1&query=Tackett+Creek+Royal+Blue+ATV+trails",
+      },
+    ],
   },
   {
     slug: "black-mountain-ky",
@@ -107,6 +239,24 @@ export const rideAreas: RideArea[] = [
     bestFor: ["Experienced riders", "Mountain terrain", "Scenic rides", "Backup repair planning"],
     nearbyTowns: ["Evarts", "Harlan", "Lynch", "Cumberland"],
     checklist: ["Repair backup", "Fuel and supplies", "Place to stay", "Food stops"],
+    trails: [
+      {
+        name: "Black Mountain Off-Road Adventure Area",
+        type: "Trail system",
+        difficulty: "Mixed",
+        access: "Trail permit required.",
+        description: "The main high-country riding anchor for Black Mountain trips, with challenging terrain and scenic routes.",
+        url: "https://www.harlancountytrails.com/",
+      },
+      {
+        name: "Harlan / Evarts access points",
+        type: "Trail access",
+        difficulty: "Mixed",
+        access: "Confirm current trailhead details and permit rules.",
+        description: "Local access towns that riders use for staging, lodging, fuel, food, and repair support.",
+        url: "https://www.google.com/maps/search/?api=1&query=Black+Mountain+Off-Road+trailhead+Evarts+KY",
+      },
+    ],
   },
 ];
 

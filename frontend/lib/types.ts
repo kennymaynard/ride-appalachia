@@ -144,6 +144,16 @@ export type RideArea = {
   bestFor: string[];
   nearbyTowns: string[];
   checklist: string[];
+  trails: TrailInfo[];
+};
+
+export type TrailInfo = {
+  name: string;
+  type: string;
+  difficulty: "Easy" | "Moderate" | "Hard" | "Mixed";
+  access: string;
+  description: string;
+  url: string;
 };
 
 export type TrailReview = {

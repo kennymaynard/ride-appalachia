@@ -1543,6 +1543,76 @@ button.tier-card.is-selected {
   line-height: 1.35;
 }
 
+.trail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.trail-list article {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.trail-list-topline,
+.trail-access {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.trail-list-topline span,
+.trail-list-topline strong {
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trail-list-topline span {
+  color: var(--orange);
+}
+
+.trail-list-topline strong {
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  padding: 0.25rem 0.5rem;
+  color: var(--soft);
+}
+
+.trail-list h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.trail-list p,
+.trail-access span {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.38;
+}
+
+.trail-access {
+  border-top: 1px solid var(--line);
+  padding-top: 0.65rem;
+}
+
+.trail-access a {
+  color: var(--orange-soft);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .trail-reviews {
   width: min(94rem, calc(100% - 2rem));
   margin: 1rem auto 0;
@@ -1928,6 +1998,7 @@ button.tier-card.is-selected {
 
 @media (max-width: 1050px) {
   .listing-grid,
+  .trail-list,
   .tier-grid,
   .ride-area-grid,
   .ride-area-detail-grid,

@@ -75,6 +75,32 @@ export default async function RideAreaDetailPage({ params }: Props) {
       </section>
 
       <RideAreaMap areas={rideAreas} activeSlug={area.slug} />
+
+      <section className="page-section trail-list-section">
+        <div className="section-heading">
+          <p>Trails</p>
+          <h2>Trails near {area.name}</h2>
+        </div>
+        <div className="trail-list">
+          {area.trails.map((trail) => (
+            <article key={trail.name}>
+              <div className="trail-list-topline">
+                <span>{trail.type}</span>
+                <strong>{trail.difficulty}</strong>
+              </div>
+              <h3>{trail.name}</h3>
+              <p>{trail.description}</p>
+              <div className="trail-access">
+                <span>{trail.access}</span>
+                <a href={trail.url} rel="noreferrer" target="_blank">
+                  Verify Access
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <TrailReviews areaSlug={area.slug} areaName={area.name} reviews={areaReviews} />
 
       <section className="page-section">
