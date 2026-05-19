@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MarketplaceGrid } from "../components/MarketplaceGrid";
 import { RideAreaFinder } from "../components/RideAreaFinder";
-import { RideAreaMap } from "../components/RideAreaMap";
 import { categories, rideAreas } from "../lib/sample-data";
 import { getListings } from "../lib/api";
 
@@ -29,7 +28,25 @@ export default async function Home() {
       </section>
 
       <RideAreaFinder areas={rideAreas} />
-      <RideAreaMap areas={rideAreas} />
+
+      <section className="page-section ride-area-preview">
+        <div className="section-heading">
+          <p>Full map</p>
+          <h2>Open the trail map when you are ready to explore.</h2>
+        </div>
+        <div className="ride-area-preview-grid">
+          {rideAreas.slice(0, 4).map((area) => (
+            <Link href={`/ride-areas/${area.slug}`} key={area.slug}>
+              <span>{area.state}</span>
+              <strong>{area.name}</strong>
+            </Link>
+          ))}
+        </div>
+        <div className="hero-actions compact-actions">
+          <Link href="/ride-areas">Open Full Ride Map</Link>
+          <Link href="/planner">Build Trip Plan</Link>
+        </div>
+      </section>
 
       <section className="page-section marketplace-jump">
         <div className="section-heading">

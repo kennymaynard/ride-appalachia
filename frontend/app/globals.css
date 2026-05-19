@@ -302,6 +302,40 @@ p {
   padding-bottom: clamp(1rem, 3vw, 1.5rem);
 }
 
+.ride-area-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ride-area-preview-grid a {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.9rem;
+}
+
+.ride-area-preview-grid span {
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ride-area-preview-grid strong {
+  color: var(--soft);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.compact-actions {
+  margin-top: 1rem;
+}
+
 .page-section,
 .tier-grid,
 .dashboard-grid,
@@ -2016,6 +2050,10 @@ button.tier-card.is-selected {
     grid-template-columns: 1fr 1fr;
   }
 
+  .ride-area-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .trail-map-layout,
   .trail-review-layout,
   .launch-strip {
@@ -2048,6 +2086,7 @@ button.tier-card.is-selected {
   }
 
   .listing-grid,
+  .ride-area-preview-grid,
   .tier-grid,
   .ride-area-grid,
   .ride-area-detail-grid,
