@@ -154,6 +154,9 @@ export type TrailInfo = {
   access: string;
   description: string;
   url: string;
+  passUrl?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type TrailReview = {

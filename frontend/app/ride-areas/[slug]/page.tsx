@@ -64,9 +64,16 @@ export default async function RideAreaDetailPage({ params }: Props) {
                 <p>{trail.description}</p>
                 <div className="trail-access">
                   <span>{trail.access}</span>
-                  <a href={trail.url} rel="noreferrer" target="_blank">
-                    Verify Access
-                  </a>
+                  <div className="trail-actions">
+                    <a href={trail.url} rel="noreferrer" target="_blank">
+                      Trail Map
+                    </a>
+                    {trail.passUrl ? (
+                      <a href={trail.passUrl} rel="noreferrer" target="_blank">
+                        Passes / Rules
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             ))}
