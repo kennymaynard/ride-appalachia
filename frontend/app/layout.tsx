@@ -19,7 +19,7 @@ export default function RootLayout({
         <header className="topbar">
           <BrandLogo />
           <nav>
-            <Link href="/ride-areas">Ride Areas</Link>
+            <Link href="/ride-areas">Find Nearby</Link>
             <Link href="/planner">Planner</Link>
             <Link href="/lodging">Lodging</Link>
             <Link href="/deals">Deals</Link>

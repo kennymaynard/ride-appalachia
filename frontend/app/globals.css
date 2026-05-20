@@ -1609,7 +1609,7 @@ button.tier-card.is-selected {
 
 .ride-finder-controls {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) auto auto;
+  grid-template-columns: minmax(16rem, 1fr) minmax(9rem, 0.25fr) auto auto;
   gap: 0.75rem;
   align-items: end;
 }
@@ -1623,7 +1623,8 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
-.ride-finder-controls input {
+.ride-finder-controls input,
+.ride-finder-controls select {
   width: 100%;
   min-height: 2.8rem;
   border: 1px solid var(--line);
@@ -1632,6 +1633,11 @@ button.tier-card.is-selected {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
   padding: 0.8rem;
+}
+
+.ride-finder-controls select {
+  appearance: none;
+  cursor: pointer;
 }
 
 .ride-finder-controls button {
@@ -1659,10 +1665,115 @@ button.tier-card.is-selected {
   font-weight: 850;
 }
 
+.location-results {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.location-result-group {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 0.85rem;
+}
+
+.location-result-group summary {
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.location-result-group summary span {
+  display: block;
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.location-result-group summary strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: clamp(1.25rem, 3vw, 1.9rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.nearby-trail-list,
+.nearby-category-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.nearby-trail-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.nearby-category-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nearby-trail-list article,
+.nearby-category-grid article {
+  display: grid;
+  align-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.85rem;
+}
+
+.nearby-trail-list article > div:first-child span,
+.nearby-category-grid article span {
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.nearby-trail-list h3,
+.nearby-category-grid h3 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.2rem, 3vw, 1.65rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.nearby-trail-list p,
+.nearby-category-grid p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.nearby-category-grid a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 2rem;
+  border: 1px solid rgba(242, 106, 27, 0.35);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  padding: 0 0.7rem;
+  color: var(--orange-soft);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .ride-finder-results {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.ride-finder-results.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.85rem;
 }
 
 .ride-finder-results article {
@@ -2165,6 +2276,8 @@ button.tier-card.is-selected {
 @media (max-width: 1050px) {
   .listing-grid,
   .trail-list,
+  .nearby-trail-list,
+  .nearby-category-grid,
   .tier-grid,
   .ride-area-grid,
   .ride-area-detail-grid,
@@ -2180,6 +2293,10 @@ button.tier-card.is-selected {
 
   .ride-finder-results {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .ride-finder-results.compact {
+    grid-template-columns: 1fr;
   }
 
   .ride-area-preview-grid {
@@ -2219,6 +2336,8 @@ button.tier-card.is-selected {
 
   .listing-grid,
   .trail-list,
+  .nearby-trail-list,
+  .nearby-category-grid,
   .ride-area-preview-grid,
   .tier-grid,
   .ride-area-grid,

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { RideArea } from "../lib/types";
+import type { Business, Category, RideArea, TrailInfo } from "../lib/types";
 
 type Props = {
   areas: RideArea[];
+  listings: Business[];
 };
 
 type Coordinates = {
@@ -16,6 +17,15 @@ type Coordinates = {
 type RankedArea = RideArea & {
   distanceMiles?: number;
   matchReason: string;
+};
+
+type NearbyTrail = TrailInfo & {
+  area: RideArea;
+  distanceMiles?: number;
+};
+
+type NearbyBusiness = Business & {
+  distanceMiles?: number;
 };
 
 const knownTravelCities: Array<Coordinates & { names: string[] }> = [
@@ -35,6 +45,15 @@ const knownTravelCities: Array<Coordinates & { names: string[] }> = [
   { names: ["huntsville", "huntsville tn"], latitude: 36.4098, longitude: -84.4908 },
   { names: ["oneida", "oneida tn"], latitude: 36.4981, longitude: -84.5127 },
   { names: ["lafollette", "lafollette tn"], latitude: 36.3829, longitude: -84.1199 },
+];
+
+const marketplaceCategories: Array<{ label: string; value: Exclude<Category, "deals"> | "deals" }> = [
+  { label: "Lodging", value: "lodging" },
+  { label: "Food", value: "food" },
+  { label: "Rentals", value: "rentals" },
+  { label: "Repairs", value: "repairs" },
+  { label: "Fuel", value: "fuel" },
+  { label: "Deals", value: "deals" },
 ];
 
 function toRadians(value: number) {
@@ -63,6 +82,13 @@ function findKnownCity(value: string) {
   const normalizedValue = normalize(value);
   return knownTravelCities.find((city) =>
     city.names.some((name) => name === normalizedValue),
+  );
+}
+
+function findCityInText(value: string) {
+  const normalizedValue = normalize(value);
+  return knownTravelCities.find((city) =>
+    city.names.some((name) => normalizedValue.includes(name)),
   );
 }
 
@@ -105,11 +131,43 @@ function rankByText(areas: RideArea[], city: string): RankedArea[] {
   }));
 }
 
-export function RideAreaFinder({ areas }: Props) {
+function getBusinessCoordinates(business: Business, areas: RideArea[]) {
+  const directCity = findCityInText(business.location);
+  if (directCity) return directCity;
+
+  const area = areas.find((item) => {
+    const haystack = [item.name, item.locationQuery, ...item.nearbyTowns]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(business.location.toLowerCase());
+  });
+
+  return area
+    ? { latitude: area.latitude, longitude: area.longitude }
+    : undefined;
+}
+
+function getSearchCoordinates(city: string, coordinates: Coordinates | null) {
+  return findKnownCity(city) ?? coordinates;
+}
+
+function getMarketplaceHref(category: Category | "deals", location: string, radius: number) {
+  const base = category === "lodging" ? "/lodging" : category === "deals" ? "/deals" : "/";
+  const params = new URLSearchParams();
+  if (category !== "lodging" && category !== "deals") params.set("category", category);
+  if (location) params.set("area", location);
+  params.set("radius", String(radius));
+
+  return `${base}?${params.toString()}`;
+}
+
+export function RideAreaFinder({ areas, listings }: Props) {
   const [travelCity, setTravelCity] = useState("");
+  const [radiusMiles, setRadiusMiles] = useState(50);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState("");
   const [hasSearchedCity, setHasSearchedCity] = useState(false);
+  const searchCoordinates = getSearchCoordinates(travelCity, coordinates);
 
   const rankedAreas = useMemo(() => {
     const knownCity = findKnownCity(travelCity);
@@ -122,6 +180,69 @@ export function RideAreaFinder({ areas }: Props) {
       matchReason: "featured",
     }));
   }, [areas, coordinates, hasSearchedCity, travelCity]);
+
+  const nearbyTrails = useMemo<NearbyTrail[]>(() => {
+    const trails = areas.flatMap((area) =>
+      area.trails.map((trail) => {
+        const trailCoordinates =
+          typeof trail.latitude === "number" && typeof trail.longitude === "number"
+            ? { latitude: trail.latitude, longitude: trail.longitude }
+            : { latitude: area.latitude, longitude: area.longitude };
+        const distance = searchCoordinates
+          ? distanceMiles(searchCoordinates, trailCoordinates)
+          : undefined;
+
+        return {
+          ...trail,
+          area,
+          distanceMiles: distance,
+        };
+      }),
+    );
+
+    const filtered = searchCoordinates
+      ? trails.filter((trail) => (trail.distanceMiles ?? 0) <= radiusMiles)
+      : hasSearchedCity
+        ? trails.filter((trail) => {
+            const searchText = [trail.name, trail.area.name, trail.area.state, ...trail.area.nearbyTowns]
+              .join(" ")
+              .toLowerCase();
+            return searchText.includes(normalize(travelCity));
+          })
+        : trails;
+
+    return filtered
+      .sort((a, b) => (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0))
+      .slice(0, 10);
+  }, [areas, hasSearchedCity, radiusMiles, searchCoordinates, travelCity]);
+
+  const nearbyListings = useMemo<NearbyBusiness[]>(() => {
+    const ranked = listings.map((business) => {
+      const businessCoordinates = getBusinessCoordinates(business, areas);
+      const distance =
+        searchCoordinates && businessCoordinates
+          ? distanceMiles(searchCoordinates, businessCoordinates)
+          : undefined;
+
+      return {
+        ...business,
+        distanceMiles: distance,
+      };
+    });
+
+    const filtered = searchCoordinates
+      ? ranked.filter((business) => business.distanceMiles === undefined || business.distanceMiles <= radiusMiles)
+      : hasSearchedCity
+        ? ranked.filter((business) =>
+            [business.location, business.name, business.description]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalize(travelCity)),
+          )
+        : ranked;
+
+    return filtered.sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999));
+  }, [areas, hasSearchedCity, listings, radiusMiles, searchCoordinates, travelCity]);
 
   function useCurrentLocation() {
     setStatus("");
@@ -152,8 +273,8 @@ export function RideAreaFinder({ areas }: Props) {
     setHasSearchedCity(true);
     setStatus(
       findKnownCity(travelCity)
-        ? `Showing ride areas closest to ${travelCity}.`
-        : "Showing the closest text matches from known ride towns.",
+        ? `Showing trails and stops within ${radiusMiles} miles of ${travelCity}.`
+        : "Showing matches from known ride towns. Use a nearby town for mileage results.",
     );
   }
 
@@ -176,8 +297,21 @@ export function RideAreaFinder({ areas }: Props) {
             }}
           />
         </label>
+        <label>
+          How far?
+          <select
+            value={radiusMiles}
+            onChange={(event) => setRadiusMiles(Number(event.target.value))}
+          >
+            <option value={25}>25 miles</option>
+            <option value={50}>50 miles</option>
+            <option value={75}>75 miles</option>
+            <option value={100}>100 miles</option>
+            <option value={150}>150 miles</option>
+          </select>
+        </label>
         <button type="button" onClick={searchTravelCity}>
-          Search City
+          Find Nearby
         </button>
         <button type="button" onClick={useCurrentLocation}>
           Use My Location
@@ -186,27 +320,107 @@ export function RideAreaFinder({ areas }: Props) {
 
       {status ? <p className="ride-finder-status">{status}</p> : null}
 
-      <div className="ride-finder-results">
-        {rankedAreas.slice(0, 4).map((area) => (
-          <article key={area.slug}>
-            <div>
-              <span>{area.matchReason}</span>
-              <h3>{area.name}</h3>
-              <p>
-                {area.state}
-                {area.distanceMiles !== undefined
-                  ? ` • ${Math.round(area.distanceMiles)} miles away`
-                  : ""}
-              </p>
-            </div>
-            <div className="ride-area-actions">
-              <Link href={`/ride-areas/${area.slug}`}>View Area</Link>
-              <Link href={`/planner?area=${encodeURIComponent(area.locationQuery)}`}>
-                Build Plan
-              </Link>
-            </div>
-          </article>
-        ))}
+      <div className="location-results">
+        <details className="location-result-group" open>
+          <summary>
+            <span>Trails</span>
+            <strong>{nearbyTrails.length} nearby trail options</strong>
+          </summary>
+          <div className="nearby-trail-list">
+            {nearbyTrails.map((trail) => (
+              <article key={`${trail.area.slug}-${trail.name}`}>
+                <div>
+                  <span>{trail.area.name}</span>
+                  <h3>{trail.name}</h3>
+                  <p>
+                    {trail.access}
+                    {trail.distanceMiles !== undefined
+                      ? ` • ${Math.round(trail.distanceMiles)} miles`
+                      : ""}
+                  </p>
+                </div>
+                <div className="trail-actions">
+                  <a href={trail.url} rel="noreferrer" target="_blank">
+                    Trail Map
+                  </a>
+                  {trail.passUrl ? (
+                    <a href={trail.passUrl} rel="noreferrer" target="_blank">
+                      Passes / Rules
+                    </a>
+                  ) : null}
+                  <Link href={`/planner?area=${encodeURIComponent(trail.area.locationQuery)}`}>
+                    Plan
+                  </Link>
+                </div>
+              </article>
+            ))}
+            {!nearbyTrails.length ? (
+              <p className="empty-state">No trail matches yet. Try a larger mile range.</p>
+            ) : null}
+          </div>
+        </details>
+
+        <details className="location-result-group" open>
+          <summary>
+            <span>Marketplace</span>
+            <strong>Everything nearby by category</strong>
+          </summary>
+          <div className="nearby-category-grid">
+            {marketplaceCategories.map((category) => {
+              const categoryListings =
+                category.value === "deals"
+                  ? nearbyListings.filter((listing) => listing.deals.some((deal) => deal.is_active))
+                  : nearbyListings.filter((listing) => listing.category === category.value);
+
+              return (
+                <article key={category.value}>
+                  <div>
+                    <span>{categoryListings.length} found</span>
+                    <h3>{category.label}</h3>
+                    <p>
+                      {categoryListings.slice(0, 2).map((listing) => listing.name).join(", ") ||
+                        "Waiting on local partners"}
+                    </p>
+                  </div>
+                  <Link href={getMarketplaceHref(category.value, travelCity, radiusMiles)}>
+                    Open
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </details>
+
+        <details className="location-result-group">
+          <summary>
+            <span>Best match</span>
+            <strong>{rankedAreas[0]?.name ?? "Nearby ride plan"}</strong>
+          </summary>
+          <div className="ride-finder-results compact">
+            {rankedAreas.slice(0, 3).map((area) => (
+              <article key={area.slug}>
+                <div>
+                  <span>{area.matchReason}</span>
+                  <h3>{area.name}</h3>
+                  <p>
+                    {area.state}
+                    {area.distanceMiles !== undefined
+                      ? ` • ${Math.round(area.distanceMiles)} miles away`
+                      : ""}
+                  </p>
+                </div>
+                <div className="ride-area-actions">
+                  <Link href={`/planner?area=${encodeURIComponent(area.locationQuery)}`}>
+                    Build Plan
+                  </Link>
+                  <Link href={`/lodging?area=${encodeURIComponent(area.locationQuery)}`}>
+                    Lodging
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </details>
       </div>
     </section>
   );

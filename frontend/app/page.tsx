@@ -20,33 +20,14 @@ export default async function Home() {
             Matewan, Harlan, and other ride-area towns.
           </p>
           <div className="hero-actions">
-            <Link href="/ride-areas">Find Ride Area</Link>
+            <Link href="/ride-areas">Find Nearby</Link>
             <Link href="/planner">Build Trip Plan</Link>
             <Link href="/business/join">Become a Partner</Link>
           </div>
         </div>
       </section>
 
-      <RideAreaFinder areas={rideAreas} />
-
-      <section className="page-section ride-area-preview">
-        <div className="section-heading">
-          <p>Full map</p>
-          <h2>Open the trail map when you are ready to explore.</h2>
-        </div>
-        <div className="ride-area-preview-grid">
-          {rideAreas.slice(0, 4).map((area) => (
-            <Link href={`/ride-areas/${area.slug}`} key={area.slug}>
-              <span>{area.state}</span>
-              <strong>{area.name}</strong>
-            </Link>
-          ))}
-        </div>
-        <div className="hero-actions compact-actions">
-          <Link href="/ride-areas">Open Full Ride Map</Link>
-          <Link href="/planner">Build Trip Plan</Link>
-        </div>
-      </section>
+      <RideAreaFinder areas={rideAreas} listings={listings} />
 
       <section className="page-section marketplace-jump">
         <div className="section-heading">

@@ -1,30 +1,22 @@
 import { RideAreaFinder } from "../../components/RideAreaFinder";
-import { RideAreaGrid } from "../../components/RideAreaGrid";
-import { RideAreaMap } from "../../components/RideAreaMap";
 import { rideAreas } from "../../lib/sample-data";
+import { getListings } from "../../lib/api";
 
-export default function RideAreasPage() {
+export default async function RideAreasPage() {
+  const listings = await getListings("all");
+
   return (
     <main className="page">
       <section className="page-hero compact">
-        <p className="eyebrow">Ride areas</p>
-        <h1>Start with where you are riding.</h1>
+        <p className="eyebrow">Find nearby</p>
+        <h1>Enter a location. Choose the miles. See what is nearby.</h1>
         <p>
-          Pick a destination, then build a plan around nearby lodging, food, fuel,
-          rentals, repairs, and deals.
+          No more digging through destination boxes. Search once and see trails,
+          lodging, food, fuel, rentals, repairs, and deals around the trip.
         </p>
       </section>
 
-      <RideAreaFinder areas={rideAreas} />
-      <RideAreaMap areas={rideAreas} />
-
-      <section className="page-section">
-        <div className="section-heading">
-          <p>Destinations</p>
-          <h2>Appalachian ride anchors</h2>
-        </div>
-        <RideAreaGrid areas={rideAreas} />
-      </section>
+      <RideAreaFinder areas={rideAreas} listings={listings} />
     </main>
   );
 }
