@@ -298,6 +298,216 @@ p {
   padding-bottom: clamp(1rem, 3vw, 1.5rem);
 }
 
+.business-welcome {
+  width: min(94rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1rem 0 3rem;
+}
+
+.business-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.42fr);
+  gap: 1rem;
+  min-height: clamp(28rem, 58vh, 39rem);
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.44)),
+    url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80")
+      center / cover;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.business-hero-copy {
+  max-width: 58rem;
+}
+
+.business-hero-copy h1,
+.business-growth-panel h2,
+.business-final-cta h2 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 5.6rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.business-hero-copy p:not(.eyebrow),
+.business-growth-panel p,
+.business-final-cta p {
+  max-width: 46rem;
+  color: var(--soft);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.45;
+}
+
+.business-hero-panel {
+  display: grid;
+  gap: 0.8rem;
+  border: 1px solid rgba(242, 106, 27, 0.4);
+  border-radius: 0.6rem;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 1rem;
+}
+
+.business-hero-panel strong,
+.business-price-grid article > span,
+.business-addon-row strong,
+.business-category-grid strong,
+.business-benefit-grid strong,
+.business-step-grid strong {
+  color: var(--orange-soft);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.business-hero-panel span,
+.business-addon-row p,
+.business-category-grid span,
+.business-benefit-grid span {
+  color: var(--soft);
+  line-height: 1.35;
+}
+
+.business-hero-panel ul,
+.business-price-grid ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--soft);
+  font-weight: 800;
+}
+
+.business-pricing-panel,
+.business-category-panel,
+.business-growth-panel,
+.business-steps-panel,
+.business-final-cta {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(10, 10, 10, 0.9);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.business-price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.business-price-grid article,
+.business-addon-row article,
+.business-category-grid article,
+.business-benefit-grid article,
+.business-step-grid article {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.business-price-grid h3 {
+  margin: 0;
+  font-size: clamp(2.25rem, 5vw, 3.6rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.business-price-grid h3 small {
+  margin-left: 0.3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.business-price-grid p {
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.35;
+}
+
+.business-addon-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.business-addon-row span {
+  font-size: 1.3rem;
+  font-weight: 950;
+}
+
+.business-category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.business-category-grid article {
+  min-height: 7rem;
+  align-content: center;
+  text-align: center;
+}
+
+.business-growth-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.business-benefit-grid,
+.business-step-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.business-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.business-step-grid article {
+  text-align: center;
+}
+
+.business-step-grid article span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  font-weight: 950;
+}
+
+.business-step-grid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.business-final-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.68)),
+    url("https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1600&q=80")
+      center / cover;
+}
+
 .ride-area-preview-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2301,7 +2511,9 @@ button.tier-card.is-selected {
 
   .trail-map-layout,
   .trail-review-layout,
-  .launch-strip {
+  .launch-strip,
+  .business-hero,
+  .business-growth-panel {
     grid-template-columns: 1fr;
   }
 
@@ -2334,6 +2546,9 @@ button.tier-card.is-selected {
   .trail-list,
   .nearby-trail-list,
   .nearby-category-grid,
+  .business-price-grid,
+  .business-category-grid,
+  .business-step-grid,
   .ride-area-preview-grid,
   .tier-grid,
   .ride-area-grid,
@@ -2350,6 +2565,7 @@ button.tier-card.is-selected {
   }
 
   .admin-stats,
+  .business-addon-row,
   .admin-business-card dl {
     grid-template-columns: 1fr;
   }
