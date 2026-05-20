@@ -19,7 +19,6 @@ export function BrandLogo() {
       <span className={showImage ? "brand-text sr-only" : "brand-text"}>
         Ride <strong>Appalachia</strong>
       </span>
-      <small>Ride more. Plan less.</small>
     </Link>
   );
 }

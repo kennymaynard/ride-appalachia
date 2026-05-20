@@ -58,24 +58,25 @@ button {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 1.25rem;
+  gap: clamp(0.65rem, 1.5vw, 1rem);
   border-bottom: 1px solid var(--line);
-  background: rgba(7, 7, 7, 0.88);
-  padding: 1rem clamp(1rem, 3vw, 2rem);
+  background: rgba(7, 7, 7, 0.92);
+  padding: 0.55rem clamp(0.75rem, 2vw, 1.25rem);
   backdrop-filter: blur(18px);
 }
 
 .brand {
-  display: grid;
-  gap: 0.12rem;
+  display: inline-flex;
   align-items: center;
+  min-width: 0;
   text-transform: uppercase;
 }
 
 .brand-logo {
   display: block;
-  width: clamp(5.2rem, 12vw, 8.75rem);
-  height: auto;
+  width: auto;
+  height: clamp(3.2rem, 6vw, 4.35rem);
+  object-fit: contain;
 }
 
 .brand-text {
@@ -96,13 +97,6 @@ button {
   color: var(--orange);
 }
 
-.brand small {
-  color: var(--orange-soft);
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -115,10 +109,11 @@ button {
 .topbar nav {
   display: flex;
   justify-content: center;
-  gap: clamp(0.8rem, 2.5vw, 2rem);
+  gap: clamp(0.55rem, 1.7vw, 1.35rem);
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.86rem;
+  font-size: clamp(0.68rem, 1vw, 0.82rem);
   font-weight: 900;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -154,12 +149,11 @@ button {
 
 .hero {
   display: grid;
-  min-height: 27rem;
+  min-height: clamp(23rem, 52vh, 32rem);
   align-items: center;
-  padding: clamp(1.5rem, 4vw, 3.5rem) 0 1rem;
+  padding: clamp(0.75rem, 2.2vw, 1.75rem) 0 0.75rem;
 }
 
-.hero > div,
 .page-hero,
 .detail-hero {
   border: 1px solid var(--line);
@@ -170,8 +164,10 @@ button {
 }
 
 .hero > div {
-  max-width: 57rem;
-  padding: clamp(1.15rem, 3vw, 2rem);
+  max-width: 50rem;
+  padding: clamp(1rem, 2.6vw, 1.65rem);
+  border-left: 3px solid rgba(242, 106, 27, 0.75);
+  background: linear-gradient(90deg, rgba(7, 7, 7, 0.88), rgba(7, 7, 7, 0.42));
 }
 
 .eyebrow {
@@ -194,10 +190,10 @@ p {
 .detail-copy h1 {
   margin: 0;
   max-width: 62rem;
-  font-size: clamp(3rem, 8vw, 7rem);
+  font-size: clamp(2.4rem, 6.2vw, 5.15rem);
   font-weight: 950;
   letter-spacing: 0;
-  line-height: 0.9;
+  line-height: 0.94;
   text-transform: uppercase;
 }
 
