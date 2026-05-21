@@ -22,6 +22,115 @@ type Props = {
   points: MapPoint[];
 };
 
+function escapeXml(value: string) {
+  return value.replace(/[<>&'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      "<": "&lt;",
+      ">": "&gt;",
+      "&": "&amp;",
+      "'": "&apos;",
+      '"': "&quot;",
+    };
+    return entities[character];
+  });
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function downloadTextFile(filename: string, contents: string, type: string) {
+  const blob = new Blob([contents], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildGpx(point: MapPoint) {
+  const trackPoints = point.routeLine
+    .map(
+      (coordinate) =>
+        `      <trkpt lat="${coordinate.latitude}" lon="${coordinate.longitude}"></trkpt>`,
+    )
+    .join("\n");
+  const waypoints = point.photoStops
+    .map(
+      (stop) => `  <wpt lat="${stop.latitude}" lon="${stop.longitude}">
+    <name>${escapeXml(stop.name)}</name>
+    <desc>${escapeXml(stop.note)}</desc>
+  </wpt>`,
+    )
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Appalachia Offroad" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>${escapeXml(point.label)}</name>
+    <desc>${escapeXml(`${point.areaName} • ${point.lengthMiles} miles • ${point.difficulty}`)}</desc>
+  </metadata>
+${waypoints}
+  <trk>
+    <name>${escapeXml(point.label)}</name>
+    <desc>${escapeXml(point.access)}</desc>
+    <trkseg>
+${trackPoints}
+    </trkseg>
+  </trk>
+</gpx>
+`;
+}
+
+function buildGeoJson(point: MapPoint) {
+  return JSON.stringify(
+    {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {
+            name: point.label,
+            area: point.areaName,
+            activity: point.activity,
+            difficulty: point.difficulty,
+            lengthMiles: point.lengthMiles,
+            access: point.access,
+            officialMap: point.href,
+          },
+          geometry: {
+            type: "LineString",
+            coordinates: point.routeLine.map((coordinate) => [
+              coordinate.longitude,
+              coordinate.latitude,
+            ]),
+          },
+        },
+        ...point.photoStops.map((stop) => ({
+          type: "Feature",
+          properties: {
+            name: stop.name,
+            note: stop.note,
+            kind: "photo-stop",
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [stop.longitude, stop.latitude],
+          },
+        })),
+      ],
+    },
+    null,
+    2,
+  );
+}
+
 function FitBounds({ bounds }: { bounds: [[number, number], [number, number]] }) {
   const map = useMap();
 
@@ -101,6 +210,7 @@ export function TrailLeafletMap({
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
   const [showHiking, setShowHiking] = useState(true);
+  const [mapStyle, setMapStyle] = useState<"standard" | "topo">("topo");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [userLocation, setUserLocation] = useState<[number, number]>();
   const [trackingStatus, setTrackingStatus] = useState("Track me");
@@ -143,6 +253,22 @@ export function TrailLeafletMap({
       { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 },
     );
   };
+  const handleDownloadGpx = () => {
+    if (!selectedTrail) return;
+    downloadTextFile(
+      `${slugify(selectedTrail.label)}.gpx`,
+      buildGpx(selectedTrail),
+      "application/gpx+xml;charset=utf-8",
+    );
+  };
+  const handleDownloadGeoJson = () => {
+    if (!selectedTrail) return;
+    downloadTextFile(
+      `${slugify(selectedTrail.label)}.geojson`,
+      buildGeoJson(selectedTrail),
+      "application/geo+json;charset=utf-8",
+    );
+  };
 
   return (
     <div className="trail-leaflet-map">
@@ -169,6 +295,25 @@ export function TrailLeafletMap({
         <button type="button" onClick={handleTrackMe}>
           {trackingStatus}
         </button>
+        <button
+          className={mapStyle === "topo" ? "is-active" : ""}
+          type="button"
+          onClick={() =>
+            setMapStyle((current) => (current === "topo" ? "standard" : "topo"))
+          }
+        >
+          {mapStyle === "topo" ? "Topo on" : "Topo off"}
+        </button>
+        {selectedTrail ? (
+          <>
+            <button type="button" onClick={handleDownloadGpx}>
+              Download GPX
+            </button>
+            <button type="button" onClick={handleDownloadGeoJson}>
+              GeoJSON
+            </button>
+          </>
+        ) : null}
       </div>
       <MapContainer
         center={center}
@@ -178,10 +323,18 @@ export function TrailLeafletMap({
         zoom={7}
         zoomControl
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {mapStyle === "topo" ? (
+          <TileLayer
+            attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, style &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+            maxZoom={17}
+            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        )}
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
         {trailLine ? (
@@ -271,6 +424,10 @@ export function TrailLeafletMap({
               {selectedTrail.activity}
             </span>
             <p>{selectedTrail.access}</p>
+            <p>
+              Download GPX or GeoJSON before you lose service and open it in an
+              offline GPS map app.
+            </p>
             <div className="trail-focus-stops">
               {selectedTrail.photoStops.map((stop) => (
                 <span key={stop.name}>{stop.name}</span>
