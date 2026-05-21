@@ -271,6 +271,112 @@ p {
   line-height: 1.35;
 }
 
+.landing-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+}
+
+.landing-steps article {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(10, 10, 10, 0.9);
+  padding: 1rem;
+}
+
+.landing-steps strong {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  font-weight: 950;
+}
+
+.landing-steps span {
+  color: var(--orange-soft);
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.landing-steps p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.38;
+}
+
+.trail-pack-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.trail-pack-preview-grid article {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.trail-pack-preview-grid article > span,
+.trail-pack-preview-grid small {
+  color: var(--orange-soft);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trail-pack-preview-grid h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.trail-pack-preview-grid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.38;
+}
+
+.trail-pack-preview-grid div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.trail-pack-preview-grid small {
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  padding: 0.3rem 0.45rem;
+}
+
+.trail-pack-preview-grid a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .category-nav {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3322,6 +3428,7 @@ button.tier-card.is-selected {
   .trail-pack-grid,
   .map-source-card,
   .launch-strip,
+  .landing-steps,
   .business-hero,
   .business-growth-panel,
   .planner-setup,
@@ -3368,6 +3475,7 @@ button.tier-card.is-selected {
   .business-step-grid,
   .trail-pack-stats,
   .map-source-stats,
+  .trail-pack-preview-grid,
   .planner-trail-grid,
   .offline-pack-grid,
   .offline-pack-list,
