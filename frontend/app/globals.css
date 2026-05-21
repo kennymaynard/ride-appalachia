@@ -1391,6 +1391,113 @@ button.tier-card.is-selected {
   white-space: pre-wrap;
 }
 
+.planner-redesign {
+  display: grid;
+  gap: 1rem;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+}
+
+.planner-setup,
+.planner-card {
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(10, 10, 10, 0.92);
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.planner-setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.4fr) minmax(9rem, 0.22fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.planner-setup h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  font-weight: 950;
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.planner-setup p:not(.eyebrow) {
+  margin: 0.55rem 0 0;
+  color: var(--soft);
+  line-height: 1.35;
+}
+
+.planner-setup label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-setup input,
+.planner-setup select {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0.8rem;
+}
+
+.planner-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.72fr);
+  gap: 1rem;
+}
+
+.planner-options.clean {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.planner-roadmap-card {
+  align-content: start;
+}
+
+.planner-trail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.planner-trail-grid article {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.planner-trail-grid span {
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-trail-grid h3 {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.planner-trail-grid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .success-shell {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2513,7 +2620,10 @@ button.tier-card.is-selected {
   .trail-review-layout,
   .launch-strip,
   .business-hero,
-  .business-growth-panel {
+  .business-growth-panel,
+  .planner-setup,
+  .planner-main-grid,
+  .planner-options.clean {
     grid-template-columns: 1fr;
   }
 
@@ -2549,6 +2659,7 @@ button.tier-card.is-selected {
   .business-price-grid,
   .business-category-grid,
   .business-step-grid,
+  .planner-trail-grid,
   .ride-area-preview-grid,
   .tier-grid,
   .ride-area-grid,

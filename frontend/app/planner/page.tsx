@@ -1,5 +1,6 @@
 import { TripPlanner } from "../../components/TripPlanner";
 import { getListings } from "../../lib/api";
+import { rideAreas } from "../../lib/sample-data";
 
 type Props = {
   searchParams: Promise<{ area?: string }>;
@@ -20,7 +21,7 @@ export default async function PlannerPage({ searchParams }: Props) {
         </p>
       </section>
 
-      <TripPlanner initialLocation={area || ""} listings={listings} />
+      <TripPlanner areas={rideAreas} initialLocation={area || ""} listings={listings} />
     </main>
   );
 }
