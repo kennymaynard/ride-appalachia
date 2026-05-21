@@ -17,20 +17,40 @@ function FitBounds({ bounds }: { bounds: [[number, number], [number, number]] })
   const map = useMap();
 
   useEffect(() => {
+    const mapElement = map.getContainer();
     const refreshMap = () => {
       map.invalidateSize();
       map.fitBounds(bounds, { padding: [28, 28], maxZoom: 9 });
     };
+    const scheduleRefresh = () => window.requestAnimationFrame(refreshMap);
 
     refreshMap();
-    const frame = window.requestAnimationFrame(refreshMap);
-    const timeout = window.setTimeout(refreshMap, 350);
+    const frame = scheduleRefresh();
+    const timers = [150, 350, 700, 1200].map((delay) =>
+      window.setTimeout(refreshMap, delay),
+    );
+    const resizeObserver = new ResizeObserver(scheduleRefresh);
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          refreshMap();
+        }
+      },
+      { threshold: 0.01 },
+    );
+
+    resizeObserver.observe(mapElement);
+    intersectionObserver.observe(mapElement);
     window.addEventListener("resize", refreshMap);
+    window.addEventListener("orientationchange", refreshMap);
 
     return () => {
       window.cancelAnimationFrame(frame);
-      window.clearTimeout(timeout);
+      timers.forEach((timer) => window.clearTimeout(timer));
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       window.removeEventListener("resize", refreshMap);
+      window.removeEventListener("orientationchange", refreshMap);
     };
   }, [bounds, map]);
 
