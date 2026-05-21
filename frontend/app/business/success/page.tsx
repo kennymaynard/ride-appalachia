@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getBusiness } from "../../../lib/api";
+import { getBusinessByAccessToken } from "../../../lib/api";
 import { partnerTiers } from "../../../lib/sample-data";
 import type { Tier } from "../../../lib/types";
 
@@ -8,6 +8,7 @@ type Props = {
     business_id?: string;
     checkout?: string;
     tier?: Tier["id"];
+    access_token?: string;
   }>;
 };
 
@@ -18,8 +19,9 @@ function checkoutLabel(checkout?: string) {
 
 export default async function BusinessSuccessPage({ searchParams }: Props) {
   const params = await searchParams;
-  const businessId = params.business_id ? Number(params.business_id) : null;
-  const business = businessId ? await getBusiness(businessId) : null;
+  const business = params.access_token
+    ? await getBusinessByAccessToken(params.access_token)
+    : null;
   const selectedTier =
     partnerTiers.find((tier) => tier.id === params.tier) || partnerTiers[0];
 

@@ -330,7 +330,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
             {nearbyTrails.map((trail) => (
               <article key={`${trail.area.slug}-${trail.name}`}>
                 <div>
-                  <span>{trail.area.name}</span>
+                  <span>{trail.activity ? `${trail.activity} • ${trail.area.name}` : trail.area.name}</span>
                   <h3>{trail.name}</h3>
                   <p>
                     {trail.access}

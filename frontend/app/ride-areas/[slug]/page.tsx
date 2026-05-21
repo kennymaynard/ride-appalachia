@@ -57,7 +57,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
             {area.trails.map((trail) => (
               <article key={trail.name}>
                 <div className="trail-list-topline">
-                  <span>{trail.type}</span>
+                  <span>{trail.activity ? `${trail.activity} • ${trail.type}` : trail.type}</span>
                   <strong>{trail.difficulty}</strong>
                 </div>
                 <h3>{trail.name}</h3>
@@ -85,7 +85,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
             <span>Map</span>
             <strong>Open map for {area.name}</strong>
           </summary>
-          <RideAreaMap areas={rideAreas} activeSlug={area.slug} compact />
+          <RideAreaMap areas={rideAreas} activeSlug={area.slug} compact reviews={areaReviews} />
         </details>
 
         <div className="ride-area-detail-grid">

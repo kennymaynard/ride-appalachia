@@ -51,7 +51,7 @@ function toListingForm(business: Business): ListingForm {
     location: business.location,
     photo_url: business.photo_url,
     website_url: business.website_url,
-    owner_email: business.owner_email,
+    owner_email: business.owner_email || "",
     subscription_tier: business.subscription_tier,
   };
 }
@@ -132,6 +132,17 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     );
   }
 
+  function useUploadedPhoto(file?: File) {
+    if (!file || !listingForm) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setListingForm({ ...listingForm, photo_url: reader.result });
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function saveListing(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedBusiness || !listingForm) return;
@@ -141,7 +152,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setStatus("");
 
     try {
-      const updatedBusiness = await updateBusiness(selectedBusiness.id, listingForm);
+      const updatedBusiness = await updateBusiness(
+        selectedBusiness.id,
+        listingForm,
+        selectedBusiness.owner_access_token,
+      );
       replaceBusiness(updatedBusiness);
       setListingForm(toListingForm(updatedBusiness));
       setStatus("Listing saved.");
@@ -163,13 +178,16 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setStatus("");
 
     try {
-      const deal = await addDeal({
-        business_id: selectedBusiness.id,
-        title: dealForm.title,
-        code: dealForm.code,
-        description: dealForm.description,
-        is_active: true,
-      });
+      const deal = await addDeal(
+        {
+          business_id: selectedBusiness.id,
+          title: dealForm.title,
+          code: dealForm.code,
+          description: dealForm.description,
+          is_active: true,
+        },
+        selectedBusiness.owner_access_token,
+      );
       const updatedBusiness = {
         ...selectedBusiness,
         deals: [deal, ...selectedBusiness.deals],
@@ -188,9 +206,14 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     if (!selectedBusiness) return;
     setError("");
     try {
-      const deal = await updateDeal(selectedBusiness.id, dealId, {
-        is_active: !isActive,
-      });
+      const deal = await updateDeal(
+        selectedBusiness.id,
+        dealId,
+        {
+          is_active: !isActive,
+        },
+        selectedBusiness.owner_access_token,
+      );
       replaceBusiness({
         ...selectedBusiness,
         deals: selectedBusiness.deals.map((item) =>
@@ -207,7 +230,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     if (!selectedBusiness) return;
     setError("");
     try {
-      await deleteDeal(selectedBusiness.id, dealId);
+      await deleteDeal(selectedBusiness.id, dealId, selectedBusiness.owner_access_token);
       replaceBusiness({
         ...selectedBusiness,
         deals: selectedBusiness.deals.filter((deal) => deal.id !== dealId),
@@ -227,16 +250,23 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setStatus("");
 
     try {
-      const campaign = await createCampaign({
-        business_id: selectedBusiness.id,
-        campaign_type: "monthly_sponsor",
-        ...campaignForm,
-      });
+      const campaign = await createCampaign(
+        {
+          business_id: selectedBusiness.id,
+          campaign_type: "monthly_sponsor",
+          ...campaignForm,
+        },
+        selectedBusiness.owner_access_token,
+      );
       replaceBusiness({
         ...selectedBusiness,
         campaigns: [campaign, ...selectedBusiness.campaigns],
       });
-      const checkoutUrl = await createCheckout("monthly_sponsor", selectedBusiness.id);
+      const checkoutUrl = await createCheckout(
+        "monthly_sponsor",
+        selectedBusiness.id,
+        selectedBusiness.owner_access_token,
+      );
       window.location.href = checkoutUrl;
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to start campaign.");
@@ -253,10 +283,13 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setStatus("");
 
     try {
-      const serviceRequest = await createLodgingServiceRequest({
-        business_id: selectedBusiness.id,
-        ...serviceForm,
-      });
+      const serviceRequest = await createLodgingServiceRequest(
+        {
+          business_id: selectedBusiness.id,
+          ...serviceForm,
+        },
+        selectedBusiness.owner_access_token,
+      );
       replaceBusiness({
         ...selectedBusiness,
         service_requests: [serviceRequest, ...(selectedBusiness.service_requests || [])],
@@ -383,19 +416,25 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             />
           </label>
           <label>
+            Photo
+            <input
+              accept="image/*"
+              type="file"
+              onChange={(event) => useUploadedPhoto(event.target.files?.[0])}
+            />
+            <small className="field-help">
+              Upload a listing photo, or paste a direct image URL below.
+            </small>
+          </label>
+          <label>
             Photo URL
             <input
               required
-              value={listingForm.photo_url}
+              value={listingForm.photo_url.startsWith("data:image/") ? "Uploaded photo selected" : listingForm.photo_url}
               onChange={(event) =>
                 setListingForm({ ...listingForm, photo_url: event.target.value })
               }
             />
-            <small className="field-help">
-              Use a direct image URL ending in jpg, png, webp, or a trusted image
-              host. Facebook or Instagram post links will be replaced with a category
-              photo.
-            </small>
           </label>
           <label>
             Partner tier

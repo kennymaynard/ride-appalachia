@@ -1,11 +1,13 @@
 import secrets
+import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
 from app.models import Business, Campaign, Deal, LodgingServiceRequest
 from app.schemas import (
+    BusinessClaimRequest,
     BusinessLoginRead,
     BusinessLoginRequest,
     BusinessCreate,
@@ -24,6 +26,23 @@ from app.services.email_service import send_business_login_email
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["business dashboard"])
+
+
+def digits_only(value: str) -> str:
+    return re.sub(r"\D+", "", value)
+
+
+def require_business_access(
+    business_id: int,
+    x_business_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+) -> Business:
+    business = db.get(Business, business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    if not business.owner_access_token or x_business_token != business.owner_access_token:
+        raise HTTPException(status_code=401, detail="Business access token required")
+    return business
 
 
 @router.post("/businesses/login", response_model=BusinessLoginRead)
@@ -67,7 +86,7 @@ def login_business(
     )
 
 
-@router.post("/businesses", response_model=BusinessRead)
+@router.post("/businesses", response_model=BusinessDashboardRead)
 def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> Business:
     data = payload.model_dump()
     data["owner_email"] = data["owner_email"].strip().lower()
@@ -106,7 +125,10 @@ def get_business_by_access_token(
 
 
 @router.get("/businesses/{business_id}", response_model=BusinessDashboardRead)
-def get_business(business_id: int, db: Session = Depends(get_db)) -> Business:
+def get_business(
+    business: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> Business:
     business = (
         db.query(Business)
         .options(
@@ -114,24 +136,18 @@ def get_business(business_id: int, db: Session = Depends(get_db)) -> Business:
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
         )
-        .filter(Business.id == business_id)
+        .filter(Business.id == business.id)
         .first()
     )
-    if not business:
-        raise HTTPException(status_code=404, detail="Business not found")
     return business
 
 
 @router.patch("/businesses/{business_id}", response_model=BusinessRead)
 def update_business(
-    business_id: int,
     payload: BusinessUpdate,
+    business: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> Business:
-    business = db.get(Business, business_id)
-    if not business:
-        raise HTTPException(status_code=404, detail="Business not found")
-
     data = payload.model_dump(exclude_unset=True)
     if "owner_email" in data and data["owner_email"]:
         data["owner_email"] = data["owner_email"].strip().lower()
@@ -147,14 +163,53 @@ def update_business(
     return business
 
 
-@router.post("/businesses/{business_id}/deals", response_model=DealRead)
-def add_deal(business_id: int, payload: DealCreate, db: Session = Depends(get_db)) -> Deal:
-    if business_id != payload.business_id:
-        raise HTTPException(status_code=400, detail="Business id mismatch")
-
-    business = db.get(Business, business_id)
+@router.post("/businesses/{business_id}/claim", response_model=BusinessDashboardRead)
+def claim_business(
+    business_id: int,
+    payload: BusinessClaimRequest,
+    db: Session = Depends(get_db),
+) -> Business:
+    business = (
+        db.query(Business)
+        .options(
+            selectinload(Business.deals),
+            selectinload(Business.campaigns),
+            selectinload(Business.service_requests),
+        )
+        .filter(Business.id == business_id)
+        .first()
+    )
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
+
+    if business.owner_email and business.owner_email != payload.owner_email.strip().lower():
+        raise HTTPException(status_code=409, detail="This listing is already claimed")
+
+    if digits_only(business.phone)[-4:] != payload.phone_last4:
+        raise HTTPException(status_code=400, detail="Phone verification did not match")
+
+    business.owner_email = payload.owner_email.strip().lower()
+    business.subscription_tier = payload.subscription_tier
+    if not business.owner_access_token:
+        business.owner_access_token = secrets.token_urlsafe(24)
+    if business.listing_status == "rejected":
+        business.listing_status = "needs_changes"
+        business.admin_notes = "Claim received. Admin will review ownership before publishing changes."
+
+    db.commit()
+    db.refresh(business)
+    return business
+
+
+@router.post("/businesses/{business_id}/deals", response_model=DealRead)
+def add_deal(
+    business_id: int,
+    payload: DealCreate,
+    _: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> Deal:
+    if business_id != payload.business_id:
+        raise HTTPException(status_code=400, detail="Business id mismatch")
 
     deal = Deal(**payload.model_dump())
     db.add(deal)
@@ -168,6 +223,7 @@ def update_deal(
     business_id: int,
     deal_id: int,
     payload: DealUpdate,
+    _: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> Deal:
     deal = db.query(Deal).filter(Deal.id == deal_id, Deal.business_id == business_id).first()
@@ -183,7 +239,12 @@ def update_deal(
 
 
 @router.delete("/businesses/{business_id}/deals/{deal_id}")
-def delete_deal(business_id: int, deal_id: int, db: Session = Depends(get_db)) -> dict[str, bool]:
+def delete_deal(
+    business_id: int,
+    deal_id: int,
+    _: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> dict[str, bool]:
     deal = db.query(Deal).filter(Deal.id == deal_id, Deal.business_id == business_id).first()
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -197,6 +258,7 @@ def delete_deal(business_id: int, deal_id: int, db: Session = Depends(get_db)) -
 def create_campaign(
     business_id: int,
     payload: CampaignCreate,
+    _: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> Campaign:
     if business_id != payload.business_id:
@@ -217,6 +279,7 @@ def create_campaign(
 def create_lodging_service_request(
     business_id: int,
     payload: LodgingServiceRequestCreate,
+    _: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> LodgingServiceRequest:
     if business_id != payload.business_id:

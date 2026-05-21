@@ -24,6 +24,7 @@ const initialForm = {
   location: "",
   website_url: "",
   description: "",
+  photo_url: "",
 };
 
 function slugify(value: string) {
@@ -54,6 +55,17 @@ export default function JoinPage() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function useUploadedPhoto(file?: File) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        updateForm("photo_url", reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function submitJoinForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -66,7 +78,7 @@ export default function JoinPage() {
       description: form.description.trim(),
       phone: form.phone.trim(),
       location: form.location.trim(),
-      photo_url: categoryPhotos[form.category],
+      photo_url: form.photo_url || categoryPhotos[form.category],
       website_url: form.website_url.trim(),
       subscription_tier: tier,
       owner_email: form.owner_email.trim(),
@@ -74,7 +86,7 @@ export default function JoinPage() {
 
     try {
       const business = await createBusiness(payload);
-      const checkoutUrl = await createCheckout(tier, business.id);
+      const checkoutUrl = await createCheckout(tier, business.id, business.owner_access_token);
       window.location.href = checkoutUrl;
     } catch (caughtError) {
       setIsSubmitting(false);
@@ -195,9 +207,16 @@ export default function JoinPage() {
           </label>
           <p className="field-help">
             Claims and new listings are reviewed before public approval. We use
-            a category photo first, then you can add a direct image URL from the
-            business dashboard.
+            a category photo if you do not upload one.
           </p>
+          <label>
+            Listing photo
+            <input
+              accept="image/*"
+              type="file"
+              onChange={(event) => useUploadedPhoto(event.target.files?.[0])}
+            />
+          </label>
           <label>
             Description
             <textarea

@@ -46,8 +46,8 @@ export type Business = {
   location: string;
   photo_url: string;
   website_url: string;
-  owner_email: string;
-  owner_access_token: string;
+  owner_email?: string;
+  owner_access_token?: string;
   listing_status: "pending" | "approved" | "needs_changes" | "rejected" | "unpublished";
   admin_notes: string;
   subscription_tier: string;
@@ -151,6 +151,7 @@ export type TrailInfo = {
   name: string;
   type: string;
   difficulty: "Easy" | "Moderate" | "Hard" | "Mixed";
+  activity?: "OHV" | "Hiking" | "Multi-use";
   access: string;
   description: string;
   url: string;

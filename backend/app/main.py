@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from alembic import command
+from alembic.config import Config
 
-from app.database import Base, SessionLocal, engine, get_settings
+from app.database import SessionLocal, get_settings
 from app.routes import admin, business, listings, reviews, subscriptions
-from app.schema_migrations import run_lightweight_migrations
 from app.seed import seed_database
 
 settings = get_settings()
@@ -21,8 +24,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
-    run_lightweight_migrations()
+    alembic_config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    command.upgrade(alembic_config, "head")
     db = SessionLocal()
     try:
         seed_database(db)

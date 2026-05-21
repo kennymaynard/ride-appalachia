@@ -1,6 +1,17 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel"}
+SUBSCRIPTION_TIERS = {
+    "local_business",
+    "lodging_partner",
+    "featured_partner",
+    "monthly_sponsor",
+    "cleaner_partner",
+}
+LISTING_STATUSES = {"pending", "approved", "needs_changes", "rejected", "unpublished"}
 
 
 class DealBase(BaseModel):
@@ -104,15 +115,29 @@ class TrailReviewModerationUpdate(BaseModel):
 
 
 class BusinessBase(BaseModel):
-    name: str
-    slug: str
+    name: str = Field(min_length=2, max_length=160)
+    slug: str = Field(min_length=2, max_length=180)
     category: str
     description: str
-    phone: str
-    location: str
+    phone: str = Field(min_length=7, max_length=40)
+    location: str = Field(min_length=2, max_length=180)
     photo_url: str
     website_url: str = ""
     subscription_tier: str = "local_business"
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, value: str) -> str:
+        if value not in BUSINESS_CATEGORIES:
+            raise ValueError("Unknown business category")
+        return value
+
+    @field_validator("subscription_tier")
+    @classmethod
+    def validate_subscription_tier(cls, value: str) -> str:
+        if value not in SUBSCRIPTION_TIERS:
+            raise ValueError("Unknown subscription tier")
+        return value
 
 
 class BusinessCreate(BusinessBase):
@@ -120,23 +145,35 @@ class BusinessCreate(BusinessBase):
 
 
 class BusinessUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=2, max_length=160)
     category: Optional[str] = None
     description: Optional[str] = None
-    phone: Optional[str] = None
-    location: Optional[str] = None
+    phone: Optional[str] = Field(default=None, min_length=7, max_length=40)
+    location: Optional[str] = Field(default=None, min_length=2, max_length=180)
     photo_url: Optional[str] = None
     website_url: Optional[str] = None
     subscription_tier: Optional[str] = None
     owner_email: Optional[str] = None
+
+    @field_validator("category")
+    @classmethod
+    def validate_optional_category(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in BUSINESS_CATEGORIES:
+            raise ValueError("Unknown business category")
+        return value
+
+    @field_validator("subscription_tier")
+    @classmethod
+    def validate_optional_subscription_tier(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in SUBSCRIPTION_TIERS:
+            raise ValueError("Unknown subscription tier")
+        return value
 
 
 class BusinessRead(BusinessBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    owner_email: str = ""
-    owner_access_token: str = ""
     listing_status: str = "pending"
     admin_notes: str = ""
     is_approved: bool
@@ -151,12 +188,34 @@ class BusinessRead(BusinessBase):
 
 
 class BusinessDashboardRead(BusinessRead):
+    owner_email: str = ""
+    owner_access_token: str = ""
     service_requests: list[LodgingServiceRequestRead] = []
 
 
 class BusinessModerationUpdate(BaseModel):
     listing_status: str
     admin_notes: str = ""
+
+    @field_validator("listing_status")
+    @classmethod
+    def validate_listing_status(cls, value: str) -> str:
+        if value not in LISTING_STATUSES:
+            raise ValueError("Unknown listing status")
+        return value
+
+
+class BusinessClaimRequest(BaseModel):
+    owner_email: str
+    phone_last4: str = Field(min_length=4, max_length=4)
+    subscription_tier: str
+
+    @field_validator("subscription_tier")
+    @classmethod
+    def validate_claim_subscription_tier(cls, value: str) -> str:
+        if value not in SUBSCRIPTION_TIERS:
+            raise ValueError("Unknown subscription tier")
+        return value
 
 
 class SubscriptionRequest(BaseModel):

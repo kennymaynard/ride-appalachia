@@ -1,17 +1,30 @@
 import Link from "next/link";
-import type { RideArea } from "../lib/types";
+import type { RideArea, TrailInfo, TrailReview } from "../lib/types";
+import { TrailMapShell } from "./TrailMapShell";
 
 type Props = {
   areas: RideArea[];
   activeSlug?: string;
   compact?: boolean;
+  reviews?: TrailReview[];
 };
 
-type MapPoint = {
+export type MapPoint = {
+  areaName: string;
+  areaSlug: string;
+  state: string;
   label: string;
+  type: string;
+  activity: "OHV" | "Hiking" | "Multi-use";
+  difficulty: TrailInfo["difficulty"];
+  access: string;
   latitude: number;
   longitude: number;
-  href?: string;
+  href: string;
+  reviewCount: number;
+  reviewRating?: number;
+  reviewSnippet?: string;
+  reviewText: string;
 };
 
 type MapBounds = {
@@ -21,33 +34,52 @@ type MapBounds = {
   maxLon: number;
 };
 
-function getMapPoints(areas: RideArea[], activeArea?: RideArea): MapPoint[] {
-  if (!activeArea) {
-    return areas.map((area) => ({
-      label: area.name,
-      latitude: area.latitude,
-      longitude: area.longitude,
-      href: `/ride-areas/${area.slug}`,
-    }));
-  }
+function getAreaReviewSummary(areaSlug: string, reviews: TrailReview[]) {
+  const areaReviews = reviews.filter((review) => review.areaSlug === areaSlug);
+  if (!areaReviews.length) return { count: 0 };
 
-  const trailPoints = activeArea.trails
-    .filter((trail) => typeof trail.latitude === "number" && typeof trail.longitude === "number")
-    .map((trail) => ({
-      label: trail.name,
-      latitude: trail.latitude as number,
-      longitude: trail.longitude as number,
-      href: trail.url,
-    }));
+  return {
+    count: areaReviews.length,
+    rating:
+      areaReviews.reduce((sum, review) => sum + review.rating, 0) /
+      areaReviews.length,
+    snippet: areaReviews[0]?.comment,
+  };
+}
 
-  return [
-    {
-      label: activeArea.name,
-      latitude: activeArea.latitude,
-      longitude: activeArea.longitude,
-    },
-    ...trailPoints,
-  ];
+function formatRating(count: number, rating?: number) {
+  if (!rating) return "No rider reviews yet";
+  return `${rating.toFixed(1)} from ${count} review${count === 1 ? "" : "s"}`;
+}
+
+function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): MapPoint {
+  const reviewSummary = getAreaReviewSummary(area.slug, reviews);
+  const activity = trail.activity ?? (trail.type.toLowerCase().includes("hiking") ? "Hiking" : "OHV");
+
+  return {
+    areaName: area.name,
+    areaSlug: area.slug,
+    state: area.state,
+    label: trail.name,
+    type: trail.type,
+    activity,
+    difficulty: trail.difficulty,
+    access: trail.access,
+    latitude: trail.latitude ?? area.latitude,
+    longitude: trail.longitude ?? area.longitude,
+    href: trail.url,
+    reviewCount: reviewSummary.count,
+    reviewRating: reviewSummary.rating,
+    reviewSnippet: reviewSummary.snippet,
+    reviewText: formatRating(reviewSummary.count, reviewSummary.rating),
+  };
+}
+
+function getMapPoints(areas: RideArea[], reviews: TrailReview[], activeArea?: RideArea): MapPoint[] {
+  const mappedAreas = activeArea ? [activeArea] : areas;
+  return mappedAreas.flatMap((area) =>
+    area.trails.map((trail) => toMapPoint(area, trail, reviews)),
+  );
 }
 
 function getMapBounds(points: MapPoint[]): MapBounds {
@@ -68,91 +100,83 @@ function getMapBounds(points: MapPoint[]): MapBounds {
   };
 }
 
-function getMapUrl(bounds: MapBounds, activeArea?: RideArea) {
-  const params = new URLSearchParams({
-    bbox: [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat].join(","),
-    layer: "mapnik",
-  });
-
-  if (activeArea) {
-    params.set("marker", `${activeArea.latitude},${activeArea.longitude}`);
-  }
-
-  return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`;
-}
-
-function getPinStyle(point: MapPoint, bounds: MapBounds) {
-  const lonRange = bounds.maxLon - bounds.minLon || 1;
-  const latRange = bounds.maxLat - bounds.minLat || 1;
-  const left = ((point.longitude - bounds.minLon) / lonRange) * 100;
-  const top = ((bounds.maxLat - point.latitude) / latRange) * 100;
-
-  return {
-    left: `${Math.min(Math.max(left, 3), 97)}%`,
-    top: `${Math.min(Math.max(top, 5), 95)}%`,
-  };
-}
-
 function getAreaSearch(area: RideArea, query: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${query} near ${area.name} ${area.state}`,
   )}`;
 }
 
-export function RideAreaMap({ areas, activeSlug, compact = false }: Props) {
+function getLeafletBounds(bounds: MapBounds): [[number, number], [number, number]] {
+  return [
+    [bounds.minLat, bounds.minLon],
+    [bounds.maxLat, bounds.maxLon],
+  ];
+}
+
+export function RideAreaMap({ areas, activeSlug, compact = false, reviews = [] }: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
-  const mapPoints = getMapPoints(areas, activeArea);
+  const mapPoints = getMapPoints(areas, reviews, activeArea);
   const mapBounds = getMapBounds(mapPoints);
-  const trailPins = activeArea ? mapPoints.slice(1) : [];
+  const ohvCount = mapPoints.filter((point) => point.activity !== "Hiking").length;
+  const hikingCount = mapPoints.filter((point) => point.activity === "Hiking").length;
+  const visibleAreas = activeArea ? [activeArea] : areas;
 
   return (
     <section className={compact ? "trail-map-shell compact" : "trail-map-shell"}>
       {!compact ? (
         <div className="section-heading">
           <p>Live trail map</p>
-          <h2>Zoom in on ride-area towns.</h2>
+          <h2>Trail names, reviews, and hiking options.</h2>
         </div>
       ) : null}
       <div className="trail-map-layout">
         <div className="trail-map" aria-label="Zoomable Appalachian ride-area map">
-          <iframe
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={getMapUrl(mapBounds, activeArea)}
-            title="Zoomable map of Appalachian ride areas"
+          <TrailMapShell
+            activeTitle={activeArea ? activeArea.name : "Appalachia Offroad map"}
+            bounds={getLeafletBounds(mapBounds)}
+            hikingCount={hikingCount}
+            ohvCount={ohvCount}
+            points={mapPoints}
           />
-          {trailPins.length ? (
-            <div className="trail-map-pins" aria-label="Trail pins on this map">
-              {trailPins.map((pin) => (
-                <a
-                  href={pin.href}
-                  key={`${pin.label}-${pin.latitude}-${pin.longitude}`}
-                  rel="noreferrer"
-                  style={getPinStyle(pin, mapBounds)}
-                  target="_blank"
-                  title={pin.label}
-                >
-                  <span />
-                  <strong>{pin.label}</strong>
-                </a>
-              ))}
-            </div>
-          ) : null}
-          <div className="trail-map-overlay">
-            <strong>{activeArea ? activeArea.name : "Appalachia Offroad map"}</strong>
-            <span>Pan and zoom to inspect nearby towns, roads, lodging, food, and fuel.</span>
-          </div>
         </div>
 
         <details className="trail-map-list" open>
-          <summary>Available ride areas</summary>
+          <summary>{activeArea ? "Trails on this map" : "Trail map index"}</summary>
           <div className="trail-map-list-inner">
-            {areas.map((area) => (
+            {visibleAreas.map((area) => (
               <article className={area.slug === activeSlug ? "is-active" : ""} key={area.slug}>
                 <div>
                   <span>{area.state}</span>
                   <h3>{area.name}</h3>
                   <p>{area.headline}</p>
+                </div>
+                <div className="map-review-summary">
+                  {(() => {
+                    const summary = getAreaReviewSummary(area.slug, reviews);
+                    return summary.count ? (
+                      <>
+                        <strong>{summary.rating?.toFixed(1)} rider rating</strong>
+                        <p>{summary.snippet}</p>
+                      </>
+                    ) : (
+                      <p>No rider reviews yet.</p>
+                    );
+                  })()}
+                </div>
+                <div className="map-trail-name-list" aria-label={`Trail names for ${area.name}`}>
+                  {area.trails.map((trail) => (
+                    <a
+                      className={trail.activity === "Hiking" ? "is-hiking" : "is-ohv"}
+                      href={trail.url}
+                      key={trail.name}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <span>{trail.activity ?? "OHV"}</span>
+                      <strong>{trail.name}</strong>
+                      <small>{trail.difficulty}</small>
+                    </a>
+                  ))}
                 </div>
                 <div className="availability-tags" aria-label={`Available planning options for ${area.name}`}>
                   {area.checklist.map((item) => (

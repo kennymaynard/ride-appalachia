@@ -9,9 +9,10 @@ import {
   moderateBusiness,
   moderateTrailReview,
   setBusinessFeatured,
+  updateAdminBusiness,
   updateServiceRequestStatus,
 } from "../lib/api";
-import type { Business, LodgingServiceRequest, TrailReview } from "../lib/types";
+import type { Business, BusinessUpdateInput, LodgingServiceRequest, TrailReview } from "../lib/types";
 
 type Props = {
   initialBusinesses?: Business[];
@@ -33,6 +34,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [isUnlocked, setIsUnlocked] = useState(initialBusinesses.length > 0);
   const [isLoading, setIsLoading] = useState(false);
   const [workingId, setWorkingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<BusinessUpdateInput>({});
   const [error, setError] = useState("");
 
   const stats = useMemo(
@@ -72,6 +75,38 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  function startEditing(business: Business) {
+    setEditingId(business.id);
+    setEditForm({
+      name: business.name,
+      description: business.description,
+      phone: business.phone,
+      location: business.location,
+      website_url: business.website_url,
+      photo_url: business.photo_url,
+    });
+    setError("");
+  }
+
+  async function saveAdminEdit(event: FormEvent<HTMLFormElement>, businessId: number) {
+    event.preventDefault();
+    setError("");
+    setWorkingId(businessId);
+    try {
+      replaceBusiness(await updateAdminBusiness(businessId, editForm, adminPassword));
+      setEditingId(null);
+      setEditForm({});
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to edit business.",
+      );
+    } finally {
+      setWorkingId(null);
     }
   }
 
@@ -301,6 +336,65 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       <div className="admin-list">
         {businesses.map((business) => (
           <article className="admin-business-card" key={business.id}>
+            {editingId === business.id ? (
+              <form onSubmit={(event) => saveAdminEdit(event, business.id)}>
+                <label>
+                  Name
+                  <input
+                    required
+                    value={editForm.name || ""}
+                    onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Phone
+                  <input
+                    required
+                    value={editForm.phone || ""}
+                    onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Location
+                  <input
+                    required
+                    value={editForm.location || ""}
+                    onChange={(event) => setEditForm({ ...editForm, location: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Website
+                  <input
+                    value={editForm.website_url || ""}
+                    onChange={(event) => setEditForm({ ...editForm, website_url: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Photo URL
+                  <input
+                    required
+                    value={editForm.photo_url || ""}
+                    onChange={(event) => setEditForm({ ...editForm, photo_url: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    required
+                    value={editForm.description || ""}
+                    onChange={(event) => setEditForm({ ...editForm, description: event.target.value })}
+                  />
+                </label>
+                <div className="admin-actions">
+                  <button type="submit" disabled={workingId === business.id}>
+                    Save Edits
+                  </button>
+                  <button type="button" onClick={() => setEditingId(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
             <div>
               <div className="listing-meta">
                 <span>{business.category}</span>
@@ -335,7 +429,15 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                 </div>
               </dl>
             </div>
+            )}
             <div className="admin-actions">
+              <button
+                type="button"
+                disabled={workingId === business.id}
+                onClick={() => startEditing(business)}
+              >
+                Edit
+              </button>
               <button
                 type="button"
                 disabled={business.is_approved || workingId === business.id}

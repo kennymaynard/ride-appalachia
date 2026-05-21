@@ -415,7 +415,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
               </p>
               <div className="trail-actions">
                 <a href={trail.url} rel="noreferrer" target="_blank">
-                  Trail Map
+                  {trail.activity === "Hiking" ? "Hiking Info" : "Trail Map"}
                 </a>
                 {trail.passUrl ? (
                   <a href={trail.passUrl} rel="noreferrer" target="_blank">

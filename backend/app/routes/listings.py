@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
@@ -10,10 +10,10 @@ router = APIRouter(tags=["marketplace"])
 
 @router.get("/listings", response_model=list[BusinessRead])
 def list_marketplace(
-    category: str = Query(default=None),
-    featured: bool = Query(default=None),
-    location: str = Query(default=None),
-    q: str = Query(default=None),
+    category: str | None = None,
+    featured: bool | None = None,
+    location: str | None = None,
+    q: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[Business]:
     query = (

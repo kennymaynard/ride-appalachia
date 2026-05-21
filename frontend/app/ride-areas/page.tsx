@@ -1,5 +1,6 @@
 import { RideAreaFinder } from "../../components/RideAreaFinder";
-import { rideAreas } from "../../lib/sample-data";
+import { RideAreaMap } from "../../components/RideAreaMap";
+import { rideAreas, trailReviews } from "../../lib/sample-data";
 import { getListings } from "../../lib/api";
 
 export default async function RideAreasPage() {
@@ -17,6 +18,7 @@ export default async function RideAreasPage() {
       </section>
 
       <RideAreaFinder areas={rideAreas} listings={listings} />
+      <RideAreaMap areas={rideAreas} reviews={trailReviews} />
     </main>
   );
 }

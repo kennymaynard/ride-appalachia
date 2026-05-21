@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { createCheckout, updateBusiness } from "../lib/api";
+import { claimBusiness as submitBusinessClaim, createCheckout } from "../lib/api";
 import { partnerTiers } from "../lib/sample-data";
 import type { Business, Tier } from "../lib/types";
 
@@ -14,7 +14,8 @@ export function ClaimBusiness({ business }: Props) {
   const [tier, setTier] = useState<Tier["id"]>(
     business.subscription_tier as Tier["id"],
   );
-  const [ownerEmail, setOwnerEmail] = useState(business.owner_email);
+  const [ownerEmail, setOwnerEmail] = useState(business.owner_email || "");
+  const [phoneLast4, setPhoneLast4] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,11 +29,16 @@ export function ClaimBusiness({ business }: Props) {
     setIsSubmitting(true);
 
     try {
-      await updateBusiness(business.id, {
+      const claimedBusiness = await submitBusinessClaim(business.id, {
         owner_email: ownerEmail.trim().toLowerCase(),
+        phone_last4: phoneLast4,
         subscription_tier: tier,
       });
-      const checkoutUrl = await createCheckout(tier, business.id);
+      const checkoutUrl = await createCheckout(
+        tier,
+        claimedBusiness.id,
+        claimedBusiness.owner_access_token,
+      );
       window.location.href = checkoutUrl;
     } catch (caughtError) {
       setIsSubmitting(false);
@@ -109,10 +115,25 @@ export function ClaimBusiness({ business }: Props) {
             placeholder="you@yourbusiness.com"
           />
         </label>
+        <label>
+          Business phone last 4
+          <input
+            inputMode="numeric"
+            maxLength={4}
+            minLength={4}
+            pattern="[0-9]{4}"
+            required
+            value={phoneLast4}
+            onChange={(event) =>
+              setPhoneLast4(event.target.value.replace(/\D/g, "").slice(0, 4))
+            }
+            placeholder="0142"
+          />
+        </label>
         {error ? <p className="form-error">{error}</p> : null}
         <button
           type="button"
-          disabled={isSubmitting || !ownerEmail.trim()}
+          disabled={isSubmitting || !ownerEmail.trim() || phoneLast4.length !== 4}
           onClick={claimBusiness}
         >
           {isSubmitting ? "Starting Checkout..." : "Claim And Continue To Checkout"}

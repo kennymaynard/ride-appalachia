@@ -33,6 +33,9 @@ def is_valid_photo_url(photo_url: str) -> bool:
     if not photo_url:
         return False
 
+    if photo_url.startswith("data:image/"):
+        return True
+
     parsed_url = urlparse(photo_url.strip())
     hostname = (parsed_url.hostname or "").lower()
     path = parsed_url.path.lower()

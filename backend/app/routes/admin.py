@@ -7,9 +7,11 @@ from app.schemas import (
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
+    BusinessUpdate,
     LodgingServiceRequestRead,
     LodgingServiceRequestStatusUpdate,
 )
+from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["admin"])
 
@@ -31,9 +33,39 @@ def list_businesses(
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
         )
-        .order_by(Business.created_at.desc())
+        .order_by(
+            (Business.listing_status == "pending").desc(),
+            (Business.listing_status == "needs_changes").desc(),
+            Business.created_at.desc(),
+        )
         .all()
     )
+
+
+@router.patch("/businesses/{business_id}", response_model=BusinessRead)
+def edit_business(
+    business_id: int,
+    payload: BusinessUpdate,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> Business:
+    business = db.get(Business, business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    next_category = data.get("category", business.category)
+    if "photo_url" in data:
+        data["photo_url"] = normalize_photo_url(data["photo_url"], next_category)
+
+    for key, value in data.items():
+        if key == "owner_email" and value:
+            value = value.strip().lower()
+        setattr(business, key, value)
+
+    db.commit()
+    db.refresh(business)
+    return business
 
 
 @router.post("/businesses/{business_id}/approve", response_model=BusinessRead)

@@ -140,6 +140,10 @@ export async function getBusiness(businessId: number): Promise<Business | null> 
   }
 }
 
+function getBusinessHeaders(ownerAccessToken?: string): Record<string, string> {
+  return ownerAccessToken ? { "x-business-token": ownerAccessToken } : {};
+}
+
 export async function getBusinessByAccessToken(ownerAccessToken: string): Promise<Business | null> {
   try {
     const response = await apiFetch(`/api/businesses/access/${ownerAccessToken}`, {
@@ -187,10 +191,11 @@ export async function loginBusiness(
 export async function updateBusiness(
   businessId: number,
   payload: BusinessUpdateInput,
+  ownerAccessToken?: string,
 ): Promise<Business> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify(payload),
   });
 
@@ -202,10 +207,28 @@ export async function updateBusiness(
   return response.json();
 }
 
-export async function addDeal(payload: DealCreateInput): Promise<Deal> {
-  const response = await fetch(`${getApiUrl()}/api/businesses/${payload.business_id}/deals`, {
+export async function claimBusiness(
+  businessId: number,
+  payload: { owner_email: string; phone_last4: string; subscription_tier: string },
+): Promise<Business> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/claim`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to verify business ownership");
+  }
+
+  return response.json();
+}
+
+export async function addDeal(payload: DealCreateInput, ownerAccessToken?: string): Promise<Deal> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${payload.business_id}/deals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify(payload),
   });
 
@@ -221,10 +244,11 @@ export async function updateDeal(
   businessId: number,
   dealId: number,
   payload: DealUpdateInput,
+  ownerAccessToken?: string,
 ): Promise<Deal> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/deals/${dealId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify(payload),
   });
 
@@ -236,9 +260,14 @@ export async function updateDeal(
   return response.json();
 }
 
-export async function deleteDeal(businessId: number, dealId: number): Promise<void> {
+export async function deleteDeal(
+  businessId: number,
+  dealId: number,
+  ownerAccessToken?: string,
+): Promise<void> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/deals/${dealId}`, {
     method: "DELETE",
+    headers: getBusinessHeaders(ownerAccessToken),
   });
 
   if (!response.ok) {
@@ -246,10 +275,13 @@ export async function deleteDeal(businessId: number, dealId: number): Promise<vo
   }
 }
 
-export async function createCampaign(payload: CampaignCreateInput): Promise<Campaign> {
+export async function createCampaign(
+  payload: CampaignCreateInput,
+  ownerAccessToken?: string,
+): Promise<Campaign> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${payload.business_id}/campaigns`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify(payload),
   });
 
@@ -263,10 +295,11 @@ export async function createCampaign(payload: CampaignCreateInput): Promise<Camp
 
 export async function createLodgingServiceRequest(
   payload: LodgingServiceRequestCreateInput,
+  ownerAccessToken?: string,
 ): Promise<LodgingServiceRequest> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${payload.business_id}/service-requests`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify(payload),
   });
 
@@ -300,10 +333,14 @@ export async function trackDealClaimClick(dealId: number): Promise<void> {
   }
 }
 
-export async function createCheckout(tier: string, businessId?: number): Promise<string> {
+export async function createCheckout(
+  tier: string,
+  businessId?: number,
+  ownerAccessToken?: string,
+): Promise<string> {
   const response = await fetch(`${getApiUrl()}/api/subscriptions/checkout`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
     body: JSON.stringify({ tier, business_id: businessId }),
   });
 
@@ -466,6 +503,24 @@ export async function moderateBusiness(
 
   if (!response.ok) {
     throw new Error("Unable to moderate business");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminBusiness(
+  businessId: number,
+  payload: BusinessUpdateInput,
+  adminPassword?: string,
+): Promise<Business> {
+  const response = await fetch(`${getApiUrl()}/api/admin/businesses/${businessId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to edit business");
   }
 
   return response.json();

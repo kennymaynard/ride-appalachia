@@ -59,7 +59,9 @@ def apply_subscription_update(
 @router.post("/subscriptions/checkout", response_model=CheckoutSessionRead)
 def create_subscription_checkout(
     payload: SubscriptionRequest,
+    x_business_token: str = Header(default=""),
     settings: Settings = Depends(get_settings),
+    db: Session = Depends(get_db),
 ) -> CheckoutSessionRead:
     allowed_tiers = {
         "local_business",
@@ -71,7 +73,21 @@ def create_subscription_checkout(
     if payload.tier not in allowed_tiers:
         raise HTTPException(status_code=400, detail="Unknown subscription tier")
 
-    checkout_url = create_checkout_session(settings, payload.tier, payload.business_id)
+    owner_access_token = ""
+    if payload.business_id:
+        business = db.get(Business, payload.business_id)
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+        if not business.owner_access_token or x_business_token != business.owner_access_token:
+            raise HTTPException(status_code=401, detail="Business access token required")
+        owner_access_token = business.owner_access_token
+
+    checkout_url = create_checkout_session(
+        settings,
+        payload.tier,
+        payload.business_id,
+        owner_access_token,
+    )
     return CheckoutSessionRead(checkout_url=checkout_url)
 
 

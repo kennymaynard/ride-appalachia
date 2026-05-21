@@ -25,10 +25,16 @@ def get_price_id(settings: Settings, tier: str) -> str:
     return price_ids.get(tier, "")
 
 
-def create_checkout_session(settings: Settings, tier: str, business_id: Optional[int] = None) -> str:
+def create_checkout_session(
+    settings: Settings,
+    tier: str,
+    business_id: Optional[int] = None,
+    owner_access_token: str = "",
+) -> str:
     price_id = get_price_id(settings, tier)
     business_query = f"&business_id={business_id}" if business_id else ""
-    success_url = f"{settings.frontend_url}/business/success?checkout=success&tier={tier}{business_query}"
+    access_query = f"&access_token={owner_access_token}" if owner_access_token else ""
+    success_url = f"{settings.frontend_url}/business/success?checkout=success&tier={tier}{business_query}{access_query}"
     cancel_url = f"{settings.frontend_url}/business/join?checkout=cancelled&tier={tier}{business_query}"
 
     if not settings.stripe_secret_key or not price_id:
