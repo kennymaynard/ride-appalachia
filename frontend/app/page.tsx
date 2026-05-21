@@ -12,17 +12,23 @@ export default async function Home() {
     <main>
       <section className="hero">
         <div>
-          <p className="eyebrow">Founding partner launch</p>
-          <h1>Plan the ride weekend without the headache.</h1>
+          <p className="eyebrow">Trail map, trip planner, and local stops</p>
+          <h1>Know the trail. Find the stops. Ride with a plan.</h1>
           <p>
-            Appalachia Offroad helps ATV and UTV riders find lodging, food,
-            rentals, repairs, fuel, and deals near Rush, Inez, Hatfield,
-            Matewan, Harlan, and other ride-area towns.
+            Appalachia Offroad shows riders nearby trail systems, trail names,
+            reviews, lodging, food, fuel, repairs, rentals, and deals across
+            Appalachian ride towns before the truck ever leaves the driveway.
           </p>
           <div className="hero-actions">
-            <Link href="/ride-areas">Find Nearby</Link>
+            <Link href="/ride-areas">Open Trail Map</Link>
             <Link href="/planner">Build Trip Plan</Link>
             <Link href="/business/join">Become a Partner</Link>
+          </div>
+          <div className="hero-feature-grid" aria-label="App features">
+            <span>Interactive trail map</span>
+            <span>Nearby lodging, food, fuel, and repairs</span>
+            <span>Reviews and difficulty levels</span>
+            <span>Business deals for riders</span>
           </div>
         </div>
       </section>

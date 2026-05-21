@@ -213,6 +213,26 @@ p {
   margin-top: 1.1rem;
 }
 
+.hero-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  max-width: 42rem;
+  margin-top: 1rem;
+}
+
+.hero-feature-grid span {
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 0.42rem;
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--soft);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
 .hero-actions a:nth-child(2),
 .page-hero a,
 .listing-actions a:nth-child(2) {
@@ -2004,6 +2024,32 @@ button.tier-card.is-selected {
   line-height: 1.25;
 }
 
+.trail-map-overlay p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.trail-focus-stops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.trail-focus-stops span {
+  border: 1px solid rgba(255, 157, 69, 0.36);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.15);
+  color: var(--orange-soft);
+  padding: 0.28rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .trail-map-legend {
   display: flex;
   flex-wrap: wrap;
@@ -2913,6 +2959,10 @@ button.tier-card.is-selected {
 
   .category-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-feature-grid {
+    grid-template-columns: 1fr;
   }
 
   .listing-grid,

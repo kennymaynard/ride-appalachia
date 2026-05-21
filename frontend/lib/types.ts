@@ -158,6 +158,19 @@ export type TrailInfo = {
   passUrl?: string;
   latitude?: number;
   longitude?: number;
+  lengthMiles?: number;
+  photoStops?: TrailPhotoStop[];
+  routeLine?: TrailCoordinate[];
+};
+
+export type TrailCoordinate = {
+  latitude: number;
+  longitude: number;
+};
+
+export type TrailPhotoStop = TrailCoordinate & {
+  name: string;
+  note: string;
 };
 
 export type TrailReview = {

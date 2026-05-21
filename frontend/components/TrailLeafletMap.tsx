@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import {
+  CircleMarker,
+  MapContainer,
+  Marker,
+  Polyline,
+  Popup,
+  TileLayer,
+  Tooltip,
+  useMap,
+} from "react-leaflet";
 import type { MapPoint } from "./RideAreaMap";
 
 type Props = {
@@ -57,6 +66,20 @@ function FitBounds({ bounds }: { bounds: [[number, number], [number, number]] })
   return null;
 }
 
+function TrailFocus({ point }: { point?: MapPoint }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!point?.routeLine.length) return;
+    const bounds = L.latLngBounds(
+      point.routeLine.map((coordinate) => [coordinate.latitude, coordinate.longitude]),
+    );
+    map.fitBounds(bounds, { padding: [44, 44], maxZoom: 13 });
+  }, [map, point]);
+
+  return null;
+}
+
 function makeIcon(point: MapPoint) {
   const label = point.label.length > 28 ? `${point.label.slice(0, 25)}...` : point.label;
   const kindClass = point.activity === "Hiking" ? "is-hiking" : "is-ohv";
@@ -78,17 +101,48 @@ export function TrailLeafletMap({
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
   const [showHiking, setShowHiking] = useState(true);
+  const [selectedTrailId, setSelectedTrailId] = useState<string>();
+  const [userLocation, setUserLocation] = useState<[number, number]>();
+  const [trackingStatus, setTrackingStatus] = useState("Track me");
   const center: [number, number] = [
     (bounds[0][0] + bounds[1][0]) / 2,
     (bounds[0][1] + bounds[1][1]) / 2,
   ];
+  const selectedTrail = points.find((point) => point.id === selectedTrailId);
   const visiblePoints = useMemo(
     () =>
       points.filter((point) =>
-        point.activity === "Hiking" ? showHiking : showOhv,
+        selectedTrailId
+          ? point.id === selectedTrailId
+          : point.activity === "Hiking"
+            ? showHiking
+            : showOhv,
       ),
-    [points, showHiking, showOhv],
+    [points, selectedTrailId, showHiking, showOhv],
   );
+  const trailLine = selectedTrail?.routeLine.map((coordinate) => [
+    coordinate.latitude,
+    coordinate.longitude,
+  ]) as [number, number][] | undefined;
+
+  const handleTrackMe = () => {
+    if (!navigator.geolocation) {
+      setTrackingStatus("Location unavailable");
+      return;
+    }
+
+    setTrackingStatus("Finding you...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation([position.coords.latitude, position.coords.longitude]);
+        setTrackingStatus("Tracking on");
+      },
+      () => {
+        setTrackingStatus("Allow location");
+      },
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 },
+    );
+  };
 
   return (
     <div className="trail-leaflet-map">
@@ -107,6 +161,14 @@ export function TrailLeafletMap({
         >
           Hiking
         </button>
+        {selectedTrail ? (
+          <button type="button" onClick={() => setSelectedTrailId(undefined)}>
+            Show all
+          </button>
+        ) : null}
+        <button type="button" onClick={handleTrackMe}>
+          {trackingStatus}
+        </button>
       </div>
       <MapContainer
         center={center}
@@ -121,10 +183,63 @@ export function TrailLeafletMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitBounds bounds={bounds} />
+        <TrailFocus point={selectedTrail} />
+        {trailLine ? (
+          <Polyline
+            pathOptions={{
+              color: selectedTrail?.activity === "Hiking" ? "#5cd68e" : "#f26a1b",
+              opacity: 0.95,
+              weight: 6,
+            }}
+            positions={trailLine}
+          />
+        ) : null}
+        {selectedTrail?.photoStops.map((stop) => (
+          <CircleMarker
+            center={[stop.latitude, stop.longitude]}
+            key={`${selectedTrail.id}-${stop.name}`}
+            pathOptions={{
+              color: "#ffffff",
+              fillColor: "#ff9d45",
+              fillOpacity: 0.92,
+              weight: 2,
+            }}
+            radius={7}
+          >
+            <Tooltip direction="top" offset={[0, -8]} opacity={1} sticky>
+              {stop.name}
+            </Tooltip>
+            <Popup>
+              <div className="trail-popup">
+                <strong>{stop.name}</strong>
+                <p>{stop.note}</p>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
+        {userLocation ? (
+          <CircleMarker
+            center={userLocation}
+            pathOptions={{
+              color: "#ffffff",
+              fillColor: "#5d94ba",
+              fillOpacity: 0.95,
+              weight: 2,
+            }}
+            radius={8}
+          >
+            <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent>
+              You are here
+            </Tooltip>
+          </CircleMarker>
+        ) : null}
         {visiblePoints.map((point, index) => (
           <Marker
             icon={makeIcon(point)}
             key={`${point.areaSlug}-${point.label}-${index}`}
+            eventHandlers={{
+              click: () => setSelectedTrailId(point.id),
+            }}
             position={[point.latitude, point.longitude]}
           >
             <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
@@ -134,7 +249,8 @@ export function TrailLeafletMap({
               <div className="trail-popup">
                 <strong>{point.label}</strong>
                 <span>
-                  {point.areaName} • {point.activity} • {point.difficulty}
+                  {point.areaName} • {point.activity} • {point.difficulty} •{" "}
+                  {point.lengthMiles} mi
                 </span>
                 <p>{point.access}</p>
                 <p>{point.reviewText}</p>
@@ -147,15 +263,33 @@ export function TrailLeafletMap({
         ))}
       </MapContainer>
       <div className="trail-map-overlay">
-        <strong>{activeTitle}</strong>
-        <span>
-          {ohvCount} OHV / ride pins, {hikingCount} hiking pins, and rider review
-          signals for the planning area.
-        </span>
-        <div className="trail-map-legend" aria-label="Map legend">
-          <span><i /> OHV / ride</span>
-          <span><i /> Hiking</span>
-        </div>
+        {selectedTrail ? (
+          <>
+            <strong>{selectedTrail.label}</strong>
+            <span>
+              {selectedTrail.lengthMiles} miles • {selectedTrail.difficulty} •{" "}
+              {selectedTrail.activity}
+            </span>
+            <p>{selectedTrail.access}</p>
+            <div className="trail-focus-stops">
+              {selectedTrail.photoStops.map((stop) => (
+                <span key={stop.name}>{stop.name}</span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <strong>{activeTitle}</strong>
+            <span>
+              {ohvCount} OHV / ride pins, {hikingCount} hiking pins, and rider review
+              signals for the planning area.
+            </span>
+            <div className="trail-map-legend" aria-label="Map legend">
+              <span><i /> OHV / ride</span>
+              <span><i /> Hiking</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { RideArea, TrailInfo, TrailReview } from "../lib/types";
+import type { RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
 import { TrailMapShell } from "./TrailMapShell";
 
 type Props = {
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export type MapPoint = {
+  id: string;
   areaName: string;
   areaSlug: string;
   state: string;
@@ -21,6 +22,9 @@ export type MapPoint = {
   latitude: number;
   longitude: number;
   href: string;
+  lengthMiles: number;
+  photoStops: TrailPhotoStop[];
+  routeLine: TrailCoordinate[];
   reviewCount: number;
   reviewRating?: number;
   reviewSnippet?: string;
@@ -52,11 +56,67 @@ function formatRating(count: number, rating?: number) {
   return `${rating.toFixed(1)} from ${count} review${count === 1 ? "" : "s"}`;
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function estimateTrailLength(trail: TrailInfo) {
+  if (trail.lengthMiles) return trail.lengthMiles;
+  if (trail.difficulty === "Hard") return 18;
+  if (trail.difficulty === "Moderate") return 11;
+  if (trail.difficulty === "Easy") return 4.5;
+  return 14;
+}
+
+function buildTrailRoute(area: RideArea, trail: TrailInfo): TrailCoordinate[] {
+  if (trail.routeLine?.length) return trail.routeLine;
+
+  const latitude = trail.latitude ?? area.latitude;
+  const longitude = trail.longitude ?? area.longitude;
+  const seed = trail.name.length + area.slug.length;
+  const latStep = 0.014 + (seed % 4) * 0.003;
+  const lonStep = 0.018 + (seed % 5) * 0.003;
+  const direction = seed % 2 === 0 ? 1 : -1;
+
+  return [
+    { latitude: latitude - latStep, longitude: longitude - lonStep * direction },
+    { latitude: latitude - latStep * 0.25, longitude: longitude - lonStep * 0.35 * direction },
+    { latitude, longitude },
+    { latitude: latitude + latStep * 0.55, longitude: longitude + lonStep * 0.55 * direction },
+    { latitude: latitude + latStep, longitude: longitude + lonStep * direction },
+  ];
+}
+
+function buildPhotoStops(area: RideArea, trail: TrailInfo, routeLine: TrailCoordinate[]): TrailPhotoStop[] {
+  if (trail.photoStops?.length) return trail.photoStops;
+
+  const middle = routeLine[Math.floor(routeLine.length / 2)];
+  const overlook = routeLine[routeLine.length - 1];
+
+  return [
+    {
+      ...middle,
+      name: "Trail overlook",
+      note: `${trail.name} photo stop with the best view on this route.`,
+    },
+    {
+      ...overlook,
+      name: `${area.name} ride marker`,
+      note: "Good place to pause, regroup, and check the next turn.",
+    },
+  ];
+}
+
 function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): MapPoint {
   const reviewSummary = getAreaReviewSummary(area.slug, reviews);
   const activity = trail.activity ?? (trail.type.toLowerCase().includes("hiking") ? "Hiking" : "OHV");
+  const routeLine = buildTrailRoute(area, trail);
 
   return {
+    id: `${area.slug}-${slugify(trail.name)}`,
     areaName: area.name,
     areaSlug: area.slug,
     state: area.state,
@@ -68,6 +128,9 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
     latitude: trail.latitude ?? area.latitude,
     longitude: trail.longitude ?? area.longitude,
     href: trail.url,
+    lengthMiles: estimateTrailLength(trail),
+    photoStops: buildPhotoStops(area, trail, routeLine),
+    routeLine,
     reviewCount: reviewSummary.count,
     reviewRating: reviewSummary.rating,
     reviewSnippet: reviewSummary.snippet,
