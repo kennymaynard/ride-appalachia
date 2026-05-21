@@ -1534,6 +1534,117 @@ button.tier-card.is-selected {
   color: var(--gold);
 }
 
+.map-source-shell {
+  display: grid;
+  gap: 1rem;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+}
+
+.map-source-stats,
+.map-source-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.map-source-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.map-source-stats article,
+.map-source-card {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(10, 10, 10, 0.92);
+  padding: 1rem;
+}
+
+.map-source-stats strong {
+  display: block;
+  color: var(--orange);
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.map-source-stats span,
+.map-source-card > div:first-child span,
+.map-source-status strong,
+.map-source-card h3 {
+  color: var(--orange-soft);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.map-source-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(11rem, 0.35fr) minmax(12rem, 0.45fr) minmax(16rem, 0.7fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.map-source-card.is-needs_contact {
+  border-color: rgba(242, 106, 27, 0.55);
+}
+
+.map-source-card.is-download_ready {
+  border-color: rgba(92, 214, 142, 0.45);
+}
+
+.map-source-card h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.2rem, 3vw, 1.85rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.map-source-card h3,
+.map-source-card p,
+.map-source-card ul {
+  margin: 0;
+}
+
+.map-source-card p,
+.map-source-card li,
+.map-source-status span {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.map-source-card ul {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1rem;
+}
+
+.map-source-actions {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 8.5rem;
+}
+
+.map-source-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.map-source-actions a:nth-child(2) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
 .planner-redesign {
   display: grid;
   gap: 1rem;
@@ -3050,6 +3161,7 @@ button.tier-card.is-selected {
 
   .trail-map-layout,
   .trail-review-layout,
+  .map-source-card,
   .launch-strip,
   .business-hero,
   .business-growth-panel,
@@ -3095,6 +3207,7 @@ button.tier-card.is-selected {
   .business-price-grid,
   .business-category-grid,
   .business-step-grid,
+  .map-source-stats,
   .planner-trail-grid,
   .offline-pack-grid,
   .offline-pack-list,

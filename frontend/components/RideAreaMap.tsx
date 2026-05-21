@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
+import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
 import { TrailMapShell } from "./TrailMapShell";
 
 type Props = {
@@ -179,19 +180,23 @@ export function RideAreaMap({ areas, activeSlug, compact = false, reviews = [] }
                   })()}
                 </div>
                 <div className="map-trail-name-list" aria-label={`Trail names for ${area.name}`}>
-                  {area.trails.map((trail) => (
-                    <a
-                      className={trail.activity === "Hiking" ? "is-hiking" : "is-ohv"}
-                      href={trail.url}
-                      key={trail.name}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      <span>{trail.activity ?? "OHV"}</span>
-                      <strong>{trail.name}</strong>
-                      <small>{trail.difficulty}</small>
-                    </a>
-                  ))}
+                  {area.trails.map((trail) => {
+                    const source = getTrailMapSource(area, trail);
+
+                    return (
+                      <a
+                        className={trail.activity === "Hiking" ? "is-hiking" : "is-ohv"}
+                        href={trail.url}
+                        key={trail.name}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        <span>{trail.activity ?? "OHV"}</span>
+                        <strong>{trail.name}</strong>
+                        <small>{getTrailMapStatusLabel(source.status)}</small>
+                      </a>
+                    );
+                  })}
                 </div>
                 <div className="availability-tags" aria-label={`Available planning options for ${area.name}`}>
                   {area.checklist.map((item) => (
@@ -211,6 +216,7 @@ export function RideAreaMap({ areas, activeSlug, compact = false, reviews = [] }
                   </Link>
                 </div>
                 <div className="map-search-actions">
+                  <Link href="/map-sources">Map checklist</Link>
                   <a href={getAreaSearch(area, "food")} rel="noreferrer" target="_blank">
                     Food map
                   </a>

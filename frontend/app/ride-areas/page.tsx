@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { RideAreaFinder } from "../../components/RideAreaFinder";
 import { RideAreaMap } from "../../components/RideAreaMap";
 import { rideAreas, trailReviews } from "../../lib/sample-data";
@@ -15,6 +16,7 @@ export default async function RideAreasPage() {
           No more digging through destination boxes. Search once and see trails,
           lodging, food, fuel, rentals, repairs, and deals around the trip.
         </p>
+        <Link href="/map-sources">Open map source checklist</Link>
       </section>
 
       <RideAreaFinder areas={rideAreas} listings={listings} />
