@@ -32,6 +32,32 @@ type Props = {
   listings: Business[];
 };
 
+type OfflineTripPack = {
+  destination: string;
+  radiusMiles: number;
+  savedAt: string;
+  checklist: string[];
+  directions: string;
+  trails: Array<{
+    area: string;
+    name: string;
+    access: string;
+    difficulty: TrailInfo["difficulty"];
+    activity: TrailInfo["activity"];
+    latitude?: number;
+    longitude?: number;
+    url: string;
+  }>;
+  stops: Array<{
+    category: Category;
+    name: string;
+    location: string;
+    phone: string;
+    website_url: string;
+    deal?: string;
+  }>;
+};
+
 const plannerItems: PlannerItem[] = [
   {
     id: "trails",
@@ -90,6 +116,7 @@ const knownTravelCities: Array<Coordinates & { names: string[] }> = [
 
 const defaultSelected = ["trails", "sleep", "eat", "fuel"];
 const storageKey = "ride-appalachia-trip-planner";
+const offlinePackKey = "ride-appalachia-offline-trip-pack";
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -156,6 +183,8 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [locationFilter, setLocationFilter] = useState(initialLocation);
   const [radiusMiles, setRadiusMiles] = useState(50);
   const [copyStatus, setCopyStatus] = useState("");
+  const [directions, setDirections] = useState("");
+  const [offlineStatus, setOfflineStatus] = useState("");
 
   const searchCoordinates = findKnownCity(locationFilter);
   const selectedItems = useMemo(
@@ -253,8 +282,11 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       "",
       "Local stops:",
       stopText || "- No local stops match yet",
+      "",
+      "Your directions:",
+      directions || "- Add road notes, meetup points, parking, and backup routes.",
     ].join("\n");
-  }, [locationFilter, nearbyStops, nearbyTrails, radiusMiles, selectedItems]);
+  }, [directions, locationFilter, nearbyStops, nearbyTrails, radiusMiles, selectedItems]);
 
   useEffect(() => {
     const savedValue = window.localStorage.getItem(storageKey);
@@ -269,6 +301,16 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       }
     } catch {
       window.localStorage.removeItem(storageKey);
+    }
+
+    const savedPack = window.localStorage.getItem(offlinePackKey);
+    if (!savedPack) return;
+
+    try {
+      const pack = JSON.parse(savedPack) as Partial<OfflineTripPack>;
+      if (typeof pack.directions === "string") setDirections(pack.directions);
+    } catch {
+      window.localStorage.removeItem(offlinePackKey);
     }
   }, []);
 
@@ -300,6 +342,60 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     } catch {
       setCopyStatus("Copy was blocked. Use print instead.");
     }
+  }
+
+  function buildOfflinePack(): OfflineTripPack {
+    return {
+      destination: locationFilter || "Any area",
+      radiusMiles,
+      savedAt: new Date().toISOString(),
+      checklist: selectedItems.map((item) => item.label),
+      directions,
+      trails: nearbyTrails.slice(0, 12).map((trail) => ({
+        area: trail.area.name,
+        name: trail.name,
+        access: trail.access,
+        difficulty: trail.difficulty,
+        activity: trail.activity,
+        latitude: trail.latitude ?? trail.area.latitude,
+        longitude: trail.longitude ?? trail.area.longitude,
+        url: trail.url,
+      })),
+      stops: nearbyStops.slice(0, 12).map((business) => {
+        const activeDeal = business.deals.find((deal) => deal.is_active);
+
+        return {
+          category: business.category,
+          name: business.name,
+          location: business.location,
+          phone: business.phone,
+          website_url: business.website_url,
+          deal: activeDeal?.title,
+        };
+      }),
+    };
+  }
+
+  function saveOfflinePack() {
+    const pack = buildOfflinePack();
+    window.localStorage.setItem(offlinePackKey, JSON.stringify(pack));
+    setOfflineStatus("Offline pack saved on this device.");
+  }
+
+  function downloadOfflinePack() {
+    const pack = buildOfflinePack();
+    const blob = new Blob([JSON.stringify(pack, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `appalachia-offroad-${normalize(pack.destination).replace(/[^a-z0-9]+/g, "-") || "trip"}-offline-pack.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setOfflineStatus("Offline pack downloaded.");
   }
 
   return (
@@ -388,13 +484,21 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
             <button type="button" onClick={copyTripPlan}>
               Copy Plan
             </button>
+            <button type="button" onClick={saveOfflinePack}>
+              Save Offline
+            </button>
+            <Link href="/offline">Offline Mode</Link>
             <button type="button" onClick={() => window.print()}>
               Print
+            </button>
+            <button type="button" onClick={downloadOfflinePack}>
+              Download Pack
             </button>
             <button type="button" onClick={startOver}>
               Reset
             </button>
             {copyStatus ? <p>{copyStatus}</p> : null}
+            {offlineStatus ? <p>{offlineStatus}</p> : null}
           </div>
         </aside>
       </div>
@@ -478,6 +582,14 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
           <p>Shareable summary</p>
           <h2>Weekend plan.</h2>
         </div>
+        <label className="planner-directions">
+          Build your own directions
+          <textarea
+            placeholder="Example: Meet at cabin at 8:00. Fuel in Matewan. Park trailers at the main lot. Take the easier loop first, lunch at..."
+            value={directions}
+            onChange={(event) => setDirections(event.target.value)}
+          />
+        </label>
         <pre>{tripSummary}</pre>
       </section>
     </section>

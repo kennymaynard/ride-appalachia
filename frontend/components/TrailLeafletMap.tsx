@@ -55,6 +55,8 @@ function downloadTextFile(filename: string, contents: string, type: string) {
 }
 
 function buildGpx(point: MapPoint) {
+  if (!point.routeLine.length) return "";
+
   const trackPoints = point.routeLine
     .map(
       (coordinate) =>
@@ -74,7 +76,7 @@ function buildGpx(point: MapPoint) {
 <gpx version="1.1" creator="Appalachia Offroad" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata>
     <name>${escapeXml(point.label)}</name>
-    <desc>${escapeXml(`${point.areaName} • ${point.lengthMiles} miles • ${point.difficulty}`)}</desc>
+    <desc>${escapeXml(`${point.areaName} • ${point.lengthMiles ?? "Length pending"} miles • ${point.difficulty}`)}</desc>
   </metadata>
 ${waypoints}
   <trk>
@@ -179,7 +181,12 @@ function TrailFocus({ point }: { point?: MapPoint }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!point?.routeLine.length) return;
+    if (!point) return;
+    if (!point.routeLine.length) {
+      map.setView([point.latitude, point.longitude], 13);
+      return;
+    }
+
     const bounds = L.latLngBounds(
       point.routeLine.map((coordinate) => [coordinate.latitude, coordinate.longitude]),
     );
@@ -219,6 +226,7 @@ export function TrailLeafletMap({
     (bounds[0][1] + bounds[1][1]) / 2,
   ];
   const selectedTrail = points.find((point) => point.id === selectedTrailId);
+  const hasExactRoute = Boolean(selectedTrail?.routeLine.length);
   const visiblePoints = useMemo(
     () =>
       points.filter((point) =>
@@ -230,10 +238,12 @@ export function TrailLeafletMap({
       ),
     [points, selectedTrailId, showHiking, showOhv],
   );
-  const trailLine = selectedTrail?.routeLine.map((coordinate) => [
-    coordinate.latitude,
-    coordinate.longitude,
-  ]) as [number, number][] | undefined;
+  const trailLine = hasExactRoute
+    ? (selectedTrail?.routeLine.map((coordinate) => [
+        coordinate.latitude,
+        coordinate.longitude,
+      ]) as [number, number][])
+    : undefined;
 
   const handleTrackMe = () => {
     if (!navigator.geolocation) {
@@ -254,7 +264,7 @@ export function TrailLeafletMap({
     );
   };
   const handleDownloadGpx = () => {
-    if (!selectedTrail) return;
+    if (!selectedTrail || !hasExactRoute) return;
     downloadTextFile(
       `${slugify(selectedTrail.label)}.gpx`,
       buildGpx(selectedTrail),
@@ -262,7 +272,7 @@ export function TrailLeafletMap({
     );
   };
   const handleDownloadGeoJson = () => {
-    if (!selectedTrail) return;
+    if (!selectedTrail || !hasExactRoute) return;
     downloadTextFile(
       `${slugify(selectedTrail.label)}.geojson`,
       buildGeoJson(selectedTrail),
@@ -304,7 +314,7 @@ export function TrailLeafletMap({
         >
           {mapStyle === "topo" ? "Topo on" : "Topo off"}
         </button>
-        {selectedTrail ? (
+        {selectedTrail && hasExactRoute ? (
           <>
             <button type="button" onClick={handleDownloadGpx}>
               Download GPX
@@ -403,7 +413,7 @@ export function TrailLeafletMap({
                 <strong>{point.label}</strong>
                 <span>
                   {point.areaName} • {point.activity} • {point.difficulty} •{" "}
-                  {point.lengthMiles} mi
+                  {point.lengthMiles ? `${point.lengthMiles} mi` : "Length pending"}
                 </span>
                 <p>{point.access}</p>
                 <p>{point.reviewText}</p>
@@ -420,19 +430,28 @@ export function TrailLeafletMap({
           <>
             <strong>{selectedTrail.label}</strong>
             <span>
-              {selectedTrail.lengthMiles} miles • {selectedTrail.difficulty} •{" "}
+              {selectedTrail.lengthMiles ? `${selectedTrail.lengthMiles} miles` : "Length pending"} • {selectedTrail.difficulty} •{" "}
               {selectedTrail.activity}
             </span>
             <p>{selectedTrail.access}</p>
-            <p>
-              Download GPX or GeoJSON before you lose service and open it in an
-              offline GPS map app.
-            </p>
-            <div className="trail-focus-stops">
-              {selectedTrail.photoStops.map((stop) => (
-                <span key={stop.name}>{stop.name}</span>
-              ))}
-            </div>
+            {hasExactRoute ? (
+              <p>
+                Exact route imported. Download GPX or GeoJSON before you lose
+                service and open it in an offline GPS map app.
+              </p>
+            ) : (
+              <p>
+                Exact trail line has not been imported yet. Use the official map
+                link for this trail until the GPX/KMZ file is loaded.
+              </p>
+            )}
+            {selectedTrail.photoStops.length ? (
+              <div className="trail-focus-stops">
+                {selectedTrail.photoStops.map((stop) => (
+                  <span key={stop.name}>{stop.name}</span>
+                ))}
+              </div>
+            ) : null}
           </>
         ) : (
           <>

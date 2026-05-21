@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "../components/BrandLogo";
+import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ServiceWorkerRegister />
         <header className="topbar">
           <BrandLogo />
           <nav>

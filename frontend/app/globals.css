@@ -1300,7 +1300,8 @@ button.tier-card.is-selected {
   margin-top: 1rem;
 }
 
-.planner-tools button {
+.planner-tools button,
+.planner-tools a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1315,12 +1316,14 @@ button.tier-card.is-selected {
 }
 
 .planner-tools button:nth-child(2),
-.planner-tools button:nth-child(3) {
+.planner-tools a,
+.planner-tools button:nth-child(4),
+.planner-tools button:nth-child(5),
+.planner-tools button:nth-child(6) {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
 
-.planner-tools button:nth-child(3),
 .planner-tools p {
   grid-column: 1 / -1;
 }
@@ -1409,6 +1412,126 @@ button.tier-card.is-selected {
   font-size: 0.9rem;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.planner-directions {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.planner-directions textarea {
+  width: 100%;
+  min-height: 7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0.8rem;
+  resize: vertical;
+  text-transform: none;
+}
+
+.offline-pack {
+  display: grid;
+  gap: 1rem;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+}
+
+.offline-pack-header,
+.offline-pack-grid article,
+.offline-pack-section {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(10, 10, 10, 0.92);
+  padding: 1rem;
+}
+
+.offline-pack-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.offline-pack-header h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.offline-pack-header p,
+.offline-pack-grid p,
+.offline-pack-list p {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.offline-pack-header button,
+.offline-pack-list a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.offline-pack-grid,
+.offline-pack-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.offline-pack-grid span,
+.offline-pack-list span {
+  color: var(--orange);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.offline-pack-grid ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.65rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--soft);
+}
+
+.offline-pack-list article {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.offline-pack-list h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.offline-pack-list strong {
+  color: var(--gold);
 }
 
 .planner-redesign {
@@ -2973,6 +3096,8 @@ button.tier-card.is-selected {
   .business-category-grid,
   .business-step-grid,
   .planner-trail-grid,
+  .offline-pack-grid,
+  .offline-pack-list,
   .ride-area-preview-grid,
   .tier-grid,
   .ride-area-grid,
@@ -3024,6 +3149,10 @@ button.tier-card.is-selected {
   }
 
   .review-topline {
+    display: grid;
+  }
+
+  .offline-pack-header {
     display: grid;
   }
 }
