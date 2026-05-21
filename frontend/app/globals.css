@@ -1645,6 +1645,163 @@ button.tier-card.is-selected {
   color: var(--text);
 }
 
+.trail-pack {
+  display: grid;
+  gap: 1rem;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(10, 10, 10, 0.92);
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.trail-pack-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.trail-pack-header h2 {
+  margin: 0;
+  max-width: 62rem;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.trail-pack-header p {
+  max-width: 52rem;
+  color: var(--soft);
+  line-height: 1.42;
+}
+
+.trail-pack-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, auto));
+  gap: 0.5rem;
+}
+
+.trail-pack-actions button,
+.trail-pack-actions a,
+.trail-pack-text-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trail-pack-actions button:nth-child(2),
+.trail-pack-actions a,
+.trail-pack-text-link {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.trail-pack-stats,
+.trail-pack-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.trail-pack-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.trail-pack-stats article,
+.trail-pack-grid article {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.9rem;
+}
+
+.trail-pack-stats strong {
+  display: block;
+  color: var(--orange);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.trail-pack-stats span,
+.trail-pack-grid article > span {
+  color: var(--orange-soft);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trail-pack-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+}
+
+.trail-pack-map-list,
+.trail-pack-stop-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.trail-pack-map-list a,
+.trail-pack-stop-list div {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(242, 106, 27, 0.22);
+  border-radius: 0.42rem;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.55rem;
+}
+
+.trail-pack-map-list strong,
+.trail-pack-stop-list strong {
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.1;
+}
+
+.trail-pack-map-list small,
+.trail-pack-stop-list small,
+.trail-pack-grid p {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.trail-pack-text-link {
+  width: fit-content;
+  margin-top: 0.7rem;
+}
+
+.trail-pack textarea {
+  width: 100%;
+  min-height: 11.5rem;
+  margin-top: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.42rem;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0.75rem;
+  resize: vertical;
+}
+
+.trail-pack-status {
+  margin: 0.6rem 0 0;
+  color: var(--orange-soft);
+  font-weight: 850;
+}
+
 .planner-redesign {
   display: grid;
   gap: 1rem;
@@ -3161,6 +3318,8 @@ button.tier-card.is-selected {
 
   .trail-map-layout,
   .trail-review-layout,
+  .trail-pack-header,
+  .trail-pack-grid,
   .map-source-card,
   .launch-strip,
   .business-hero,
@@ -3207,6 +3366,7 @@ button.tier-card.is-selected {
   .business-price-grid,
   .business-category-grid,
   .business-step-grid,
+  .trail-pack-stats,
   .map-source-stats,
   .planner-trail-grid,
   .offline-pack-grid,

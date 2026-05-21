@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarketplaceGrid } from "../../../components/MarketplaceGrid";
 import { RideAreaMap } from "../../../components/RideAreaMap";
+import { TrailPack } from "../../../components/TrailPack";
 import { TrailReviews } from "../../../components/TrailReviews";
 import { getListings, getTrailReviews } from "../../../lib/api";
 import { rideAreas, trailReviews } from "../../../lib/sample-data";
@@ -46,6 +47,8 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <Link href="/ride-areas">All Ride Areas</Link>
         </div>
       </section>
+
+      <TrailPack area={area} listings={fallbackListings} />
 
       <section className="page-section ride-area-control-panel">
         <details className="ride-area-accordion" open>
