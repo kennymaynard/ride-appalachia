@@ -5,23 +5,16 @@ import { categories, rideAreas } from "../lib/sample-data";
 import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
 
-const heroTabs = [
-  { href: "/lodging", label: "Cabins, Lodges, Campgrounds", icon: "icon-stay" },
-  { href: "/ride-areas", label: "ATV / UTV Rentals", icon: "icon-rentals" },
-  { href: "/planner", label: "Trail Packs", icon: "icon-trails" },
-  { href: "/deals", label: "Rider Deals", icon: "icon-deals" },
-];
-
-const phoneCategories = [
-  { label: "Stay", icon: "icon-stay" },
-  { label: "Rentals", icon: "icon-rentals" },
-  { label: "Eat", icon: "icon-eat" },
-  { label: "Repairs", icon: "icon-repairs" },
-  { label: "Fuel", icon: "icon-fuel" },
-  { label: "Events", icon: "icon-events" },
-  { label: "Deals", icon: "icon-deals" },
-  { label: "Trails", icon: "icon-trails" },
-  { label: "Services", icon: "icon-services" },
+const appCategories = [
+  { href: "/lodging", label: "Stay", detail: "Cabins, lodges, campgrounds", icon: "icon-stay" },
+  { href: "/ride-areas", label: "Rentals", detail: "ATV and UTV options", icon: "icon-rentals" },
+  { href: "/?category=food", label: "Eat", detail: "Restaurants and rider meals", icon: "icon-eat" },
+  { href: "/?category=repairs", label: "Repairs", detail: "Parts, tires, service", icon: "icon-repairs" },
+  { href: "/?category=fuel", label: "Fuel", detail: "Gas, ice, supplies", icon: "icon-fuel" },
+  { href: "/planner", label: "Plan", detail: "Offline trip builder", icon: "icon-events" },
+  { href: "/deals", label: "Deals", detail: "Local offers", icon: "icon-deals" },
+  { href: "/ride-areas", label: "Trails", detail: "Maps and Trail Packs", icon: "icon-trails" },
+  { href: "/business", label: "Services", detail: "Business tools", icon: "icon-services" },
 ];
 
 export default async function Home() {
@@ -44,79 +37,64 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="app-hero">
-        <div className="app-hero-tabs" aria-label="Quick categories">
-          {heroTabs.map((item) => (
-            <Link key={item.href} href={item.href}>
+      <section className="app-home">
+        <div className="app-home-header">
+          <img src="/ride-appalachia-logo.png" alt="Appalachia Offroad" />
+          <p>Ride more. Plan less.</p>
+        </div>
+
+        <Link className="app-search" href="/ride-areas">
+          Search businesses, trails, maps, and places...
+        </Link>
+
+        <div className="app-category-grid" aria-label="App shortcuts">
+          {appCategories.map((item) => (
+            <Link key={item.label} href={item.href}>
               <span className={`landing-icon ${item.icon}`} aria-hidden="true" />
-              {item.label}
+              <strong>{item.label}</strong>
+              <small>{item.detail}</small>
             </Link>
           ))}
         </div>
 
-        <div className="app-hero-inner">
-          <div className="phone-showcase" aria-hidden="true">
-            <div className="phone-frame">
-              <div className="phone-status">
-                <span>9:41</span>
-                <span>LTE</span>
-              </div>
-              <img src="/ride-appalachia-logo.png" alt="" />
-              <div className="phone-search">Search businesses, trails, photos...</div>
-              <div className="phone-grid">
-                {phoneCategories.map((item) => (
-                  <span key={item.label}>
-                    <i className={`landing-icon ${item.icon}`} aria-hidden="true" />
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-              <div className="phone-listing">
-                <div className="phone-listing-icon">
-                  <i className="landing-icon icon-stay" aria-hidden="true" />
-                </div>
-                <span>
-                  <strong>Featured Listing</strong>
-                  Verified rider stop
-                  <small>Cabins - fuel - food</small>
-                </span>
-              </div>
-            </div>
-          </div>
+        <div className="app-action-row">
+          <Link className="app-action-card primary" href="/ride-areas">
+            <span>
+              <strong>Find Trail Packs</strong>
+              Official map sources, trail details, and nearby stops.
+            </span>
+          </Link>
+          <Link className="app-action-card" href="/planner">
+            <span>
+              <strong>Build Offline Plan</strong>
+              Save maps, notes, fuel, food, lodging, and backup stops.
+            </span>
+          </Link>
+          <Link className="app-action-card" href="/business/join">
+            <span>
+              <strong>List Your Business</strong>
+              Get discovered by riders before they arrive.
+            </span>
+          </Link>
+        </div>
 
-          <div className="app-hero-copy">
+        <div className="app-home-copy">
+          <div>
             <p className="eyebrow">Offline-ready Trail Packs</p>
-            <h1>Find the ride. Save the plan. Go offline.</h1>
-            <p>
-              Appalachia Offroad helps riders and hikers pick a trail area, save
-              official map sources, find nearby stops, and keep the whole trip
-              plan ready when service drops.
-            </p>
-            <div className="hero-actions">
-              <Link href="/ride-areas">Find Trail Packs</Link>
-              <Link href="/planner">Build Offline Plan</Link>
-              <Link href="/business/join">List Your Business</Link>
-            </div>
+            <h1>Pick the ride. Tap what you need. Keep it offline.</h1>
           </div>
+          <p>
+            Appalachia Offroad helps riders and hikers choose a trail area,
+            save map sources, find nearby stops, and carry the trip plan when
+            cell service disappears.
+          </p>
         </div>
 
         <div className="app-proof-strip" aria-label="App coverage">
-          <article>
-            <strong>{rideAreas.length}</strong>
-            <span>Ride and hike areas</span>
-          </article>
-          <article>
-            <strong>{publicMapCount}</strong>
-            <span>Public map sources</span>
-          </article>
-          <article>
-            <strong>{downloadableMapCount}</strong>
-            <span>Downloadable map files</span>
-          </article>
-          <article>
-            <strong>Offline</strong>
-            <span>Saved notes and trip packs</span>
-          </article>
+          <article><strong>{rideAreas.length}</strong><span>Ride and hike areas</span></article>
+          <article><strong>{publicMapCount}</strong><span>Public map sources</span></article>
+          <article><strong>{downloadableMapCount}</strong><span>Downloadable map files</span></article>
+          <article><strong>Offline</strong><span>Saved notes and trip packs</span></article>
         </div>
       </section>
 

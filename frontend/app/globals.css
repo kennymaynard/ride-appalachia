@@ -245,6 +245,192 @@ p {
   color: var(--text);
 }
 
+.app-home {
+  width: min(58rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) 0 0;
+}
+
+.app-home-header {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0 0.85rem;
+  text-align: center;
+}
+
+.app-home-header img {
+  width: min(15rem, 58vw);
+  height: auto;
+}
+
+.app-home-header p {
+  margin: 0;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-search {
+  position: relative;
+  display: block;
+  min-height: 3.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.065);
+  color: rgba(255, 255, 255, 0.62);
+  padding: 1rem 1rem 1rem 3rem;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-weight: 800;
+}
+
+.app-search::before {
+  content: "";
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  width: 0.82rem;
+  height: 0.82rem;
+  border: 2px solid var(--orange);
+  border-radius: 999px;
+  transform: translateY(-60%);
+}
+
+.app-search::after {
+  content: "";
+  position: absolute;
+  left: 1.85rem;
+  top: 1.95rem;
+  width: 0.48rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--orange);
+  transform: rotate(45deg);
+}
+
+.app-category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.app-category-grid a {
+  display: grid;
+  min-height: 7.2rem;
+  align-content: center;
+  justify-items: center;
+  gap: 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.7rem;
+  background: #101010;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.app-category-grid a:hover {
+  border-color: rgba(242, 106, 27, 0.65);
+  background: rgba(242, 106, 27, 0.1);
+}
+
+.app-category-grid .landing-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.app-category-grid strong {
+  color: var(--orange-soft);
+  font-size: 0.86rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.app-category-grid small {
+  max-width: 9rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-action-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.app-action-card {
+  display: grid;
+  min-height: 7.4rem;
+  align-content: end;
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 0.7rem;
+  background: rgba(242, 106, 27, 0.08);
+  padding: 1rem;
+}
+
+.app-action-card.primary {
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.92), rgba(139, 48, 8, 0.82));
+  color: #180701;
+}
+
+.app-action-card span {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.app-action-card.primary span {
+  color: #180701;
+}
+
+.app-action-card strong {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.app-action-card.primary strong {
+  color: #120500;
+}
+
+.app-home-copy {
+  display: grid;
+  grid-template-columns: 1fr minmax(16rem, 0.65fr);
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: end;
+  margin-top: clamp(1.4rem, 3vw, 2rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: clamp(1.2rem, 3vw, 2rem);
+}
+
+.app-home-copy h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 6vw, 4.9rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.app-home-copy > p {
+  margin: 0;
+  color: var(--soft);
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .app-hero {
   width: min(94rem, calc(100% - 2rem));
   margin: 0 auto;
@@ -3872,6 +4058,8 @@ button.tier-card.is-selected {
   .trail-pack-header,
   .trail-pack-grid,
   .map-source-card,
+  .app-home-copy,
+  .app-action-row,
   .app-hero-inner,
   .launch-strip,
   .landing-steps,
@@ -3913,6 +4101,7 @@ button.tier-card.is-selected {
   }
 
   .app-hero-tabs,
+  .app-category-grid,
   .app-proof-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -4001,6 +4190,7 @@ button.tier-card.is-selected {
 
 @media (max-width: 480px) {
   .hero,
+  .app-home,
   .app-hero,
   .page,
   .detail-page,
@@ -4025,6 +4215,8 @@ button.tier-card.is-selected {
   }
 
   .app-hero-tabs,
+  .app-category-grid,
+  .app-action-row,
   .app-proof-strip {
     grid-template-columns: 1fr;
   }
