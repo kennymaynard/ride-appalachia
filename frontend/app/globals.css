@@ -245,6 +245,77 @@ p {
   color: var(--text);
 }
 
+.simple-landing {
+  display: grid;
+  gap: clamp(1rem, 3vw, 1.5rem);
+  width: min(64rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3rem) 0 clamp(0.5rem, 2vw, 1rem);
+}
+
+.simple-landing-logo img {
+  display: block;
+  width: min(13rem, 54vw);
+  height: auto;
+}
+
+.simple-landing-copy {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 54rem;
+}
+
+.simple-landing-copy h1 {
+  margin: 0;
+  max-width: 56rem;
+  font-size: clamp(2.65rem, 8vw, 6.6rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.simple-landing-copy p:not(.eyebrow) {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--soft);
+  font-size: clamp(1.02rem, 2vw, 1.24rem);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.simple-feature-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.25rem;
+}
+
+.simple-feature-row article {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 7rem;
+  align-content: start;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.simple-feature-row strong {
+  color: var(--orange-soft);
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.simple-feature-row span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
 .app-home {
   width: min(58rem, calc(100% - 2rem));
   margin: 0 auto;
@@ -4362,6 +4433,7 @@ button.tier-card.is-selected {
 
 @media (max-width: 1050px) {
   .listing-grid,
+  .simple-feature-row,
   .trail-list,
   .nearby-trail-list,
   .nearby-category-grid,
@@ -4527,6 +4599,7 @@ button.tier-card.is-selected {
 
 @media (max-width: 480px) {
   .hero,
+  .simple-landing,
   .app-home,
   .app-hero,
   .page,

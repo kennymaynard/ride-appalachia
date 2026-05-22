@@ -1,20 +1,8 @@
 import Link from "next/link";
 import { MarketplaceGrid } from "../components/MarketplaceGrid";
-import { RideAreaFinder } from "../components/RideAreaFinder";
 import { categories, rideAreas } from "../lib/sample-data";
 import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
-
-const appCategories = [
-  { href: "/ride-areas", label: "Trails", detail: "Maps", icon: "icon-trails" },
-  { href: "/planner", label: "Plan", detail: "Offline", icon: "icon-events" },
-  { href: "/lodging", label: "Stay", detail: "Cabins", icon: "icon-stay" },
-  { href: "/?category=fuel", label: "Fuel", detail: "Supplies", icon: "icon-fuel" },
-  { href: "/?category=food", label: "Eat", detail: "Meals", icon: "icon-eat" },
-  { href: "/?category=repairs", label: "Repairs", detail: "Service", icon: "icon-repairs" },
-  { href: "/ride-areas", label: "Rentals", detail: "ATV / UTV", icon: "icon-rentals" },
-  { href: "/deals", label: "Deals", detail: "Offers", icon: "icon-deals" },
-];
 
 export default async function Home() {
   const listings = await getListings("all");
@@ -36,116 +24,37 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="app-home">
-        <div className="app-screen">
-          <div className="app-top-row">
-            <img src="/ride-appalachia-logo.png" alt="Appalachia Offroad" />
-            <Link href="/offline">Offline</Link>
-          </div>
-
-          <div className="app-location-card">
-            <span>Appalachia Offroad</span>
-            <h1>Where are you riding?</h1>
-            <p>
-              A trip planner for ATV riders, UTV groups, and hikers who need
-              trail maps, nearby stops, and an offline plan before they lose service.
-            </p>
-          </div>
-
-          <div className="app-explainer">
-            <strong>What this app does</strong>
-            <p>
-              Pick a trail area, see available trail maps and reviews, then build
-              a simple ride plan with lodging, food, fuel, repairs, rentals, notes,
-              and download links in one place.
-            </p>
-            <div>
-              <span>Find the trail</span>
-              <span>Plan the stops</span>
-              <span>Use it offline</span>
-            </div>
-          </div>
-
-          <Link className="app-search" href="/ride-areas">
-            Search trail area, town, business, or map
-          </Link>
-
-          <div className="app-category-grid" aria-label="App shortcuts">
-            {appCategories.map((item) => (
-              <Link key={item.label} href={item.href}>
-                <span className={`landing-icon ${item.icon}`} aria-hidden="true" />
-                <strong>{item.label}</strong>
-                <small>{item.detail}</small>
-              </Link>
-            ))}
-          </div>
-
-          <div className="app-section-title">
-            <span>Start here</span>
-            <Link href="/ride-areas">View all</Link>
-          </div>
-
-          <div className="app-ride-card">
-            <div className="app-route-art" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div>
-              <span className="app-card-kicker">Featured Trail Pack</span>
-              <h2>Rush, Kentucky</h2>
-              <p>Maps, reviews, trail names, nearby lodging, food, fuel, repairs, and offline notes.</p>
-              <div>
-                <small>{publicMapCount} public maps</small>
-                <small>{downloadableMapCount} downloads</small>
-              </div>
-            </div>
-            <Link href="/ride-areas/rush-ky">Open</Link>
-          </div>
-
-          <div className="app-needs-row">
-            <Link href="/planner">
-              <strong>Build my route</strong>
-              <span>Save stops and backup plans before service drops.</span>
-            </Link>
-            <Link href="/map-sources">
-              <strong>Map confidence</strong>
-              <span>See which trail maps are official, public, or contact-needed.</span>
-            </Link>
-          </div>
-
-          <div className="app-proof-strip" aria-label="App coverage">
-            <article><strong>{rideAreas.length}</strong><span>Areas</span></article>
-            <article><strong>{publicMapCount}</strong><span>Maps</span></article>
-            <article><strong>{downloadableMapCount}</strong><span>Files</span></article>
-            <article><strong>Offline</strong><span>Ready</span></article>
-          </div>
-
-          <nav className="app-bottom-tabs" aria-label="App shortcuts">
-            <Link href="/ride-areas">Trails</Link>
-            <Link href="/planner">Planner</Link>
-            <Link href="/lodging">Stay</Link>
-            <Link href="/deals">Deals</Link>
-          </nav>
+      <section className="simple-landing">
+        <div className="simple-landing-logo">
+          <img src="/ride-appalachia-logo.png" alt="Appalachia Offroad" />
         </div>
-      </section>
-
-      <section className="landing-steps" aria-label="How Appalachia Offroad works">
-        <article>
-          <strong>1</strong>
-          <span>Choose an area</span>
-          <p>Start with a town or trail system instead of hunting across tabs.</p>
-        </article>
-        <article>
-          <strong>2</strong>
-          <span>Build the Trail Pack</span>
-          <p>Save official maps, source status, lodging, fuel, food, repairs, and notes.</p>
-        </article>
-        <article>
-          <strong>3</strong>
-          <span>Use it offline</span>
-          <p>Open the pack from your phone when service gets thin.</p>
-        </article>
+        <div className="simple-landing-copy">
+          <p className="eyebrow">Trail maps, trip planning, and local stops</p>
+          <h1>Plan your Appalachia ride before you lose service.</h1>
+          <p>
+            Appalachia Offroad helps ATV riders, UTV groups, and hikers choose
+            a trail area, save map links, find nearby lodging, food, fuel,
+            repairs, and keep the plan available offline.
+          </p>
+          <div className="hero-actions">
+            <Link href="/ride-areas">Find Trail Areas</Link>
+            <Link href="/planner">Build a Plan</Link>
+          </div>
+        </div>
+        <div className="simple-feature-row" aria-label="What Appalachia Offroad does">
+          <article>
+            <strong>Find trails</strong>
+            <span>Browse trail areas, map sources, names, reviews, and difficulty.</span>
+          </article>
+          <article>
+            <strong>Plan stops</strong>
+            <span>Add lodging, food, fuel, repairs, rentals, and notes.</span>
+          </article>
+          <article>
+            <strong>Go offline</strong>
+            <span>Save the plan before cell service gets thin.</span>
+          </article>
+        </div>
       </section>
 
       <section className="page-section trail-pack-preview">
@@ -179,8 +88,6 @@ export default async function Home() {
           })}
         </div>
       </section>
-
-      <RideAreaFinder areas={rideAreas} listings={listings} />
 
       <section className="page-section marketplace-jump">
         <div className="section-heading">
