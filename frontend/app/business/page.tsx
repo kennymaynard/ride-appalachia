@@ -26,6 +26,13 @@ const launchBenefits = [
   "Featured placement options",
 ];
 
+const launchAreas = [
+  ["Rush", "8 founding spots"],
+  ["Harlan", "8 founding spots"],
+  ["Royal Blue", "8 founding spots"],
+  ["Hatfield", "8 founding spots"],
+];
+
 export default function BusinessWelcomePage() {
   const coreTiers = partnerTiers.filter((tier) =>
     ["local_business", "lodging_partner", "featured_partner"].includes(tier.id),
@@ -50,7 +57,7 @@ export default function BusinessWelcomePage() {
             ))}
           </ul>
           <div className="hero-actions">
-            <Link href="/business/join">List Your Business</Link>
+            <a href="#check-availability">Check Availability</a>
             <Link href="/business/login">Business Login</Link>
           </div>
         </div>
@@ -65,6 +72,62 @@ export default function BusinessWelcomePage() {
             <li>Lodging cleaner requests</li>
           </ul>
         </div>
+      </section>
+
+      <section className="business-availability" id="check-availability">
+        <div>
+          <p className="eyebrow">Founding partner areas</p>
+          <h2>Claim your trail-area spot before ads launch.</h2>
+          <p>
+            We are opening founding partner placement by trail area. Tell us
+            where your business serves riders and we will confirm availability.
+          </p>
+          <div className="business-area-slots">
+            {launchAreas.map(([area, spots]) => (
+              <article key={area}>
+                <strong>{area}</strong>
+                <span>{spots}</span>
+              </article>
+            ))}
+          </div>
+        </div>
+        <form className="business-lead-form">
+          <h3>Check Availability</h3>
+          <label>
+            Business name
+            <input name="business_name" placeholder="Your business" />
+          </label>
+          <label>
+            Category
+            <select name="category" defaultValue="">
+              <option value="" disabled>Choose category</option>
+              <option>Lodging</option>
+              <option>Food</option>
+              <option>Fuel</option>
+              <option>Repairs</option>
+              <option>Rentals</option>
+              <option>Events</option>
+              <option>Deals</option>
+            </select>
+          </label>
+          <label>
+            Town or trail area served
+            <input name="area" placeholder="Rush, Harlan, Royal Blue..." />
+          </label>
+          <label>
+            Phone
+            <input name="phone" placeholder="Best number" />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" placeholder="you@business.com" />
+          </label>
+          <label>
+            Website or Facebook
+            <input name="website" placeholder="https://..." />
+          </label>
+          <button type="submit">Check My Area</button>
+        </form>
       </section>
 
       <section className="business-pricing-panel">
