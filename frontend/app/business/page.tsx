@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { partnerTiers } from "../../lib/sample-data";
+import { partnerTiers, rideAreas } from "../../lib/sample-data";
 
 const businessCategories = [
   { title: "Stay", copy: "Cabins, lodges, campgrounds, hotels" },
@@ -26,12 +26,10 @@ const launchBenefits = [
   "Featured placement options",
 ];
 
-const launchAreas = [
-  ["Rush", "8 founding spots"],
-  ["Harlan", "8 founding spots"],
-  ["Royal Blue", "8 founding spots"],
-  ["Hatfield", "8 founding spots"],
-];
+const launchAreas = rideAreas.map((area) => [
+  area.name,
+  `${area.state} founding spots`,
+]);
 
 export default function BusinessWelcomePage() {
   const coreTiers = partnerTiers.filter((tier) =>
