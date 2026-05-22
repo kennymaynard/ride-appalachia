@@ -101,7 +101,7 @@ export default function JoinPage() {
   return (
     <main className="page">
       <section className="page-hero compact">
-        <p className="eyebrow">Founding partner signup</p>
+        <p className="eyebrow">Partner signup</p>
         <h1>Get found by riders before they hit the road.</h1>
         <p>
           Reach ATV and UTV groups planning trips near Rush, Inez, Hatfield,
@@ -110,7 +110,7 @@ export default function JoinPage() {
         </p>
       </section>
 
-      <section className="tier-grid selectable-tiers" aria-label="Founding partner tiers">
+      <section className="tier-grid selectable-tiers" aria-label="Partner tiers">
         {partnerTiers.map((item) => (
           <button
             className={item.id === tier ? "tier-card is-selected" : "tier-card"}

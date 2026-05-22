@@ -10,7 +10,7 @@ export default async function DealsPage() {
       <section className="page-hero compact">
         <p className="eyebrow">Local rider discounts</p>
         <h1>Deals worth planning around.</h1>
-        <p>Founding partner offers from local stays, food, rentals, repair, and fuel stops.</p>
+        <p>Verified offers from local stays, food, rentals, repair, and fuel stops.</p>
         <Link href="/business/join">Post a deal</Link>
       </section>
       <section className="page-section">

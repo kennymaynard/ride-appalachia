@@ -25,26 +25,78 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">Offline-ready Trail Packs</p>
-          <h1>Pick a trail area. Save the maps, stops, and plan.</h1>
-          <p>
-            Appalachia Offroad helps riders and hikers build a Trail Pack with
-            official map links, source confidence, nearby lodging, food, fuel,
-            repairs, notes, and an offline plan for when service drops.
-          </p>
-          <div className="hero-actions">
-            <Link href="/ride-areas">Find Trail Packs</Link>
-            <Link href="/planner">Build Offline Plan</Link>
-            <Link href="/business/join">Become a Partner</Link>
+      <section className="app-hero">
+        <div className="app-hero-tabs" aria-label="Quick categories">
+          <Link href="/lodging">Cabins, Lodges, Campgrounds</Link>
+          <Link href="/ride-areas">ATV / UTV Rentals</Link>
+          <Link href="/planner">Trail Packs</Link>
+          <Link href="/deals">Rider Deals</Link>
+        </div>
+
+        <div className="app-hero-inner">
+          <div className="phone-showcase" aria-hidden="true">
+            <div className="phone-frame">
+              <div className="phone-status">
+                <span>9:41</span>
+                <span>LTE</span>
+              </div>
+              <img src="/ride-appalachia-logo.png" alt="" />
+              <div className="phone-search">Search businesses, trails, photos...</div>
+              <div className="phone-grid">
+                <span>Stay</span>
+                <span>Rentals</span>
+                <span>Eat</span>
+                <span>Repairs</span>
+                <span>Fuel</span>
+                <span>Events</span>
+                <span>Deals</span>
+                <span>Trails</span>
+                <span>Services</span>
+              </div>
+              <div className="phone-listing">
+                <div />
+                <span>
+                  <strong>Featured Listing</strong>
+                  Mountain View Cabin
+                  <small>Cabin - 4.9</small>
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="hero-feature-grid" aria-label="App features">
-            <span>{rideAreas.length} ride and hike areas</span>
-            <span>{publicMapCount} public map sources</span>
-            <span>{downloadableMapCount} downloadable map files</span>
-            <span>Offline trip packs with custom notes</span>
+
+          <div className="app-hero-copy">
+            <p className="eyebrow">Offline-ready Trail Packs</p>
+            <h1>Find the ride. Save the plan. Go offline.</h1>
+            <p>
+              Appalachia Offroad helps riders and hikers pick a trail area, save
+              official map sources, find nearby stops, and keep the whole trip
+              plan ready when service drops.
+            </p>
+            <div className="hero-actions">
+              <Link href="/ride-areas">Find Trail Packs</Link>
+              <Link href="/planner">Build Offline Plan</Link>
+              <Link href="/business/join">List Your Business</Link>
+            </div>
           </div>
+        </div>
+
+        <div className="app-proof-strip" aria-label="App coverage">
+          <article>
+            <strong>{rideAreas.length}</strong>
+            <span>Ride and hike areas</span>
+          </article>
+          <article>
+            <strong>{publicMapCount}</strong>
+            <span>Public map sources</span>
+          </article>
+          <article>
+            <strong>{downloadableMapCount}</strong>
+            <span>Downloadable map files</span>
+          </article>
+          <article>
+            <strong>Offline</strong>
+            <span>Saved notes and trip packs</span>
+          </article>
         </div>
       </section>
 
@@ -119,10 +171,13 @@ export default async function Home() {
 
       <section className="page-section">
         <div className="section-heading">
-          <p>Founding partners</p>
-          <h2>Ready for rider traffic</h2>
+          <p>Local services</p>
+          <h2>Verified rider stops will show here.</h2>
         </div>
-        <MarketplaceGrid listings={featured.length ? featured : listings} />
+        <MarketplaceGrid
+          listings={featured.length ? featured : listings}
+          emptyText="No verified local listings yet."
+        />
       </section>
     </main>
   );

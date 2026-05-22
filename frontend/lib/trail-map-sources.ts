@@ -65,7 +65,7 @@ export function getTrailMapSource(area: RideArea, trail: TrailInfo): TrailMapSou
         : isPrivatePark
           ? "Private park map"
           : isSearchFallback
-            ? "Placeholder search"
+            ? "Source needs verification"
             : "Map source";
   const contactTarget = isPublicAgency
     ? "Public land manager / agency GIS contact"
@@ -92,7 +92,7 @@ export function getTrailMapSource(area: RideArea, trail: TrailInfo): TrailMapSou
           "Find official map owner or land manager",
           "Request current route file and public-use permission",
           "Confirm open/closed trail status",
-          "Replace placeholder link with official map",
+          "Replace temporary search link with official map",
         ];
 
   return {

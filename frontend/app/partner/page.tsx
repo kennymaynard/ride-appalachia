@@ -6,7 +6,7 @@ export default function PartnerPage() {
   return (
     <main className="page">
       <section className="page-hero compact">
-        <p className="eyebrow">Founding partners</p>
+        <p className="eyebrow">Local partners</p>
         <h1>Get discovered by riders planning their next weekend.</h1>
         <p>
           Appalachia Offroad gives local businesses a simple listing, deal placement,

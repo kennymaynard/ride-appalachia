@@ -1,4 +1,4 @@
-import type { Business, RideArea, Tier, TrailReview } from "./types";
+import type { Business, RideArea, Tier, TrailInfo, TrailReview } from "./types";
 
 export const categories = [
   { label: "Lodging", href: "/lodging", value: "lodging" },
@@ -84,16 +84,6 @@ const baseRideAreas: RideArea[] = [
         latitude: 38.344,
         longitude: -82.7695,
       },
-      {
-        name: "Northeast Kentucky connector towns",
-        type: "Planning area",
-        difficulty: "Mixed",
-        access: "Use local guidance for legal trail access.",
-        description: "Ashland, Cannonsburg, Grayson, and Catlettsburg are useful staging towns for lodging, fuel, food, and repairs.",
-        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Rush+KY",
-        latitude: 38.4784,
-        longitude: -82.6379,
-      },
     ],
   },
   {
@@ -111,16 +101,6 @@ const baseRideAreas: RideArea[] = [
     checklist: ["Place to stay", "Fuel and supplies", "Food stops", "Repair backup"],
     trails: [
       {
-        name: "Martin County ride area",
-        type: "Planning area",
-        difficulty: "Mixed",
-        access: "Confirm current legal routes locally before riding.",
-        description: "Inez works as a practical basecamp for eastern Kentucky riding with nearby towns for lodging, fuel, and food.",
-        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Inez+KY",
-        latitude: 37.8662,
-        longitude: -82.5388,
-      },
-      {
         name: "First Frontier region",
         type: "Regional trail info",
         difficulty: "Mixed",
@@ -129,26 +109,6 @@ const baseRideAreas: RideArea[] = [
         url: trailLinks.firstFrontier,
         latitude: 37.8662,
         longitude: -82.5388,
-      },
-      {
-        name: "Paintsville / Prestonsburg area routes",
-        type: "Nearby riding",
-        difficulty: "Mixed",
-        access: "Check trail status, permits, and local access rules.",
-        description: "Nearby eastern Kentucky towns riders commonly use for weekend staging, supplies, and backup services.",
-        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Paintsville+KY",
-        latitude: 37.8145,
-        longitude: -82.8071,
-      },
-      {
-        name: "Louisa / Lawrence County access",
-        type: "Nearby riding",
-        difficulty: "Mixed",
-        access: "Confirm current local access before riding.",
-        description: "Nearby staging area riders may use when building an eastern Kentucky trip around Inez and Louisa.",
-        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Louisa+KY",
-        latitude: 38.1145,
-        longitude: -82.6032,
       },
     ],
   },
@@ -164,7 +124,7 @@ const baseRideAreas: RideArea[] = [
       "Good for riders who want a simple launch point with meals, rentals, and lodging decisions handled before they arrive.",
     bestFor: ["UTV rentals", "Group meals", "First-time visitors", "Short weekend trips"],
     nearbyTowns: ["Hatfield", "Pikeville", "South Williamson", "Belfry"],
-    checklist: ["Machine rental", "Food stops", "Place to stay", "Claim any deals"],
+    checklist: ["Machine rental", "Food stops", "Place to stay", "Check local deals"],
     trails: [
       {
         name: "Hatfield-McCoy Buffalo Mountain",
@@ -198,16 +158,6 @@ const baseRideAreas: RideArea[] = [
         passUrl: trailLinks.hatfieldPermit,
         latitude: 37.6126,
         longitude: -82.2793,
-      },
-      {
-        name: "Pikeville area riding",
-        type: "Nearby riding",
-        difficulty: "Mixed",
-        access: "Verify route access before riding.",
-        description: "Useful nearby town area for riders planning lodging, food, fuel, and service stops around Pike County.",
-        url: "https://www.google.com/maps/search/?api=1&query=ATV+trails+near+Pikeville+KY",
-        latitude: 37.4793,
-        longitude: -82.5188,
       },
     ],
   },
@@ -257,17 +207,6 @@ const baseRideAreas: RideArea[] = [
         passUrl: trailLinks.hatfieldPermit,
         latitude: 37.814,
         longitude: -82.049,
-      },
-      {
-        name: "Matewan trail-town access",
-        type: "Trail-town access",
-        difficulty: "Moderate",
-        access: "Use marked legal trail-town routes and current Hatfield-McCoy rules.",
-        description: "Good planning pin for riders who want to stay, fuel, eat, and roll out from Matewan without overcomplicating the day.",
-        url: "https://www.google.com/maps/search/?api=1&query=Matewan+WV+Hatfield+McCoy+trailhead",
-        passUrl: trailLinks.hatfieldPermit,
-        latitude: 37.6223,
-        longitude: -82.1571,
       },
     ],
   },
@@ -2096,282 +2035,29 @@ const hikingTrailsByArea: Record<string, RideArea["trails"]> = {
   ],
 };
 
+const nonTrailTypes = new Set([
+  "Nearby riding",
+  "Planning area",
+  "Regional trail info",
+  "Rules and permits",
+  "Trail-town access",
+]);
+
+function isVisibleTrail(trail: TrailInfo) {
+  return !nonTrailTypes.has(trail.type);
+}
+
 export const rideAreas: RideArea[] = [...baseRideAreas, ...expandedRideAreas].map((area) => ({
   ...area,
-  trails: [...area.trails, ...(hikingTrailsByArea[area.slug] || [])],
+  trails: [
+    ...area.trails.filter(isVisibleTrail),
+    ...(hikingTrailsByArea[area.slug] || []),
+  ],
 }));
 
-export const trailReviews: TrailReview[] = [
-  {
-    id: 1,
-    areaSlug: "rush-ky",
-    riderName: "Weekend group lead",
-    rating: 5,
-    rideDate: "Spring ride",
-    machine: "UTV",
-    difficulty: "Moderate",
-    trailCondition: "Good access roads, easy staging, fuel planning matters.",
-    comment:
-      "Rush works well as a northeast Kentucky base. We liked being close to Ashland and Grayson for food, supplies, and backup plans.",
-  },
-  {
-    id: 2,
-    areaSlug: "rush-ky",
-    riderName: "Family ride planner",
-    rating: 4,
-    rideDate: "Weekend trip",
-    machine: "ATV",
-    difficulty: "Easy",
-    trailCondition: "Good for planning, check weather before hauling in.",
-    comment:
-      "Nice area to stage a low-stress weekend. The key is lining up lodging and fuel before everyone gets there.",
-  },
-  {
-    id: 3,
-    areaSlug: "inez-ky",
-    riderName: "Cabin crew",
-    rating: 5,
-    rideDate: "Fall weekend",
-    machine: "Side-by-side",
-    difficulty: "Moderate",
-    trailCondition: "Great weekend base with useful nearby towns.",
-    comment:
-      "Inez is a good anchor when you want the whole trip planned: cabin, food, fuel, and a repair backup just in case.",
-  },
-  {
-    id: 4,
-    areaSlug: "hatfield-ky",
-    riderName: "First-time visitor",
-    rating: 4,
-    rideDate: "Summer ride",
-    machine: "Rental UTV",
-    difficulty: "Easy",
-    trailCondition: "Simple to plan, good for food and rental needs.",
-    comment:
-      "Hatfield is a strong pick for new riders because the weekend can stay simple. Food and rental planning are the big wins.",
-  },
-  {
-    id: 5,
-    areaSlug: "matewan-wv",
-    riderName: "Day ride crew",
-    rating: 5,
-    rideDate: "Saturday ride",
-    machine: "ATV",
-    difficulty: "Moderate",
-    trailCondition: "Historic town stop, bring a fuel and supply plan.",
-    comment:
-      "Matewan has the trail-town feel riders like. We would build the day around fuel, lunch, and a clear call list.",
-  },
-  {
-    id: 6,
-    areaSlug: "harlan-ky",
-    riderName: "Mountain weekend rider",
-    rating: 5,
-    rideDate: "Long weekend",
-    machine: "UTV",
-    difficulty: "Hard",
-    trailCondition: "Rugged mountain riding, come prepared.",
-    comment:
-      "Harlan is where I want the backup plan handled early. Lodging, repairs, and fuel need to be sorted before the big ride days.",
-  },
-  {
-    id: 7,
-    areaSlug: "royal-blue-tn",
-    riderName: "Large group organizer",
-    rating: 4,
-    rideDate: "Holiday weekend",
-    machine: "Mixed group",
-    difficulty: "Moderate",
-    trailCondition: "Good for groups, planning ahead saves time.",
-    comment:
-      "Royal Blue and Brimstone are easier when one person has the checklist. Lodging and supply stops should be locked in first.",
-  },
-  {
-    id: 8,
-    areaSlug: "black-mountain-ky",
-    riderName: "Experienced rider",
-    rating: 5,
-    rideDate: "Fall ride",
-    machine: "UTV",
-    difficulty: "Hard",
-    trailCondition: "Scenic, serious riding with strong prep needs.",
-    comment:
-      "Black Mountain is worth the trip, but we treat it like a serious weekend. Bring a plan for repairs, weather, and fuel.",
-  },
-];
+export const trailReviews: TrailReview[] = [];
 
-export const sampleBusinesses: Business[] = [
-  {
-    id: 1,
-    name: "Rush Ridge Lodging Partner",
-    slug: "rush-ridge-lodging-partner",
-    category: "lodging",
-    description:
-      "Founding partner lodging spot for cabins, campgrounds, or hotels serving riders around Rush, Ashland, Cannonsburg, and Grayson.",
-    phone: "(606) 000-0001",
-    location: "Rush, KY",
-    photo_url:
-      "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1200&q=80",
-    website_url: "",
-    owner_email: "rush-lodging@example.com",
-    owner_access_token: "demo-rush-lodging",
-    listing_status: "approved",
-    admin_notes: "",
-    subscription_tier: "lodging_partner",
-    subscription_status: "active",
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    is_approved: true,
-    is_featured: true,
-    view_clicks: 184,
-    action_clicks: 42,
-    deals: [
-      {
-        id: 1,
-        title: "Founding lodging deal",
-        code: "BASECAMP",
-        description: "Use this slot for a cabin, campground, or hotel special for rider groups.",
-        is_active: true,
-        claim_clicks: 12,
-      },
-    ],
-    campaigns: [],
-    service_requests: [],
-  },
-  {
-    id: 2,
-    name: "Hatfield Rider Meal Partner",
-    slug: "hatfield-rider-meal-partner",
-    category: "food",
-    description:
-      "Founding partner food spot for restaurants, grills, and group-friendly stops serving hungry riders near Hatfield and South Williamson.",
-    phone: "(606) 000-0002",
-    location: "Hatfield, KY",
-    photo_url:
-      "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1200&q=80",
-    website_url: "",
-    owner_email: "hatfield-food@example.com",
-    owner_access_token: "demo-hatfield-food",
-    listing_status: "approved",
-    admin_notes: "",
-    subscription_tier: "monthly_sponsor",
-    subscription_status: "active",
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    is_approved: true,
-    is_featured: true,
-    view_clicks: 261,
-    action_clicks: 77,
-    deals: [
-      {
-        id: 2,
-        title: "Founding rider meal deal",
-        code: "RIDELOCAL",
-        description: "Use this slot for an opening-weekend meal special or group discount.",
-        is_active: true,
-        claim_clicks: 49,
-      },
-    ],
-    campaigns: [
-      {
-        id: 1,
-        business_id: 2,
-        campaign_type: "monthly_sponsor",
-        title: "Hatfield rider meal sponsor",
-        description: "Featured food placement for riders planning weekends near Hatfield and Rush.",
-        target_area: "Hatfield / Rush",
-        monthly_budget: 149,
-        status: "active",
-        impressions: 0,
-        clicks: 0,
-      },
-    ],
-    service_requests: [],
-  },
-  {
-    id: 3,
-    name: "Inez ATV Rental Partner",
-    slug: "inez-atv-rental-partner",
-    category: "rentals",
-    description:
-      "Founding partner rental spot for ATV and UTV operators offering machines, helmets, pickup windows, and ride-area advice around Inez.",
-    phone: "(606) 000-0003",
-    location: "Inez, KY",
-    photo_url:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
-    website_url: "",
-    owner_email: "inez-rentals@example.com",
-    owner_access_token: "demo-inez-rentals",
-    listing_status: "approved",
-    admin_notes: "",
-    subscription_tier: "featured_partner",
-    subscription_status: "active",
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    is_approved: true,
-    is_featured: false,
-    view_clicks: 129,
-    action_clicks: 33,
-    deals: [],
-    campaigns: [],
-    service_requests: [],
-  },
-  {
-    id: 4,
-    name: "Harlan Trail Repair Partner",
-    slug: "harlan-trail-repair-partner",
-    category: "repairs",
-    description: "Founding partner repair spot for tires, belts, fluids, and emergency service support near Harlan, Evarts, and Black Mountain.",
-    phone: "(606) 000-0004",
-    location: "Harlan, KY",
-    photo_url:
-      "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1200&q=80",
-    website_url: "",
-    owner_email: "harlan-repair@example.com",
-    owner_access_token: "demo-harlan-repair",
-    listing_status: "approved",
-    admin_notes: "",
-    subscription_tier: "local_business",
-    subscription_status: "active",
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    is_approved: true,
-    is_featured: false,
-    view_clicks: 98,
-    action_clicks: 24,
-    deals: [],
-    campaigns: [],
-    service_requests: [],
-  },
-  {
-    id: 5,
-    name: "Matewan Fuel & Supply Partner",
-    slug: "matewan-fuel-supply-partner",
-    category: "fuel",
-    description:
-      "Founding partner fuel and supply spot for gas, ice, snacks, straps, gloves, and last-minute rider needs near Matewan and Williamson.",
-    phone: "(606) 000-0005",
-    location: "Matewan, WV",
-    photo_url:
-      "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17?auto=format&fit=crop&w=1200&q=80",
-    website_url: "",
-    owner_email: "matewan-fuel@example.com",
-    owner_access_token: "demo-matewan-fuel",
-    listing_status: "approved",
-    admin_notes: "",
-    subscription_tier: "local_business",
-    subscription_status: "active",
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    is_approved: true,
-    is_featured: false,
-    view_clicks: 72,
-    action_clicks: 19,
-    deals: [],
-    campaigns: [],
-    service_requests: [],
-  },
-];
+export const sampleBusinesses: Business[] = [];
 
 export const partnerTiers: Tier[] = [
   {
@@ -2400,7 +2086,7 @@ export const partnerTiers: Tier[] = [
     name: "Lodging Partner",
     price: "$59",
     description: "For cabins, campgrounds, hotels, and rider-friendly stays.",
-    features: ["Everything in Local", "Lodging category placement", "Photo-forward listing", "Founding partner badge"],
+    features: ["Everything in Local", "Lodging category placement", "Photo-forward listing", "Priority review badge"],
   },
   {
     id: "featured_partner",

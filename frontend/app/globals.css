@@ -25,9 +25,14 @@ html {
 body {
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.08), var(--bg) 24rem),
-    url("https://images.pexels.com/photos/10341858/pexels-photo-10341858.jpeg?auto=compress&cs=tinysrgb&w=1800")
-      top center / 100% 27rem no-repeat fixed,
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15), var(--bg) 32rem),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 7rem
+    ),
     var(--bg);
   color: var(--text);
   font-family:
@@ -238,6 +243,225 @@ p {
 .listing-actions a:nth-child(2) {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
+}
+
+.app-hero {
+  width: min(94rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(0.9rem, 2vw, 1.25rem) 0 0;
+}
+
+.app-hero-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-bottom: clamp(1rem, 2.4vw, 1.6rem);
+}
+
+.app-hero-tabs a {
+  display: flex;
+  min-height: 3.35rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.42rem;
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--soft);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.84rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.app-hero-tabs a:hover {
+  border-color: rgba(242, 106, 27, 0.8);
+  color: var(--orange-soft);
+}
+
+.app-hero-inner {
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.7fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 4vw, 4rem);
+  align-items: center;
+  min-height: clamp(30rem, 65vh, 45rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+  background:
+    linear-gradient(110deg, rgba(0, 0, 0, 0.96), rgba(10, 10, 10, 0.88) 55%, rgba(28, 11, 2, 0.82)),
+    url("https://images.pexels.com/photos/10341858/pexels-photo-10341858.jpeg?auto=compress&cs=tinysrgb&w=1800")
+      center / cover;
+  padding: clamp(1.2rem, 3vw, 3rem);
+  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.45);
+}
+
+.app-hero-copy {
+  max-width: 48rem;
+}
+
+.app-hero-copy h1 {
+  margin: 0;
+  max-width: 47rem;
+  font-size: clamp(3rem, 7vw, 6.8rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.app-hero-copy h1::first-line {
+  color: var(--text);
+}
+
+.app-hero-copy p:not(.eyebrow) {
+  max-width: 42rem;
+  color: var(--soft);
+  font-size: clamp(1.02rem, 1.6vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.phone-showcase {
+  display: flex;
+  justify-content: center;
+  perspective: 75rem;
+}
+
+.phone-frame {
+  width: min(19rem, 100%);
+  min-height: 35rem;
+  transform: rotate(-7deg);
+  border: 0.55rem solid #111;
+  border-radius: 2.2rem;
+  background:
+    linear-gradient(180deg, rgba(11, 11, 11, 0.92), rgba(0, 0, 0, 0.98)),
+    var(--panel);
+  padding: 1rem;
+  box-shadow:
+    0 1.6rem 3rem rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.phone-status {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.phone-frame img {
+  display: block;
+  width: 12rem;
+  max-width: 82%;
+  margin: 1rem auto;
+}
+
+.phone-search {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.7rem 0.75rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.phone-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.phone-grid span {
+  display: flex;
+  min-height: 4.2rem;
+  align-items: end;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.48rem;
+  background: #101010;
+  color: var(--orange-soft);
+  padding: 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.phone-listing {
+  display: grid;
+  grid-template-columns: 4.4rem 1fr;
+  gap: 0.55rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.8rem;
+}
+
+.phone-listing div {
+  aspect-ratio: 1.35;
+  border-radius: 0.45rem;
+  background:
+    linear-gradient(180deg, rgba(242, 106, 27, 0), rgba(242, 106, 27, 0.38)),
+    url("https://images.pexels.com/photos/10341858/pexels-photo-10341858.jpeg?auto=compress&cs=tinysrgb&w=500")
+      center / cover;
+}
+
+.phone-listing span {
+  display: grid;
+  gap: 0.15rem;
+  color: var(--soft);
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.phone-listing strong {
+  color: var(--orange-soft);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+}
+
+.phone-listing small {
+  color: var(--gold);
+  font-size: 0.58rem;
+  font-weight: 950;
+}
+
+.app-proof-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.app-proof-strip article {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 6rem;
+  align-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1rem clamp(0.85rem, 2vw, 1.3rem);
+}
+
+.app-proof-strip article:last-child {
+  border-right: 0;
+}
+
+.app-proof-strip strong {
+  color: var(--orange);
+  font-size: clamp(1.35rem, 3vw, 2.2rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.app-proof-strip span {
+  color: var(--soft);
+  font-size: 0.85rem;
+  font-weight: 850;
+  line-height: 1.25;
 }
 
 .launch-strip {
@@ -3427,6 +3651,7 @@ button.tier-card.is-selected {
   .trail-pack-header,
   .trail-pack-grid,
   .map-source-card,
+  .app-hero-inner,
   .launch-strip,
   .landing-steps,
   .business-hero,
@@ -3464,6 +3689,21 @@ button.tier-card.is-selected {
 
   .hero-feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .app-hero-tabs,
+  .app-proof-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-hero-inner {
+    min-height: 0;
+  }
+
+  .phone-frame {
+    width: min(17rem, 92%);
+    min-height: 31rem;
+    transform: rotate(-4deg);
   }
 
   .listing-grid,
@@ -3540,6 +3780,7 @@ button.tier-card.is-selected {
 
 @media (max-width: 480px) {
   .hero,
+  .app-hero,
   .page,
   .detail-page,
   .page-section,
@@ -3560,6 +3801,19 @@ button.tier-card.is-selected {
   .trail-reviews,
   .launch-strip {
     width: min(100% - 1rem, 94rem);
+  }
+
+  .app-hero-tabs,
+  .app-proof-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .app-hero-inner {
+    padding: 1rem;
+  }
+
+  .phone-frame {
+    transform: none;
   }
 
   .trail-map {

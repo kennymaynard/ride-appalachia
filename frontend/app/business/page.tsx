@@ -44,7 +44,7 @@ export default function BusinessWelcomePage() {
         </div>
 
         <div className="business-hero-panel">
-          <strong>Founding partner launch</strong>
+          <strong>Partner launch</strong>
           <span>Lock in your early rate and update your own page anytime.</span>
           <ul>
             <li>Coupons and specials</li>
@@ -57,7 +57,7 @@ export default function BusinessWelcomePage() {
 
       <section className="business-pricing-panel">
         <div className="section-heading">
-          <p>Founding partner pricing</p>
+          <p>Partner pricing</p>
           <h2>Simple monthly plans.</h2>
         </div>
         <div className="business-price-grid">
@@ -148,7 +148,7 @@ export default function BusinessWelcomePage() {
       <section className="business-final-cta">
         <div>
           <h2>Ready for rider traffic?</h2>
-          <p>Start with a founding partner listing and build from there.</p>
+          <p>Start with a verified listing and build from there.</p>
         </div>
         <div className="hero-actions">
           <Link href="/business/join">Join Today</Link>
