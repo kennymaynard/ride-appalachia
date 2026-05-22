@@ -32,13 +32,36 @@ export default async function Home() {
           <p className="eyebrow">Ride. Stay. Explore.</p>
           <h1>The all-in-one off-road hub for Appalachia.</h1>
           <p>
-            Find trails, cabins, food, fuel, rentals, repairs, events, and local
-            deals all in one place.
+            Riders use it to find trails, save trip stops, and keep plans handy
+            when service drops. Local businesses use it to get found by riders
+            before they arrive.
           </p>
           <div className="hero-actions">
             <Link href="/ride-areas">Explore Trails</Link>
-            <Link href="/business/join">List Your Business</Link>
+            <Link href="/business">Business Side</Link>
           </div>
+        </div>
+        <div className="landing-path-grid" aria-label="Choose how to use Appalachia Offroad">
+          <article>
+            <p className="eyebrow">For riders and hikers</p>
+            <h2>Plan the trip before the signal disappears.</h2>
+            <ul>
+              <li>Find OHV and hiking trail areas</li>
+              <li>See trail names, difficulty, reviews, and map sources</li>
+              <li>Save lodging, food, fuel, repairs, rentals, and notes</li>
+            </ul>
+            <Link href="/ride-areas">Start Planning</Link>
+          </article>
+          <article>
+            <p className="eyebrow">For local businesses</p>
+            <h2>Get discovered by riders coming into town.</h2>
+            <ul>
+              <li>List cabins, restaurants, fuel, repairs, rentals, and deals</li>
+              <li>Show up near the trail areas you serve</li>
+              <li>Capture leads, clicks, and founding partner placement</li>
+            </ul>
+            <Link href="/business">Claim Your Spot</Link>
+          </article>
         </div>
         <div className="simple-feature-row" aria-label="What Appalachia Offroad does">
           <article>
