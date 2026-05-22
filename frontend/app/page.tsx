@@ -4,23 +4,6 @@ import { categories, rideAreas } from "../lib/sample-data";
 import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
 
-const homepageCategories = [
-  ["Lodging", "Cabins, lodges, campgrounds"],
-  ["Food", "Restaurants and rider meals"],
-  ["Fuel", "Gas, ice, supplies"],
-  ["Repairs", "Parts, tires, emergency help"],
-  ["Rentals", "ATV and UTV rentals"],
-  ["Events", "Local rides and meetups"],
-  ["Deals", "Rider discounts"],
-  ["Trails", "Maps and Trail Packs"],
-];
-
-const pricingPlans = [
-  ["Local Business", "$29/mo"],
-  ["Lodging Partner", "$59/mo"],
-  ["Featured Partner", "$99/mo"],
-];
-
 export default async function Home() {
   const listings = await getListings("all");
   const featured = listings.filter((business) => business.is_featured);
@@ -73,39 +56,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="homepage-category-strip" aria-label="What riders can find">
-        {homepageCategories.map(([title, copy]) => (
-          <article key={title}>
-            <strong>{title}</strong>
-            <span>{copy}</span>
-          </article>
-        ))}
-      </section>
-
-      <section className="homepage-phone-proof">
-        <div>
-          <p className="eyebrow">Plan. Ride. Explore.</p>
-          <h2>All from your phone.</h2>
-          <p>
-            Open a Trail Pack, check map sources, save nearby stops, and keep
-            your plan handy when service drops.
-          </p>
-        </div>
-        <div className="mini-phone" aria-hidden="true">
-          <div className="mini-search">Search trails, cabins, food...</div>
-          <div className="mini-icon-grid">
-            <span>Trails</span>
-            <span>Stay</span>
-            <span>Fuel</span>
-            <span>Deals</span>
-          </div>
-          <div className="mini-listing">
-            <strong>Rush Trail Pack</strong>
-            <span>Maps, stops, notes, offline plan</span>
-          </div>
-        </div>
-      </section>
-
       <section className="page-section trail-pack-preview">
         <div className="section-heading">
           <p>Trail Packs</p>
@@ -136,33 +86,6 @@ export default async function Home() {
             );
           })}
         </div>
-      </section>
-
-      <section className="homepage-pricing">
-        <div>
-          <p className="eyebrow">Founding business pricing</p>
-          <h2>Get in front of riders early.</h2>
-        </div>
-        <div className="homepage-pricing-grid">
-          {pricingPlans.map(([name, price]) => (
-            <article key={name}>
-              <span>{name}</span>
-              <strong>{price}</strong>
-            </article>
-          ))}
-        </div>
-        <Link href="/business/join">Lock In Founding Pricing</Link>
-      </section>
-
-      <section className="homepage-testimonials">
-        <article>
-          <p>"Exactly what Appalachia needed."</p>
-          <span>ATV rider, Kentucky</span>
-        </article>
-        <article>
-          <p>"Way easier than searching Facebook groups."</p>
-          <span>Weekend rider</span>
-        </article>
       </section>
 
       <section className="page-section marketplace-jump">
