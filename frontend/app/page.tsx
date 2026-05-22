@@ -5,6 +5,25 @@ import { categories, rideAreas } from "../lib/sample-data";
 import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
 
+const heroTabs = [
+  { href: "/lodging", label: "Cabins, Lodges, Campgrounds", icon: "icon-stay" },
+  { href: "/ride-areas", label: "ATV / UTV Rentals", icon: "icon-rentals" },
+  { href: "/planner", label: "Trail Packs", icon: "icon-trails" },
+  { href: "/deals", label: "Rider Deals", icon: "icon-deals" },
+];
+
+const phoneCategories = [
+  { label: "Stay", icon: "icon-stay" },
+  { label: "Rentals", icon: "icon-rentals" },
+  { label: "Eat", icon: "icon-eat" },
+  { label: "Repairs", icon: "icon-repairs" },
+  { label: "Fuel", icon: "icon-fuel" },
+  { label: "Events", icon: "icon-events" },
+  { label: "Deals", icon: "icon-deals" },
+  { label: "Trails", icon: "icon-trails" },
+  { label: "Services", icon: "icon-services" },
+];
+
 export default async function Home() {
   const listings = await getListings("all");
   const featured = listings.filter((business) => business.is_featured);
@@ -27,10 +46,12 @@ export default async function Home() {
     <main>
       <section className="app-hero">
         <div className="app-hero-tabs" aria-label="Quick categories">
-          <Link href="/lodging">Cabins, Lodges, Campgrounds</Link>
-          <Link href="/ride-areas">ATV / UTV Rentals</Link>
-          <Link href="/planner">Trail Packs</Link>
-          <Link href="/deals">Rider Deals</Link>
+          {heroTabs.map((item) => (
+            <Link key={item.href} href={item.href}>
+              <span className={`landing-icon ${item.icon}`} aria-hidden="true" />
+              {item.label}
+            </Link>
+          ))}
         </div>
 
         <div className="app-hero-inner">
@@ -43,22 +64,21 @@ export default async function Home() {
               <img src="/ride-appalachia-logo.png" alt="" />
               <div className="phone-search">Search businesses, trails, photos...</div>
               <div className="phone-grid">
-                <span>Stay</span>
-                <span>Rentals</span>
-                <span>Eat</span>
-                <span>Repairs</span>
-                <span>Fuel</span>
-                <span>Events</span>
-                <span>Deals</span>
-                <span>Trails</span>
-                <span>Services</span>
+                {phoneCategories.map((item) => (
+                  <span key={item.label}>
+                    <i className={`landing-icon ${item.icon}`} aria-hidden="true" />
+                    {item.label}
+                  </span>
+                ))}
               </div>
               <div className="phone-listing">
-                <div />
+                <div className="phone-listing-icon">
+                  <i className="landing-icon icon-stay" aria-hidden="true" />
+                </div>
                 <span>
                   <strong>Featured Listing</strong>
-                  Mountain View Cabin
-                  <small>Cabin - 4.9</small>
+                  Verified rider stop
+                  <small>Cabins - fuel - food</small>
                 </span>
               </div>
             </div>

@@ -259,10 +259,11 @@ p {
 }
 
 .app-hero-tabs a {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
   min-height: 3.35rem;
   align-items: center;
-  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 0.42rem;
   background: rgba(0, 0, 0, 0.72);
@@ -271,7 +272,7 @@ p {
   font-size: 0.84rem;
   font-weight: 900;
   line-height: 1.1;
-  text-align: center;
+  text-align: left;
 }
 
 .app-hero-tabs a:hover {
@@ -289,9 +290,8 @@ p {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.65rem;
   background:
-    linear-gradient(110deg, rgba(0, 0, 0, 0.96), rgba(10, 10, 10, 0.88) 55%, rgba(28, 11, 2, 0.82)),
-    url("https://images.pexels.com/photos/10341858/pexels-photo-10341858.jpeg?auto=compress&cs=tinysrgb&w=1800")
-      center / cover;
+    radial-gradient(circle at 19% 30%, rgba(242, 106, 27, 0.22), transparent 21rem),
+    linear-gradient(110deg, rgba(0, 0, 0, 0.98), rgba(10, 10, 10, 0.94) 55%, rgba(28, 11, 2, 0.88));
   padding: clamp(1.2rem, 3vw, 3rem);
   box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.45);
 }
@@ -359,13 +359,38 @@ p {
 }
 
 .phone-search {
+  position: relative;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.55rem;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.55);
-  padding: 0.7rem 0.75rem;
+  padding: 0.7rem 0.75rem 0.7rem 2rem;
   font-size: 0.68rem;
   font-weight: 800;
+}
+
+.phone-search::before {
+  content: "";
+  position: absolute;
+  left: 0.72rem;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid var(--orange);
+  border-radius: 999px;
+  transform: translateY(-60%);
+}
+
+.phone-search::after {
+  content: "";
+  position: absolute;
+  left: 1.27rem;
+  top: 1.35rem;
+  width: 0.35rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--orange);
+  transform: rotate(45deg);
 }
 
 .phone-grid {
@@ -376,10 +401,11 @@ p {
 }
 
 .phone-grid span {
-  display: flex;
+  display: grid;
   min-height: 4.2rem;
-  align-items: end;
+  align-content: center;
   justify-content: center;
+  gap: 0.35rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.48rem;
   background: #101010;
@@ -387,7 +413,201 @@ p {
   padding: 0.5rem;
   font-size: 0.62rem;
   font-weight: 950;
+  text-align: center;
   text-transform: uppercase;
+}
+
+.phone-grid .landing-icon {
+  margin: 0 auto;
+}
+
+.landing-icon {
+  position: relative;
+  display: inline-block;
+  width: 1.45rem;
+  height: 1.45rem;
+  color: var(--orange);
+  flex: 0 0 auto;
+}
+
+.landing-icon::before,
+.landing-icon::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.icon-stay::before {
+  left: 0.28rem;
+  top: 0.68rem;
+  width: 0.9rem;
+  height: 0.62rem;
+  border: 2px solid currentColor;
+  border-top: 0;
+  border-radius: 0.08rem;
+}
+
+.icon-stay::after {
+  left: 0.33rem;
+  top: 0.27rem;
+  width: 0.78rem;
+  height: 0.78rem;
+  border-left: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.icon-rentals::before {
+  left: 0.08rem;
+  top: 0.55rem;
+  width: 1.3rem;
+  height: 0.42rem;
+  border: 2px solid currentColor;
+  border-radius: 0.18rem;
+}
+
+.icon-rentals::after {
+  left: 0.19rem;
+  top: 0.88rem;
+  width: 0.28rem;
+  height: 0.28rem;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  box-shadow: 0.78rem 0 0 -2px #101010, 0.78rem 0 0 0 currentColor;
+}
+
+.icon-eat::before {
+  left: 0.36rem;
+  top: 0.22rem;
+  width: 0.16rem;
+  height: 1.04rem;
+  border-left: 2px solid currentColor;
+  box-shadow: 0.18rem 0 0 0 currentColor, 0.36rem 0 0 0 currentColor;
+}
+
+.icon-eat::after {
+  right: 0.32rem;
+  top: 0.18rem;
+  width: 0.34rem;
+  height: 1.14rem;
+  border-right: 2px solid currentColor;
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+
+.icon-repairs::before {
+  left: 0.63rem;
+  top: 0.12rem;
+  width: 0.22rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(42deg);
+}
+
+.icon-repairs::after {
+  left: 0.16rem;
+  top: 0.12rem;
+  width: 0.48rem;
+  height: 0.48rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  transform: rotate(42deg);
+}
+
+.icon-fuel::before {
+  left: 0.24rem;
+  top: 0.18rem;
+  width: 0.72rem;
+  height: 1.08rem;
+  border: 2px solid currentColor;
+  border-radius: 0.12rem;
+}
+
+.icon-fuel::after {
+  right: 0.17rem;
+  top: 0.32rem;
+  width: 0.38rem;
+  height: 0.75rem;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  border-radius: 0 0.22rem 0 0;
+}
+
+.icon-events::before {
+  left: 0.18rem;
+  top: 0.3rem;
+  width: 1.08rem;
+  height: 0.95rem;
+  border: 2px solid currentColor;
+  border-radius: 0.12rem;
+}
+
+.icon-events::after {
+  left: 0.33rem;
+  top: 0.62rem;
+  width: 0.18rem;
+  height: 0.18rem;
+  background: currentColor;
+  box-shadow: 0.36rem 0 0 currentColor, 0.72rem 0 0 currentColor, 0 0.34rem 0 currentColor, 0.36rem 0.34rem 0 currentColor;
+}
+
+.icon-deals::before {
+  left: 0.28rem;
+  top: 0.3rem;
+  width: 0.95rem;
+  height: 0.82rem;
+  border: 2px solid currentColor;
+  border-radius: 0.12rem;
+  transform: rotate(-16deg);
+}
+
+.icon-deals::after {
+  left: 0.43rem;
+  top: 0.45rem;
+  width: 0.18rem;
+  height: 0.18rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.icon-trails::before {
+  left: 0.42rem;
+  top: 0.12rem;
+  width: 0.64rem;
+  height: 0.64rem;
+  border: 2px solid currentColor;
+  border-radius: 999px 999px 999px 0;
+  transform: rotate(-45deg);
+}
+
+.icon-trails::after {
+  left: 0.18rem;
+  bottom: 0.15rem;
+  width: 1.08rem;
+  height: 0.42rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  border-radius: 0 0 0 0.28rem;
+}
+
+.icon-services::before {
+  left: 0.25rem;
+  top: 0.42rem;
+  width: 0.95rem;
+  height: 0.78rem;
+  border: 2px solid currentColor;
+  border-radius: 0.12rem;
+}
+
+.icon-services::after {
+  left: 0.48rem;
+  top: 0.2rem;
+  width: 0.5rem;
+  height: 0.36rem;
+  border: 2px solid currentColor;
+  border-bottom: 0;
+  border-radius: 0.28rem 0.28rem 0 0;
 }
 
 .phone-listing {
@@ -400,13 +620,14 @@ p {
   padding-top: 0.8rem;
 }
 
-.phone-listing div {
+.phone-listing-icon {
+  display: grid;
+  min-height: 3.25rem;
+  place-items: center;
   aspect-ratio: 1.35;
   border-radius: 0.45rem;
-  background:
-    linear-gradient(180deg, rgba(242, 106, 27, 0), rgba(242, 106, 27, 0.38)),
-    url("https://images.pexels.com/photos/10341858/pexels-photo-10341858.jpeg?auto=compress&cs=tinysrgb&w=500")
-      center / cover;
+  background: rgba(242, 106, 27, 0.12);
+  border: 1px solid rgba(242, 106, 27, 0.42);
 }
 
 .phone-listing span {
