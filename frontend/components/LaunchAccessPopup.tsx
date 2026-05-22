@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { createMarketingLead } from "../lib/api";
 
 const STORAGE_KEY = "appalachia-launch-access";
 
 export function LaunchAccessPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (window.localStorage.getItem(STORAGE_KEY)) return;
@@ -19,10 +21,27 @@ export function LaunchAccessPopup() {
     setIsOpen(false);
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    window.localStorage.setItem(STORAGE_KEY, "joined");
-    setSubmitted(true);
+    setError("");
+    const form = new FormData(event.currentTarget);
+    try {
+      await createMarketingLead({
+        lead_type: "launch_access",
+        email: String(form.get("email") || ""),
+        business_name: "",
+        category: "",
+        area: "",
+        phone: "",
+        website: "",
+        source: "launch_popup",
+        notes: "Homepage launch access signup",
+      });
+      window.localStorage.setItem(STORAGE_KEY, "joined");
+      setSubmitted(true);
+    } catch {
+      setError("Could not save your email. Try again in a minute.");
+    }
   }
 
   if (!isOpen) return null;
@@ -44,8 +63,9 @@ export function LaunchAccessPopup() {
             <h2 id="launch-popup-title">Be first to discover new trails, cabins, deals, and events.</h2>
             <label>
               Email
-              <input required type="email" placeholder="you@example.com" />
+              <input required name="email" type="email" placeholder="you@example.com" />
             </label>
+            {error ? <p className="form-error">{error}</p> : null}
             <button type="submit">Join Launch List</button>
           </form>
         )}

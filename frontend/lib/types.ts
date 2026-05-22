@@ -36,6 +36,22 @@ export type LodgingServiceRequest = {
   status: "new" | "contacted" | "matched" | "closed";
 };
 
+export type MarketingLead = {
+  id: number;
+  lead_type: "launch_access" | "business_availability";
+  email: string;
+  business_name: string;
+  category: string;
+  area: string;
+  phone: string;
+  website: string;
+  source: string;
+  notes: string;
+  status: "new" | "contacted" | "converted" | "closed";
+};
+
+export type MarketingLeadCreateInput = Omit<MarketingLead, "id" | "status">;
+
 export type Business = {
   id: number;
   name: string;

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Business, Campaign, LodgingServiceRequest
+from app.models import Business, Campaign, LodgingServiceRequest, MarketingLead
 from app.schemas import (
     BusinessModerationUpdate,
     BusinessDashboardRead,
@@ -10,6 +10,8 @@ from app.schemas import (
     BusinessUpdate,
     LodgingServiceRequestRead,
     LodgingServiceRequestStatusUpdate,
+    MarketingLeadRead,
+    MarketingLeadStatusUpdate,
 )
 from app.services.photos import normalize_photo_url
 
@@ -116,6 +118,35 @@ def set_service_request_status(
     db.commit()
     db.refresh(service_request)
     return service_request
+
+
+@router.get("/leads", response_model=list[MarketingLeadRead])
+def list_marketing_leads(
+    _: None = Depends(require_admin),
+    status: str = "new",
+    db: Session = Depends(get_db),
+) -> list[MarketingLead]:
+    query = db.query(MarketingLead)
+    if status != "all":
+        query = query.filter(MarketingLead.status == status)
+    return query.order_by(MarketingLead.created_at.desc()).all()
+
+
+@router.post("/leads/{lead_id}/status", response_model=MarketingLeadRead)
+def set_marketing_lead_status(
+    lead_id: int,
+    payload: MarketingLeadStatusUpdate,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> MarketingLead:
+    lead = db.get(MarketingLead, lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    lead.status = payload.status
+    db.commit()
+    db.refresh(lead)
+    return lead
 
 
 @router.post("/campaigns/{campaign_id}/status")

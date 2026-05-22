@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BusinessLeadForm } from "../../components/BusinessLeadForm";
 import { partnerTiers, rideAreas } from "../../lib/sample-data";
 
 const businessCategories = [
@@ -89,43 +90,7 @@ export default function BusinessWelcomePage() {
             ))}
           </div>
         </div>
-        <form className="business-lead-form">
-          <h3>Check Availability</h3>
-          <label>
-            Business name
-            <input name="business_name" placeholder="Your business" />
-          </label>
-          <label>
-            Category
-            <select name="category" defaultValue="">
-              <option value="" disabled>Choose category</option>
-              <option>Lodging</option>
-              <option>Food</option>
-              <option>Fuel</option>
-              <option>Repairs</option>
-              <option>Rentals</option>
-              <option>Events</option>
-              <option>Deals</option>
-            </select>
-          </label>
-          <label>
-            Town or trail area served
-            <input name="area" placeholder="Rush, Harlan, Royal Blue..." />
-          </label>
-          <label>
-            Phone
-            <input name="phone" placeholder="Best number" />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" placeholder="you@business.com" />
-          </label>
-          <label>
-            Website or Facebook
-            <input name="website" placeholder="https://..." />
-          </label>
-          <button type="submit">Check My Area</button>
-        </form>
+        <BusinessLeadForm />
       </section>
 
       <section className="business-pricing-panel">

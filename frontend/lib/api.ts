@@ -12,6 +12,8 @@ import type {
   DealUpdateInput,
   LodgingServiceRequest,
   LodgingServiceRequestCreateInput,
+  MarketingLead,
+  MarketingLeadCreateInput,
   TrailReview,
   TrailReviewCreateInput,
 } from "./types";
@@ -311,6 +313,21 @@ export async function createLodgingServiceRequest(
   return response.json();
 }
 
+export async function createMarketingLead(payload: MarketingLeadCreateInput): Promise<MarketingLead> {
+  const response = await fetch(`${getApiUrl()}/api/leads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to save lead");
+  }
+
+  return response.json();
+}
+
 export async function trackActionClick(businessId: number): Promise<void> {
   try {
     await fetch(`${getApiUrl()}/api/listings/${businessId}/action-click`, {
@@ -418,6 +435,35 @@ export async function getAdminServiceRequests(
   });
   if (!response.ok) {
     throw new Error("Unable to load lodging service requests");
+  }
+  return response.json();
+}
+
+export async function getAdminMarketingLeads(
+  adminPassword?: string,
+): Promise<MarketingLead[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/leads?status=new`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to load marketing leads");
+  }
+  return response.json();
+}
+
+export async function updateMarketingLeadStatus(
+  leadId: number,
+  status: "contacted" | "converted" | "closed",
+  adminPassword?: string,
+): Promise<MarketingLead> {
+  const response = await fetch(`${getApiUrl()}/api/admin/leads/${leadId}/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to update marketing lead");
   }
   return response.json();
 }

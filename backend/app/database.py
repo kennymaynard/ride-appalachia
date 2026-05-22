@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     admin_password: str = "ride-admin"
     resend_api_key: str = ""
     email_from: str = "Appalachia Offroad <support@appalachiaoffroadapp.com>"
+    lead_notify_email: str = "support@appalachiaoffroadapp.com"
 
 
 @lru_cache

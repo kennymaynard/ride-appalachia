@@ -12,6 +12,8 @@ SUBSCRIPTION_TIERS = {
     "cleaner_partner",
 }
 LISTING_STATUSES = {"pending", "approved", "needs_changes", "rejected", "unpublished"}
+LEAD_TYPES = {"launch_access", "business_availability"}
+LEAD_STATUSES = {"new", "contacted", "converted", "closed"}
 
 
 class DealBase(BaseModel):
@@ -242,3 +244,40 @@ class BusinessLoginRead(BaseModel):
 
 class CheckoutSessionRead(BaseModel):
     checkout_url: str
+
+
+class MarketingLeadCreate(BaseModel):
+    lead_type: str = "launch_access"
+    email: str = Field(min_length=5, max_length=180)
+    business_name: str = ""
+    category: str = ""
+    area: str = ""
+    phone: str = ""
+    website: str = ""
+    source: str = ""
+    notes: str = ""
+
+    @field_validator("lead_type")
+    @classmethod
+    def validate_lead_type(cls, value: str) -> str:
+        if value not in LEAD_TYPES:
+            raise ValueError("Unknown lead type")
+        return value
+
+
+class MarketingLeadRead(MarketingLeadCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: str = "new"
+
+
+class MarketingLeadStatusUpdate(BaseModel):
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        if value not in LEAD_STATUSES:
+            raise ValueError("Unknown lead status")
+        return value

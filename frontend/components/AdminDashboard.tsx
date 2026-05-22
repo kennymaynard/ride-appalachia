@@ -4,15 +4,17 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   approveBusiness,
   getAdminBusinesses,
+  getAdminMarketingLeads,
   getAdminServiceRequests,
   getAdminTrailReviews,
   moderateBusiness,
   moderateTrailReview,
   setBusinessFeatured,
   updateAdminBusiness,
+  updateMarketingLeadStatus,
   updateServiceRequestStatus,
 } from "../lib/api";
-import type { Business, BusinessUpdateInput, LodgingServiceRequest, TrailReview } from "../lib/types";
+import type { Business, BusinessUpdateInput, LodgingServiceRequest, MarketingLead, TrailReview } from "../lib/types";
 
 type Props = {
   initialBusinesses?: Business[];
@@ -30,6 +32,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [pendingReviews, setPendingReviews] = useState<TrailReview[]>([]);
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
+  const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
   const [adminPassword, setAdminPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(initialBusinesses.length > 0);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,9 +66,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       const loadedBusinesses = await getAdminBusinesses(adminPassword);
       const loadedReviews = await getAdminTrailReviews(adminPassword);
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
+      const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
       setServiceRequests(loadedServiceRequests);
+      setMarketingLeads(loadedMarketingLeads);
       setIsUnlocked(true);
     } catch (caughtError) {
       setError(
@@ -166,6 +171,26 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     }
   }
 
+  async function runLeadAction(
+    leadId: number,
+    status: "contacted" | "converted" | "closed",
+  ) {
+    setError("");
+    setWorkingId(leadId);
+    try {
+      await updateMarketingLeadStatus(leadId, status, adminPassword);
+      setMarketingLeads((current) => current.filter((lead) => lead.id !== leadId));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to update marketing lead.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
   if (!isUnlocked) {
     return (
       <section className="admin-shell">
@@ -205,12 +230,78 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <span>Needs Changes</span>
         </article>
         <article>
-          <strong>{pendingReviews.length + serviceRequests.length}</strong>
+          <strong>{pendingReviews.length + serviceRequests.length + marketingLeads.length}</strong>
           <span>Queues</span>
         </article>
       </div>
 
       {error ? <p className="form-error">{error}</p> : null}
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Inbound leads</p>
+          <h2>Launch and business signups</h2>
+        </div>
+        {marketingLeads.length ? (
+          <div className="admin-list">
+            {marketingLeads.map((lead) => (
+              <article className="admin-business-card" key={lead.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{lead.lead_type.replaceAll("_", " ")}</span>
+                    <span>{lead.area || lead.source || "new lead"}</span>
+                  </div>
+                  <h2>{lead.business_name || lead.email}</h2>
+                  <p>{lead.notes || "No notes provided."}</p>
+                  <dl>
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{lead.email}</dd>
+                    </div>
+                    <div>
+                      <dt>Phone</dt>
+                      <dd>{lead.phone || "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt>Category</dt>
+                      <dd>{lead.category || "Launch access"}</dd>
+                    </div>
+                    <div>
+                      <dt>Website</dt>
+                      <dd>{lead.website || "Not provided"}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "contacted")}
+                  >
+                    Contacted
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "converted")}
+                  >
+                    Converted
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "closed")}
+                  >
+                    Close
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No new launch or business leads.</p>
+        )}
+      </div>
 
       <div className="admin-review-queue">
         <div className="section-heading">

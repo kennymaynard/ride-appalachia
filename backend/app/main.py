@@ -6,7 +6,7 @@ from alembic import command
 from alembic.config import Config
 
 from app.database import SessionLocal, get_settings
-from app.routes import admin, business, listings, reviews, subscriptions
+from app.routes import admin, business, leads, listings, reviews, subscriptions
 from app.seed import seed_database
 
 settings = get_settings()
@@ -39,6 +39,7 @@ def health() -> dict[str, str]:
 
 
 app.include_router(listings.router, prefix="/api")
+app.include_router(leads.router, prefix="/api")
 app.include_router(business.router, prefix="/api")
 app.include_router(admin.router, prefix="/api/admin")
 app.include_router(reviews.router, prefix="/api")

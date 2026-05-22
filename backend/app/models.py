@@ -53,6 +53,13 @@ class ReviewStatus(str, Enum):
     rejected = "rejected"
 
 
+class LeadStatus(str, Enum):
+    new = "new"
+    contacted = "contacted"
+    converted = "converted"
+    closed = "closed"
+
+
 class Business(Base):
     __tablename__ = "businesses"
 
@@ -150,3 +157,20 @@ class LodgingServiceRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     business: Mapped[Business] = relationship(back_populates="service_requests")
+
+
+class MarketingLead(Base):
+    __tablename__ = "marketing_leads"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    lead_type: Mapped[str] = mapped_column(String(40), default="launch_access", index=True)
+    email: Mapped[str] = mapped_column(String(180), index=True)
+    business_name: Mapped[str] = mapped_column(String(160), default="")
+    category: Mapped[str] = mapped_column(String(80), default="")
+    area: Mapped[str] = mapped_column(String(160), default="", index=True)
+    phone: Mapped[str] = mapped_column(String(40), default="")
+    website: Mapped[str] = mapped_column(Text, default="")
+    source: Mapped[str] = mapped_column(String(120), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(40), default=LeadStatus.new.value, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
