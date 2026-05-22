@@ -19,6 +19,13 @@ const businessSteps = [
   ["4", "Grow", "Track clicks, update specials, and sponsor key areas."],
 ];
 
+const launchBenefits = [
+  "Get found by ATV/UTV riders",
+  "Direct leads from trip planners",
+  "Affordable monthly plans",
+  "Featured placement options",
+];
+
 export default function BusinessWelcomePage() {
   const coreTiers = partnerTiers.filter((tier) =>
     ["local_business", "lodging_partner", "featured_partner"].includes(tier.id),
@@ -32,11 +39,16 @@ export default function BusinessWelcomePage() {
       <section className="business-hero">
         <div className="business-hero-copy">
           <p className="eyebrow">For local businesses</p>
-          <h1>The off-road hub for Appalachia rider traffic.</h1>
+          <h1>Grow Your Business With Rider Traffic.</h1>
           <p>
             List your lodging, food, fuel, rentals, repairs, services, or deals
             where ATV and UTV riders are already planning the weekend.
           </p>
+          <ul className="business-hero-checks">
+            {launchBenefits.map((benefit) => (
+              <li key={benefit}>{benefit}</li>
+            ))}
+          </ul>
           <div className="hero-actions">
             <Link href="/business/join">List Your Business</Link>
             <Link href="/business/login">Business Login</Link>

@@ -316,6 +316,298 @@ p {
   line-height: 1.35;
 }
 
+.homepage-category-strip,
+.homepage-phone-proof,
+.homepage-pricing,
+.homepage-testimonials {
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+}
+
+.homepage-category-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.homepage-category-strip article,
+.demo-listing-card,
+.homepage-testimonials article {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.homepage-category-strip strong,
+.demo-listing-card span,
+.homepage-testimonials span {
+  color: var(--orange-soft);
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.homepage-category-strip span,
+.demo-listing-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.homepage-phone-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.38fr);
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid rgba(242, 106, 27, 0.22);
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, rgba(242, 106, 27, 0.12), rgba(255, 255, 255, 0.035));
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.homepage-phone-proof h2,
+.homepage-pricing h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.homepage-phone-proof p {
+  max-width: 42rem;
+  color: var(--soft);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.mini-phone {
+  display: grid;
+  gap: 0.65rem;
+  border: 0.45rem solid #111;
+  border-radius: 1.4rem;
+  background: #070707;
+  padding: 0.9rem;
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
+}
+
+.mini-search,
+.mini-listing {
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+  padding: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.mini-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.mini-icon-grid span {
+  display: grid;
+  min-height: 3.4rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: rgba(242, 106, 27, 0.12);
+  color: var(--orange-soft);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.mini-listing strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.homepage-pricing {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(22rem, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(10, 10, 10, 0.9);
+  padding: clamp(1rem, 3vw, 1.4rem);
+}
+
+.homepage-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.homepage-pricing-grid article {
+  border: 1px solid rgba(242, 106, 27, 0.26);
+  border-radius: 0.6rem;
+  background: rgba(242, 106, 27, 0.08);
+  padding: 0.85rem;
+}
+
+.homepage-pricing-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.homepage-pricing-grid strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--orange-soft);
+  font-size: 1.45rem;
+  font-weight: 950;
+}
+
+.homepage-pricing > a {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.45rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 1rem;
+  font-weight: 950;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.homepage-testimonials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.homepage-testimonials p {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.demo-listing-card {
+  min-height: 15rem;
+  align-content: end;
+  border-color: rgba(242, 106, 27, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(242, 106, 27, 0.08)),
+    #101010;
+}
+
+.demo-listing-card h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.demo-listing-card strong {
+  color: var(--gold);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.launch-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: end center;
+  background: rgba(0, 0, 0, 0.62);
+  padding: 1rem;
+}
+
+.launch-popup > div {
+  position: relative;
+  width: min(31rem, 100%);
+  border: 1px solid rgba(242, 106, 27, 0.42);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.14), rgba(255, 255, 255, 0.04)),
+    #101010;
+  padding: 1.25rem;
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.58);
+}
+
+.launch-popup > div > button {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.launch-popup form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.launch-popup h2 {
+  max-width: 25rem;
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 950;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.launch-popup p {
+  max-width: 25rem;
+  margin: 0;
+  color: var(--soft);
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.launch-popup label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.launch-popup input {
+  min-height: 2.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.45rem;
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--text);
+  padding: 0 0.8rem;
+}
+
+.launch-popup form button {
+  min-height: 2.9rem;
+  border: 1px solid rgba(242, 106, 27, 0.75);
+  border-radius: 0.45rem;
+  background: var(--orange);
+  color: #160801;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .app-home {
   width: min(58rem, calc(100% - 2rem));
   margin: 0 auto;
@@ -1537,13 +1829,20 @@ p {
 }
 
 .business-hero-panel ul,
-.business-price-grid ul {
+.business-price-grid ul,
+.business-hero-checks {
   display: grid;
   gap: 0.35rem;
   margin: 0;
   padding-left: 1.1rem;
   color: var(--soft);
   font-weight: 800;
+}
+
+.business-hero-checks {
+  max-width: 36rem;
+  margin: 1rem 0;
+  color: var(--orange-soft);
 }
 
 .business-pricing-panel,
@@ -4434,6 +4733,7 @@ button.tier-card.is-selected {
 @media (max-width: 1050px) {
   .listing-grid,
   .simple-feature-row,
+  .homepage-category-strip,
   .trail-list,
   .nearby-trail-list,
   .nearby-category-grid,
@@ -4464,6 +4764,8 @@ button.tier-card.is-selected {
 
   .trail-map-layout,
   .trail-review-layout,
+  .homepage-phone-proof,
+  .homepage-pricing,
   .trail-pack-header,
   .trail-pack-grid,
   .map-source-card,
@@ -4526,6 +4828,10 @@ button.tier-card.is-selected {
   }
 
   .listing-grid,
+  .homepage-category-strip,
+  .homepage-pricing,
+  .homepage-pricing-grid,
+  .homepage-testimonials,
   .trail-list,
   .nearby-trail-list,
   .nearby-category-grid,
@@ -4626,6 +4932,11 @@ button.tier-card.is-selected {
 
   .app-hero-tabs,
   .app-category-grid,
+  .homepage-category-strip,
+  .homepage-phone-proof,
+  .homepage-pricing,
+  .homepage-pricing-grid,
+  .homepage-testimonials,
   .app-ride-card,
   .app-needs-row,
   .app-action-row,
@@ -4699,12 +5010,13 @@ button.tier-card.is-selected {
 }
 
 .site-footer {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.4fr) 1fr;
   gap: 1rem;
   width: min(94rem, calc(100% - 2rem));
   margin: 2rem auto 0;
   border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
   padding: 1.2rem 0 2rem;
   color: var(--muted);
 }
@@ -4730,6 +5042,7 @@ button.tier-card.is-selected {
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
+  justify-content: end;
   gap: 1rem;
 }
 

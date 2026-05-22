@@ -1,4 +1,4 @@
-const CACHE_NAME = "appalachia-offroad-offline-v4";
+const CACHE_NAME = "appalachia-offroad-offline-v5";
 const APP_SHELL = ["/", "/planner", "/ride-areas", "/offline", "/ride-appalachia-logo.png"];
 
 self.addEventListener("install", (event) => {

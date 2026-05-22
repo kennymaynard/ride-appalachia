@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "../components/BrandLogo";
+import { LaunchAccessPopup } from "../components/LaunchAccessPopup";
 import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ServiceWorkerRegister />
+        <LaunchAccessPopup />
         <header className="topbar">
           <BrandLogo />
           <nav>
@@ -44,7 +46,12 @@ export default function RootLayout({
             <span>Ride more. Plan less.</span>
           </div>
           <nav>
+            <Link href="https://www.facebook.com/" target="_blank">Facebook</Link>
+            <Link href="https://www.instagram.com/" target="_blank">Instagram</Link>
+            <Link href="https://www.tiktok.com/" target="_blank">TikTok</Link>
             <Link href="/contact">Contact</Link>
+            <Link href="/business">FAQ</Link>
+            <Link href="/business/join">Business Signup</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/refunds">Refunds</Link>
