@@ -1,4 +1,4 @@
-const CACHE_NAME = "appalachia-offroad-offline-v1";
+const CACHE_NAME = "appalachia-offroad-offline-v2";
 const APP_SHELL = ["/", "/planner", "/ride-areas", "/offline", "/ride-appalachia-logo.png"];
 
 self.addEventListener("install", (event) => {
@@ -19,12 +19,18 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
   event.respondWith(
-    fetch(request)
+    fetch(request.mode === "navigate" ? new Request(request, { cache: "reload" }) : request)
       .then((response) => {
         const responseCopy = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
