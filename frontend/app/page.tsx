@@ -46,7 +46,24 @@ export default async function Home() {
           <div className="app-location-card">
             <span>Appalachia Offroad</span>
             <h1>Where are you riding?</h1>
-            <p>Find trails, lodging, fuel, food, repairs, rentals, and map downloads in one tap.</p>
+            <p>
+              A trip planner for ATV riders, UTV groups, and hikers who need
+              trail maps, nearby stops, and an offline plan before they lose service.
+            </p>
+          </div>
+
+          <div className="app-explainer">
+            <strong>What this app does</strong>
+            <p>
+              Pick a trail area, see available trail maps and reviews, then build
+              a simple ride plan with lodging, food, fuel, repairs, rentals, notes,
+              and download links in one place.
+            </p>
+            <div>
+              <span>Find the trail</span>
+              <span>Plan the stops</span>
+              <span>Use it offline</span>
+            </div>
           </div>
 
           <Link className="app-search" href="/ride-areas">
