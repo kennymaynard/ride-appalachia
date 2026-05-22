@@ -431,6 +431,299 @@ p {
   line-height: 1.45;
 }
 
+.app-screen {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 18% 9%, rgba(242, 106, 27, 0.26), transparent 16rem),
+    radial-gradient(circle at 88% 32%, rgba(234, 182, 77, 0.12), transparent 15rem),
+    linear-gradient(180deg, #111 0%, #080808 100%);
+  padding: clamp(0.9rem, 2.6vw, 1.35rem);
+  box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.5);
+}
+
+.app-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-top-row img {
+  width: min(11rem, 48vw);
+  height: auto;
+}
+
+.app-top-row a,
+.app-bottom-tabs a {
+  border: 1px solid rgba(242, 106, 27, 0.45);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  color: var(--orange-soft);
+  padding: 0.48rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.app-location-card {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: clamp(0.7rem, 2vw, 1rem);
+  border: 1px solid rgba(242, 106, 27, 0.2);
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.18), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.35);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.app-location-card span,
+.app-section-title span,
+.app-card-kicker {
+  color: var(--orange-soft);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.app-location-card h1 {
+  margin: 0;
+  max-width: 38rem;
+  font-size: clamp(2.5rem, 8vw, 5.4rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.app-location-card p {
+  max-width: 37rem;
+  margin: 0;
+  color: var(--soft);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.app-screen .app-search {
+  margin-top: 0.75rem;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-screen .app-category-grid {
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.app-screen .app-category-grid a {
+  min-height: 6.25rem;
+  border-color: rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    #0b0b0b;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.app-screen .app-category-grid a:nth-child(1),
+.app-screen .app-category-grid a:nth-child(2) {
+  border-color: rgba(242, 106, 27, 0.34);
+  background:
+    linear-gradient(180deg, rgba(242, 106, 27, 0.18), rgba(255, 255, 255, 0.025)),
+    #0d0d0d;
+}
+
+.app-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.app-section-title a {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.app-ride-card {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  gap: 0.9rem;
+  align-items: center;
+  margin-top: 0.55rem;
+  border: 1px solid rgba(242, 106, 27, 0.34);
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, rgba(242, 106, 27, 0.16), rgba(255, 255, 255, 0.035));
+  padding: 0.75rem;
+}
+
+.app-route-art {
+  position: relative;
+  min-height: 7rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(135deg, rgba(98, 168, 120, 0.22), rgba(242, 106, 27, 0.12)),
+    #090909;
+}
+
+.app-route-art::before,
+.app-route-art::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+}
+
+.app-route-art::before {
+  left: 1rem;
+  right: 1rem;
+  top: 3.2rem;
+  height: 0.22rem;
+  background: var(--orange);
+  transform: rotate(-22deg);
+  box-shadow: 1.8rem 1.1rem 0 var(--green);
+}
+
+.app-route-art::after {
+  inset: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.app-route-art span {
+  position: absolute;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid #070707;
+  border-radius: 999px;
+  background: var(--orange);
+  box-shadow: 0 0 0 0.18rem rgba(242, 106, 27, 0.25);
+}
+
+.app-route-art span:nth-child(1) {
+  left: 1.1rem;
+  top: 4.25rem;
+}
+
+.app-route-art span:nth-child(2) {
+  left: 3.2rem;
+  top: 2.3rem;
+  background: var(--green);
+}
+
+.app-route-art span:nth-child(3) {
+  right: 1.05rem;
+  top: 3.65rem;
+}
+
+.app-ride-card h2 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.45rem, 4vw, 2.4rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.app-ride-card p {
+  margin: 0.35rem 0 0;
+  color: var(--soft);
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.32;
+}
+
+.app-ride-card div div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.app-ride-card small {
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--orange-soft);
+  padding: 0.28rem 0.45rem;
+  font-size: 0.64rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.app-ride-card > a {
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.app-needs-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.app-needs-row a {
+  display: grid;
+  gap: 0.3rem;
+  min-height: 5.4rem;
+  align-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.9rem;
+}
+
+.app-needs-row strong {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.app-needs-row span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.app-screen .app-proof-strip {
+  margin-top: 0.9rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.app-screen .app-proof-strip article {
+  min-height: 4.5rem;
+  padding: 0.75rem;
+}
+
+.app-bottom-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.app-bottom-tabs a {
+  display: grid;
+  place-items: center;
+  border-radius: 0.75rem;
+  text-align: center;
+}
+
 .app-hero {
   width: min(94rem, calc(100% - 2rem));
   margin: 0 auto;
@@ -4216,9 +4509,19 @@ button.tier-card.is-selected {
 
   .app-hero-tabs,
   .app-category-grid,
+  .app-ride-card,
+  .app-needs-row,
   .app-action-row,
   .app-proof-strip {
     grid-template-columns: 1fr;
+  }
+
+  .app-ride-card {
+    align-items: stretch;
+  }
+
+  .app-ride-card > a {
+    justify-self: start;
   }
 
   .app-hero-inner {

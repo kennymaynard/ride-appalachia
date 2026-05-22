@@ -6,15 +6,14 @@ import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
 
 const appCategories = [
-  { href: "/lodging", label: "Stay", detail: "Cabins, lodges, campgrounds", icon: "icon-stay" },
-  { href: "/ride-areas", label: "Rentals", detail: "ATV and UTV options", icon: "icon-rentals" },
-  { href: "/?category=food", label: "Eat", detail: "Restaurants and rider meals", icon: "icon-eat" },
-  { href: "/?category=repairs", label: "Repairs", detail: "Parts, tires, service", icon: "icon-repairs" },
-  { href: "/?category=fuel", label: "Fuel", detail: "Gas, ice, supplies", icon: "icon-fuel" },
-  { href: "/planner", label: "Plan", detail: "Offline trip builder", icon: "icon-events" },
-  { href: "/deals", label: "Deals", detail: "Local offers", icon: "icon-deals" },
-  { href: "/ride-areas", label: "Trails", detail: "Maps and Trail Packs", icon: "icon-trails" },
-  { href: "/business", label: "Services", detail: "Business tools", icon: "icon-services" },
+  { href: "/ride-areas", label: "Trails", detail: "Maps", icon: "icon-trails" },
+  { href: "/planner", label: "Plan", detail: "Offline", icon: "icon-events" },
+  { href: "/lodging", label: "Stay", detail: "Cabins", icon: "icon-stay" },
+  { href: "/?category=fuel", label: "Fuel", detail: "Supplies", icon: "icon-fuel" },
+  { href: "/?category=food", label: "Eat", detail: "Meals", icon: "icon-eat" },
+  { href: "/?category=repairs", label: "Repairs", detail: "Service", icon: "icon-repairs" },
+  { href: "/ride-areas", label: "Rentals", detail: "ATV / UTV", icon: "icon-rentals" },
+  { href: "/deals", label: "Deals", detail: "Offers", icon: "icon-deals" },
 ];
 
 export default async function Home() {
@@ -38,63 +37,79 @@ export default async function Home() {
   return (
     <main>
       <section className="app-home">
-        <div className="app-home-header">
-          <img src="/ride-appalachia-logo.png" alt="Appalachia Offroad" />
-          <p>Ride more. Plan less.</p>
-        </div>
-
-        <Link className="app-search" href="/ride-areas">
-          Search businesses, trails, maps, and places...
-        </Link>
-
-        <div className="app-category-grid" aria-label="App shortcuts">
-          {appCategories.map((item) => (
-            <Link key={item.label} href={item.href}>
-              <span className={`landing-icon ${item.icon}`} aria-hidden="true" />
-              <strong>{item.label}</strong>
-              <small>{item.detail}</small>
-            </Link>
-          ))}
-        </div>
-
-        <div className="app-action-row">
-          <Link className="app-action-card primary" href="/ride-areas">
-            <span>
-              <strong>Find Trail Packs</strong>
-              Official map sources, trail details, and nearby stops.
-            </span>
-          </Link>
-          <Link className="app-action-card" href="/planner">
-            <span>
-              <strong>Build Offline Plan</strong>
-              Save maps, notes, fuel, food, lodging, and backup stops.
-            </span>
-          </Link>
-          <Link className="app-action-card" href="/business/join">
-            <span>
-              <strong>List Your Business</strong>
-              Get discovered by riders before they arrive.
-            </span>
-          </Link>
-        </div>
-
-        <div className="app-home-copy">
-          <div>
-            <p className="eyebrow">Offline-ready Trail Packs</p>
-            <h1>Pick the ride. Tap what you need. Keep it offline.</h1>
+        <div className="app-screen">
+          <div className="app-top-row">
+            <img src="/ride-appalachia-logo.png" alt="Appalachia Offroad" />
+            <Link href="/offline">Offline</Link>
           </div>
-          <p>
-            Appalachia Offroad helps riders and hikers choose a trail area,
-            save map sources, find nearby stops, and carry the trip plan when
-            cell service disappears.
-          </p>
-        </div>
 
-        <div className="app-proof-strip" aria-label="App coverage">
-          <article><strong>{rideAreas.length}</strong><span>Ride and hike areas</span></article>
-          <article><strong>{publicMapCount}</strong><span>Public map sources</span></article>
-          <article><strong>{downloadableMapCount}</strong><span>Downloadable map files</span></article>
-          <article><strong>Offline</strong><span>Saved notes and trip packs</span></article>
+          <div className="app-location-card">
+            <span>Appalachia Offroad</span>
+            <h1>Where are you riding?</h1>
+            <p>Find trails, lodging, fuel, food, repairs, rentals, and map downloads in one tap.</p>
+          </div>
+
+          <Link className="app-search" href="/ride-areas">
+            Search trail area, town, business, or map
+          </Link>
+
+          <div className="app-category-grid" aria-label="App shortcuts">
+            {appCategories.map((item) => (
+              <Link key={item.label} href={item.href}>
+                <span className={`landing-icon ${item.icon}`} aria-hidden="true" />
+                <strong>{item.label}</strong>
+                <small>{item.detail}</small>
+              </Link>
+            ))}
+          </div>
+
+          <div className="app-section-title">
+            <span>Start here</span>
+            <Link href="/ride-areas">View all</Link>
+          </div>
+
+          <div className="app-ride-card">
+            <div className="app-route-art" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div>
+              <span className="app-card-kicker">Featured Trail Pack</span>
+              <h2>Rush, Kentucky</h2>
+              <p>Maps, reviews, trail names, nearby lodging, food, fuel, repairs, and offline notes.</p>
+              <div>
+                <small>{publicMapCount} public maps</small>
+                <small>{downloadableMapCount} downloads</small>
+              </div>
+            </div>
+            <Link href="/ride-areas/rush-ky">Open</Link>
+          </div>
+
+          <div className="app-needs-row">
+            <Link href="/planner">
+              <strong>Build my route</strong>
+              <span>Save stops and backup plans before service drops.</span>
+            </Link>
+            <Link href="/map-sources">
+              <strong>Map confidence</strong>
+              <span>See which trail maps are official, public, or contact-needed.</span>
+            </Link>
+          </div>
+
+          <div className="app-proof-strip" aria-label="App coverage">
+            <article><strong>{rideAreas.length}</strong><span>Areas</span></article>
+            <article><strong>{publicMapCount}</strong><span>Maps</span></article>
+            <article><strong>{downloadableMapCount}</strong><span>Files</span></article>
+            <article><strong>Offline</strong><span>Ready</span></article>
+          </div>
+
+          <nav className="app-bottom-tabs" aria-label="App shortcuts">
+            <Link href="/ride-areas">Trails</Link>
+            <Link href="/planner">Planner</Link>
+            <Link href="/lodging">Stay</Link>
+            <Link href="/deals">Deals</Link>
+          </nav>
         </div>
       </section>
 
