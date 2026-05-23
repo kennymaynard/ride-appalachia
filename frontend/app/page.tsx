@@ -131,7 +131,7 @@ export default async function Home() {
       <section className="page-section">
         <div className="section-heading">
           <p>Local services</p>
-          <h2>Founding partners coming soon.</h2>
+          <h2>{featured.length ? "Featured partners." : "Founding partners coming soon."}</h2>
         </div>
         <MarketplaceGrid listings={featured.length ? featured : listings} />
       </section>

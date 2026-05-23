@@ -4328,7 +4328,8 @@ button.tier-card.is-selected {
 }
 
 .nearby-trail-list,
-.nearby-category-grid {
+.nearby-category-grid,
+.nearby-featured-list {
   display: grid;
   gap: 0.75rem;
   margin-top: 0.85rem;
@@ -4340,6 +4341,11 @@ button.tier-card.is-selected {
 
 .nearby-category-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nearby-featured-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0.85rem;
 }
 
 .nearby-trail-list article,
@@ -4907,6 +4913,7 @@ button.tier-card.is-selected {
   .homepage-category-strip,
   .trail-list,
   .nearby-trail-list,
+  .nearby-featured-list,
   .nearby-category-grid,
   .tier-grid,
   .ride-area-grid,
@@ -5008,6 +5015,7 @@ button.tier-card.is-selected {
   .business-area-slots,
   .trail-list,
   .nearby-trail-list,
+  .nearby-featured-list,
   .nearby-category-grid,
   .business-price-grid,
   .business-category-grid,

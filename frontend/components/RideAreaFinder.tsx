@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Business, Category, RideArea, TrailInfo } from "../lib/types";
+import { ListingCard } from "./ListingCard";
 
 type Props = {
   areas: RideArea[];
@@ -147,6 +148,15 @@ function getBusinessCoordinates(business: Business, areas: RideArea[]) {
     : undefined;
 }
 
+function isSponsoredOrFeatured(business: Business) {
+  return (
+    business.is_featured ||
+    business.subscription_tier === "featured_partner" ||
+    business.subscription_tier === "monthly_sponsor" ||
+    business.campaigns.some((campaign) => campaign.status === "active")
+  );
+}
+
 function getSearchCoordinates(city: string, coordinates: Coordinates | null) {
   return findKnownCity(city) ?? coordinates;
 }
@@ -241,8 +251,20 @@ export function RideAreaFinder({ areas, listings }: Props) {
           )
         : ranked;
 
-    return filtered.sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999));
+    return filtered.sort((a, b) => {
+      const featuredDelta = Number(isSponsoredOrFeatured(b)) - Number(isSponsoredOrFeatured(a));
+      if (featuredDelta) return featuredDelta;
+      return (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999);
+    });
   }, [areas, hasSearchedCity, listings, radiusMiles, searchCoordinates, travelCity]);
+
+  const featuredNearbyListings = useMemo(
+    () => nearbyListings.filter(isSponsoredOrFeatured).slice(0, 3),
+    [nearbyListings],
+  );
+  const previewNearbyListings = featuredNearbyListings.length
+    ? featuredNearbyListings
+    : nearbyListings.slice(0, 3);
 
   function useCurrentLocation() {
     setStatus("");
@@ -365,6 +387,13 @@ export function RideAreaFinder({ areas, listings }: Props) {
             <span>Marketplace</span>
             <strong>Everything nearby by category</strong>
           </summary>
+          {previewNearbyListings.length ? (
+            <div className="nearby-featured-list">
+              {previewNearbyListings.map((business) => (
+                <ListingCard key={business.id} business={business} />
+              ))}
+            </div>
+          ) : null}
           <div className="nearby-category-grid">
             {marketplaceCategories.map((category) => {
               const categoryListings =
