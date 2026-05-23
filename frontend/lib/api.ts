@@ -442,14 +442,18 @@ export async function getAdminServiceRequests(
 export async function getAdminMarketingLeads(
   adminPassword?: string,
 ): Promise<MarketingLead[]> {
-  const response = await fetch(`${getApiUrl()}/api/admin/leads?status=new`, {
-    cache: "no-store",
-    headers: getAdminHeaders(adminPassword),
-  });
-  if (!response.ok) {
-    throw new Error("Unable to load marketing leads");
+  try {
+    const response = await fetch(`${getApiUrl()}/api/admin/leads?status=new`, {
+      cache: "no-store",
+      headers: getAdminHeaders(adminPassword),
+    });
+    if (!response.ok) {
+      return [];
+    }
+    return response.json();
+  } catch {
+    return [];
   }
-  return response.json();
 }
 
 export async function updateMarketingLeadStatus(
