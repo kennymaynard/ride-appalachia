@@ -38,7 +38,9 @@ def create_checkout_session(
     cancel_url = f"{settings.frontend_url}/business/join?checkout=cancelled&tier={tier}{business_query}"
 
     if not settings.stripe_secret_key or not price_id:
-        return success_url.replace("checkout=success", "checkout=stub")
+        if settings.frontend_url.startswith("http://localhost"):
+            return success_url.replace("checkout=success", "checkout=stub")
+        raise RuntimeError("Stripe is not configured for this subscription tier")
 
     stripe.api_key = settings.stripe_secret_key
     session = stripe.checkout.Session.create(

@@ -37,6 +37,7 @@ FRONTEND_URL=https://appalachiaoffroadapp.com
 ADMIN_PASSWORD=
 RESEND_API_KEY=
 EMAIL_FROM=Appalachia Offroad <support@appalachiaoffroadapp.com>
+LEAD_NOTIFY_EMAIL=support@appalachiaoffroadapp.com
 STRIPE_SECRET_KEY=
 STRIPE_PRICE_LOCAL_BUSINESS=
 STRIPE_PRICE_LODGING_PARTNER=
@@ -84,6 +85,8 @@ Copy the webhook signing secret into `STRIPE_WEBHOOK_SECRET`.
 ## Email Setup
 
 Use Resend for business login emails.
+The same Resend key also sends launch-access and business-availability lead
+notifications to `LEAD_NOTIFY_EMAIL`.
 
 1. Verify your sending domain in Resend.
 2. Create an API key.
@@ -92,6 +95,7 @@ Use Resend for business login emails.
 ```env
 RESEND_API_KEY=
 EMAIL_FROM=Appalachia Offroad <support@appalachiaoffroadapp.com>
+LEAD_NOTIFY_EMAIL=support@appalachiaoffroadapp.com
 ```
 
 ## Launch Smoke Test

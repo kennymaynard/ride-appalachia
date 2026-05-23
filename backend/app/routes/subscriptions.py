@@ -82,12 +82,15 @@ def create_subscription_checkout(
             raise HTTPException(status_code=401, detail="Business access token required")
         owner_access_token = business.owner_access_token
 
-    checkout_url = create_checkout_session(
-        settings,
-        payload.tier,
-        payload.business_id,
-        owner_access_token,
-    )
+    try:
+        checkout_url = create_checkout_session(
+            settings,
+            payload.tier,
+            payload.business_id,
+            owner_access_token,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     return CheckoutSessionRead(checkout_url=checkout_url)
 
 
@@ -124,9 +127,29 @@ async def stripe_webhook(
     event_type = event["type"]
     data_object = event["data"]["object"]
 
+    def resolve_business_id(metadata: dict, stripe_customer_id: str = "", stripe_subscription_id: str = "") -> int:
+        business_id = int(metadata.get("business_id") or 0)
+        if business_id:
+            return business_id
+
+        query = db.query(Business)
+        if stripe_subscription_id:
+            business = query.filter(Business.stripe_subscription_id == stripe_subscription_id).first()
+            if business:
+                return business.id
+        if stripe_customer_id:
+            business = query.filter(Business.stripe_customer_id == stripe_customer_id).first()
+            if business:
+                return business.id
+        return 0
+
     if event_type == "checkout.session.completed":
         metadata = data_object.get("metadata", {})
-        business_id = int(metadata.get("business_id") or 0)
+        business_id = resolve_business_id(
+            metadata,
+            stripe_customer_id=data_object.get("customer") or "",
+            stripe_subscription_id=data_object.get("subscription") or "",
+        )
         if business_id:
             apply_subscription_update(
                 db,
@@ -139,7 +162,11 @@ async def stripe_webhook(
 
     if event_type in {"customer.subscription.updated", "customer.subscription.deleted"}:
         metadata = data_object.get("metadata", {})
-        business_id = int(metadata.get("business_id") or 0)
+        business_id = resolve_business_id(
+            metadata,
+            stripe_customer_id=data_object.get("customer") or "",
+            stripe_subscription_id=data_object.get("id") or "",
+        )
         if business_id:
             status = "canceled" if event_type == "customer.subscription.deleted" else data_object.get("status", "active")
             apply_subscription_update(

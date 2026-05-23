@@ -30,6 +30,8 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: Appalachia Offroad <support@appalachiaoffroadapp.com>
+      - key: LEAD_NOTIFY_EMAIL
+        value: support@appalachiaoffroadapp.com
       - key: ADMIN_PASSWORD
         generateValue: true
 
