@@ -12,10 +12,11 @@ from app.seed import seed_database
 settings = get_settings()
 allowed_origins = [
     settings.frontend_url,
+    "https://appalachiaoffroadapp.com",
+    "https://www.appalachiaoffroadapp.com",
     "http://localhost:3000",
 ]
-if settings.frontend_url == "https://appalachiaoffroadapp.com":
-    allowed_origins.append("https://www.appalachiaoffroadapp.com")
+allowed_origins = list(dict.fromkeys(allowed_origins))
 
 app = FastAPI(title="Appalachia Offroad API", version="0.1.0")
 
