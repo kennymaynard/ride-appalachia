@@ -408,7 +408,13 @@ export async function getAdminBusinesses(adminPassword?: string): Promise<Busine
   });
 
   if (!response.ok) {
-    throw new Error("Unable to load admin businesses");
+    if (response.status === 401) {
+      throw new Error("Admin password is incorrect. Use the ADMIN_PASSWORD value from the backend service in Render.");
+    }
+    if (response.status === 403 || response.status === 0) {
+      throw new Error("Admin API is blocked. Use appalachiaoffroadapp.com without www, or redeploy the backend.");
+    }
+    throw new Error(`Unable to load admin businesses. API returned ${response.status}.`);
   }
 
   return response.json();
