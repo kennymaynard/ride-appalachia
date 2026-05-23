@@ -10,12 +10,18 @@ from app.routes import admin, business, leads, listings, reviews, subscriptions
 from app.seed import seed_database
 
 settings = get_settings()
+allowed_origins = [
+    settings.frontend_url,
+    "http://localhost:3000",
+]
+if settings.frontend_url == "https://appalachiaoffroadapp.com":
+    allowed_origins.append("https://www.appalachiaoffroadapp.com")
 
 app = FastAPI(title="Appalachia Offroad API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
