@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
@@ -19,7 +21,9 @@ router = APIRouter(tags=["admin"])
 
 
 def require_admin(x_admin_password: str = Header(default="")) -> None:
-    if x_admin_password != get_settings().admin_password:
+    expected_password = get_settings().admin_password.strip()
+    submitted_password = x_admin_password.strip()
+    if not expected_password or not secrets.compare_digest(submitted_password, expected_password):
         raise HTTPException(status_code=401, detail="Admin password required")
 
 

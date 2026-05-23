@@ -398,7 +398,8 @@ export async function createTrailReview(payload: TrailReviewCreateInput): Promis
 }
 
 function getAdminHeaders(adminPassword?: string): Record<string, string> {
-  return adminPassword ? { "x-admin-password": adminPassword } : {};
+  const trimmedPassword = adminPassword?.trim();
+  return trimmedPassword ? { "x-admin-password": trimmedPassword } : {};
 }
 
 export async function getAdminBusinesses(adminPassword?: string): Promise<Business[]> {
