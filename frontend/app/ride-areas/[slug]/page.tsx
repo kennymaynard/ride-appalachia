@@ -7,6 +7,8 @@ import { TrailReviews } from "../../../components/TrailReviews";
 import { getListings, getTrailReviews } from "../../../lib/api";
 import { rideAreas, trailReviews } from "../../../lib/sample-data";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

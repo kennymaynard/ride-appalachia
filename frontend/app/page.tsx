@@ -4,6 +4,8 @@ import { categories, rideAreas } from "../lib/sample-data";
 import { getTrailMapSources } from "../lib/trail-map-sources";
 import { getListings } from "../lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const listings = await getListings("all");
   const featured = listings.filter((business) => business.is_featured);

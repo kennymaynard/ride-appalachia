@@ -2,6 +2,8 @@ import Link from "next/link";
 import { MarketplaceGrid } from "../../components/MarketplaceGrid";
 import { getListings } from "../../lib/api";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   searchParams: Promise<{ area?: string }>;
 };

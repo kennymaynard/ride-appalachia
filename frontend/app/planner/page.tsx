@@ -2,6 +2,8 @@ import { TripPlanner } from "../../components/TripPlanner";
 import { getListings } from "../../lib/api";
 import { rideAreas } from "../../lib/sample-data";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   searchParams: Promise<{ area?: string }>;
 };

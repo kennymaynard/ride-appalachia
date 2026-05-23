@@ -4,6 +4,8 @@ import { RideAreaMap } from "../../components/RideAreaMap";
 import { rideAreas, trailReviews } from "../../lib/sample-data";
 import { getListings } from "../../lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function RideAreasPage() {
   const listings = await getListings("all");
 

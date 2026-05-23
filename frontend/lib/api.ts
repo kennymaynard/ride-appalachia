@@ -103,7 +103,7 @@ export async function getListings(filters?: Category | "all" | ListingFilters): 
 
   try {
     const response = await apiFetch(`/api/listings?${params.toString()}`, {
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
     if (!response.ok) throw new Error("Unable to load listings");
     return response.json();
@@ -121,7 +121,7 @@ export async function getListing(slug: string): Promise<Business | null> {
 
   try {
     const response = await apiFetch(`/api/listings/${slug}`, {
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
     if (!response.ok) return null;
     return response.json();
