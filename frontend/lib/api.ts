@@ -362,7 +362,8 @@ export async function createCheckout(
   });
 
   if (!response.ok) {
-    throw new Error("Unable to create checkout");
+    const message = await response.text();
+    throw new Error(message || "Unable to create checkout");
   }
 
   const data = (await response.json()) as { checkout_url: string };

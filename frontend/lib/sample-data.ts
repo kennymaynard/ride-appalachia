@@ -2061,24 +2061,10 @@ export const sampleBusinesses: Business[] = [];
 
 export const partnerTiers: Tier[] = [
   {
-    id: "cleaner_partner",
-    name: "Cleaner Partner",
-    price: "$29.99",
-    description: "For cleaners who want unlimited lodging turnover opportunities.",
-    features: ["Flat monthly fee", "No per-clean cut", "Unlimited cleanings", "Lodging request access"],
-  },
-  {
-    id: "monthly_sponsor",
-    name: "Monthly Sponsor",
-    price: "$149",
-    description: "For businesses that want monthly ride-area/category visibility.",
-    features: ["Ride-area sponsor placement", "Category boost", "Deal visibility", "Campaign status tracking"],
-  },
-  {
     id: "local_business",
     name: "Local Business",
     price: "$29",
-    description: "For food, fuel, repair, and service providers.",
+    description: "For restaurants, repair shops, recovery services, fuel stops, outfitters, and local rider businesses.",
     features: ["Marketplace listing", "Phone and location CTA", "Deal or coupon", "Basic click stats"],
   },
   {
@@ -2094,5 +2080,19 @@ export const partnerTiers: Tier[] = [
     price: "$99",
     description: "For businesses that want homepage and category priority.",
     features: ["Everything in Lodging", "Featured placement", "Priority admin review", "Expanded deal visibility"],
+  },
+  {
+    id: "monthly_sponsor",
+    name: "Monthly Sponsor",
+    price: "$149",
+    description: "For businesses that want monthly ride-area/category visibility.",
+    features: ["Ride-area sponsor placement", "Category boost", "Deal visibility", "Campaign status tracking"],
+  },
+  {
+    id: "cleaner_partner",
+    name: "Cleaner Partner",
+    price: "$29.99",
+    description: "For cleaners who want unlimited lodging turnover opportunities.",
+    features: ["Flat monthly fee", "No per-clean cut", "Unlimited cleanings", "Lodging request access"],
   },
 ];

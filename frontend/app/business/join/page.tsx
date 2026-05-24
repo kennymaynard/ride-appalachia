@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createBusiness, createCheckout } from "../../../lib/api";
 import { partnerTiers } from "../../../lib/sample-data";
 import type { BusinessCreateInput, Category, Tier } from "../../../lib/types";
@@ -27,6 +27,16 @@ const initialForm = {
   photo_url: "",
 };
 
+const tierIds = partnerTiers.map((item) => item.id);
+
+const tierBestFor: Record<Tier["id"], string> = {
+  local_business: "Best for food, fuel, repair, recovery, outfitters, and local shops.",
+  lodging_partner: "Best for cabins, campgrounds, hotels, and trailer-friendly stays.",
+  featured_partner: "Best for priority category placement and higher visibility.",
+  monthly_sponsor: "Best for businesses sponsoring a ride area or campaign.",
+  cleaner_partner: "Best for cleaners serving lodging owners and turnover jobs.",
+};
+
 function slugify(value: string) {
   const slug = value
     .toLowerCase()
@@ -42,11 +52,25 @@ export default function JoinPage() {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [checkoutNotice, setCheckoutNotice] = useState("");
 
   const selectedTier = useMemo(
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
     [tier],
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedTier = params.get("tier") as Tier["id"] | null;
+    if (requestedTier && tierIds.includes(requestedTier)) {
+      setTier(requestedTier);
+    }
+    if (params.get("checkout") === "cancelled") {
+      setCheckoutNotice(
+        "Checkout was cancelled. Your listing details are not live until the monthly plan is completed.",
+      );
+    }
+  }, []);
 
   function updateForm(
     field: keyof typeof initialForm,
@@ -101,13 +125,37 @@ export default function JoinPage() {
   return (
     <main className="page">
       <section className="page-hero compact">
-        <p className="eyebrow">Partner signup</p>
-        <h1>Get found by riders before they hit the road.</h1>
+        <p className="eyebrow">Business signup</p>
+        <h1>Choose the right plan for your business.</h1>
         <p>
-          Reach ATV and UTV groups planning trips near Rush, Inez, Hatfield,
-          Matewan, Harlan, Black Mountain, and Royal Blue. Add your listing,
-          post specials, and sponsor the ride areas your customers search.
+          Get found by ATV, UTV, Jeep, and SxS riders looking for lodging,
+          food, fuel, repair, recovery, outfitter stops, and trail-town deals
+          before they hit the road. Start with a $29 Local Business listing or
+          choose a higher-visibility tier for lodging, featured placement, or
+          sponsorships.
         </p>
+        <div className="join-hero-proof" aria-label="Signup details">
+          <span>Plans start at $29/month</span>
+          <span>Cancel anytime</span>
+          <span>Reviewed before going live</span>
+        </div>
+      </section>
+
+      {checkoutNotice ? <p className="form-error join-alert">{checkoutNotice}</p> : null}
+
+      <section className="join-flow-strip" aria-label="Signup steps">
+        <article>
+          <span>1</span>
+          <strong>Choose your monthly tier</strong>
+        </article>
+        <article>
+          <span>2</span>
+          <strong>Add your listing details</strong>
+        </article>
+        <article>
+          <span>3</span>
+          <strong>Continue to secure checkout</strong>
+        </article>
       </section>
 
       <section className="tier-grid selectable-tiers" aria-label="Partner tiers">
@@ -125,6 +173,7 @@ export default function JoinPage() {
                 <span>/mo</span>
               </h3>
               <strong>{item.description}</strong>
+              <small>{tierBestFor[item.id]}</small>
             </div>
             <ul>
               {item.features.map((feature) => (
@@ -138,9 +187,19 @@ export default function JoinPage() {
 
       <section className="join-form-shell">
         <form className="dashboard-card" onSubmit={submitJoinForm}>
-          <div>
-            <p className="eyebrow">Selected plan</p>
-            <h2>{selectedTier.name}</h2>
+          <div className="selected-plan-summary">
+            <div>
+              <p className="eyebrow">Selected plan</p>
+              <h2>{selectedTier.name}</h2>
+            </div>
+            <strong>
+              {selectedTier.price}
+              <span>/month</span>
+            </strong>
+            <p>
+              Your listing is created first, then you continue to secure Stripe
+              checkout to activate the monthly plan.
+            </p>
           </div>
 
           <label>
@@ -230,7 +289,7 @@ export default function JoinPage() {
           {error ? <p className="form-error">{error}</p> : null}
 
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating Listing..." : "Submit And Continue To Checkout"}
+            {isSubmitting ? "Opening Checkout..." : `Continue to ${selectedTier.price}/month Checkout`}
           </button>
         </form>
       </section>

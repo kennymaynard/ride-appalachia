@@ -62,7 +62,7 @@ export default function Home() {
           </article>
           <article>
             <span>Businesses</span>
-            <strong>Reach offroad riders for $29/month.</strong>
+            <strong>Reach offroad riders with plans starting at $29/month.</strong>
           </article>
         </div>
       </section>
@@ -89,8 +89,8 @@ export default function Home() {
           <p>
             Reach ATV, UTV, Jeep, and SxS riders actively planning trips through
             Appalachia. List your lodging, restaurant, repair shop, recovery
-            service, campground, outfitter, or local business for only
-            $29/month.
+            service, campground, outfitter, or local business with plans
+            starting at $29/month.
           </p>
           <div className="business-type-row" aria-label="Business categories">
             {businessTypes.map((type) => (
@@ -105,7 +105,7 @@ export default function Home() {
             Get found by riders searching for ATV lodging, offroad restaurants,
             SxS repair and recovery, trail services, and local deals.
           </p>
-          <Link href="/business/join">Join for $29/month</Link>
+          <Link href="/business/join">See Pricing Tiers</Link>
         </aside>
       </section>
 
