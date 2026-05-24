@@ -597,6 +597,383 @@ p {
   text-transform: uppercase;
 }
 
+.home-base {
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+  padding-bottom: 1rem;
+}
+
+.home-hero,
+.home-section,
+.business-owner-section,
+.coverage-section,
+.final-home-cta {
+  width: min(94rem, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.home-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.32fr);
+  gap: clamp(1rem, 3vw, 2rem);
+  min-height: clamp(34rem, 76vh, 48rem);
+  align-items: end;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.74) 38%, rgba(0, 0, 0, 0.18) 76%),
+    linear-gradient(0deg, rgba(7, 7, 7, 0.95), rgba(7, 7, 7, 0.08) 42%),
+    url("/appalachia-offroad-hero.png") center / cover;
+  padding: clamp(1rem, 3vw, 2rem);
+  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.5);
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 0.35rem;
+  background: linear-gradient(90deg, var(--orange), var(--gold), rgba(98, 168, 120, 0.9));
+}
+
+.home-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 58rem;
+}
+
+.home-hero-copy h1,
+.business-owner-section h2,
+.final-home-cta h2 {
+  margin: 0;
+  max-width: 56rem;
+  font-size: clamp(3.1rem, 8.2vw, 7.8rem);
+  font-weight: 950;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.home-hero-copy p:not(.eyebrow),
+.business-owner-section > div > p:not(.home-badge),
+.coverage-section > p {
+  max-width: 48rem;
+  color: var(--soft);
+  font-size: clamp(1.06rem, 2vw, 1.36rem);
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.3rem;
+}
+
+.home-hero-actions a,
+.business-price-card a {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(242, 106, 27, 0.8);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  box-shadow: 0 0.8rem 2rem rgba(242, 106, 27, 0.18);
+}
+
+.home-hero-actions a:nth-child(2) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.58);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.home-hero-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.home-hero-panel article,
+.home-info-card,
+.trust-card-grid article,
+.testimonial-grid figure {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(14, 14, 14, 0.78);
+  padding: 1rem;
+  box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.24);
+}
+
+.home-hero-panel article {
+  backdrop-filter: blur(10px);
+}
+
+.home-hero-panel span,
+.home-info-card span,
+.business-type-row span,
+.trust-card-grid strong,
+.testimonial-grid figcaption {
+  color: var(--orange-soft);
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.home-hero-panel strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text);
+  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.home-section {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(10, 10, 10, 0.92);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.home-section-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.home-section-heading h2,
+.coverage-section h2 {
+  margin: 0;
+  max-width: 52rem;
+  font-size: clamp(2rem, 5vw, 4.6rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.home-card-grid,
+.trust-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.home-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home-info-card {
+  min-height: 12rem;
+  align-content: end;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(242, 106, 27, 0.08)),
+    #111;
+}
+
+.home-info-card p {
+  margin: 0.55rem 0 0;
+  color: var(--soft);
+  font-weight: 760;
+  line-height: 1.4;
+}
+
+.business-owner-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.34fr);
+  gap: clamp(1rem, 3vw, 1.5rem);
+  align-items: stretch;
+  border: 1px solid rgba(242, 106, 27, 0.32);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(120deg, rgba(242, 106, 27, 0.16), rgba(98, 168, 120, 0.08)),
+    #101010;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.home-badge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2rem;
+  align-items: center;
+  border: 1px solid rgba(234, 182, 77, 0.5);
+  border-radius: 999px;
+  background: rgba(234, 182, 77, 0.12);
+  color: var(--gold);
+  padding: 0 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.business-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.business-type-row span {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.55rem 0.7rem;
+  color: var(--soft);
+}
+
+.business-price-card {
+  display: grid;
+  gap: 0.7rem;
+  align-content: center;
+  border: 1px solid rgba(242, 106, 27, 0.45);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(180deg, rgba(242, 106, 27, 0.14), rgba(0, 0, 0, 0.24)),
+    rgba(0, 0, 0, 0.46);
+  padding: 1.1rem;
+}
+
+.business-price-card span {
+  color: var(--orange-soft);
+  font-size: clamp(4rem, 9vw, 6.5rem);
+  font-weight: 950;
+  line-height: 0.82;
+}
+
+.business-price-card strong {
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.business-price-card p {
+  margin: 0;
+  color: var(--soft);
+  font-weight: 760;
+  line-height: 1.4;
+}
+
+.phone-mockup-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.phone-mockup {
+  min-width: 0;
+  border: 0.45rem solid #0b0b0b;
+  border-radius: 1.45rem;
+  background: #080808;
+  padding: 0.65rem;
+  box-shadow:
+    0 1.4rem 2.6rem rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.phone-mockup-screen {
+  display: grid;
+  min-height: 22rem;
+  align-content: end;
+  gap: 0.75rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(11, 11, 11, 0.32), rgba(4, 4, 4, 0.96)),
+    url("/appalachia-offroad-hero.png") center / cover;
+  padding: 1rem;
+}
+
+.phone-mockup-screen span {
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.phone-mockup-screen div {
+  display: grid;
+  min-height: 7rem;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.18), rgba(98, 168, 120, 0.16)),
+    rgba(0, 0, 0, 0.54);
+}
+
+.phone-mockup-screen small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trust-card-grid article {
+  min-height: 7.5rem;
+  display: grid;
+  align-items: end;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.testimonial-grid figure {
+  margin: 0;
+}
+
+.testimonial-grid blockquote {
+  margin: 0 0 0.8rem;
+  color: var(--text);
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.coverage-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.final-home-cta {
+  display: grid;
+  min-height: 18rem;
+  align-content: center;
+  justify-items: center;
+  border: 1px solid rgba(242, 106, 27, 0.32);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.44), rgba(0, 0, 0, 0.9)),
+    url("/appalachia-offroad-hero.png") center 64% / cover;
+  padding: clamp(1rem, 4vw, 2rem);
+  text-align: center;
+}
+
+.final-home-cta h2 {
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+}
+
 .launch-popup {
   position: fixed;
   inset: 0;
@@ -1846,10 +2223,11 @@ p {
   border-radius: 0.75rem;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.44)),
-    url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80")
-      center / cover;
+    linear-gradient(90deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.58) 48%, rgba(0, 0, 0, 0.2)),
+    linear-gradient(0deg, rgba(7, 7, 7, 0.9), rgba(7, 7, 7, 0.06) 58%),
+    url("/appalachia-offroad-hero.png") center / cover;
   padding: clamp(1rem, 3vw, 2rem);
+  box-shadow: 0 1.5rem 4.5rem rgba(0, 0, 0, 0.42);
 }
 
 .business-hero-copy {
@@ -2326,6 +2704,48 @@ p {
 
 .page-hero {
   padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.page:not(.admin-page) .page-hero {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(242, 106, 27, 0.24);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.68) 52%, rgba(0, 0, 0, 0.2)),
+    linear-gradient(0deg, rgba(7, 7, 7, 0.96), rgba(7, 7, 7, 0.1) 58%),
+    url("/appalachia-offroad-hero.png") center / cover;
+  box-shadow: 0 1.4rem 4.4rem rgba(0, 0, 0, 0.46);
+}
+
+.page:not(.admin-page) .page-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 0.28rem;
+  background: linear-gradient(90deg, var(--orange), var(--gold), rgba(98, 168, 120, 0.9));
+}
+
+.page:not(.admin-page) .page-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.page:not(.admin-page) .page-section {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.06), rgba(98, 168, 120, 0.035)),
+    rgba(10, 10, 10, 0.92);
+  box-shadow: 0 1.1rem 3rem rgba(0, 0, 0, 0.22);
+}
+
+.page:not(.admin-page) .page-hero a {
+  margin-top: 0.35rem;
+  border-color: rgba(242, 106, 27, 0.72);
+  background: var(--orange);
+  color: #160801;
+  box-shadow: 0 0.8rem 2rem rgba(242, 106, 27, 0.16);
 }
 
 .page-hero.compact h1 {
@@ -4833,6 +5253,11 @@ button.tier-card.is-selected {
   display: grid;
   grid-template-columns: 0.9fr 1fr;
   overflow: hidden;
+  border-color: rgba(242, 106, 27, 0.24);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.08), rgba(98, 168, 120, 0.04)),
+    rgba(10, 10, 10, 0.92);
 }
 
 .detail-image {
@@ -4944,6 +5369,9 @@ button.tier-card.is-selected {
   .trail-review-layout,
   .homepage-phone-proof,
   .homepage-pricing,
+  .home-hero,
+  .business-owner-section,
+  .coverage-section,
   .trail-pack-header,
   .trail-pack-grid,
   .map-source-card,
@@ -5011,6 +5439,10 @@ button.tier-card.is-selected {
   .homepage-pricing,
   .homepage-pricing-grid,
   .homepage-testimonials,
+  .home-card-grid,
+  .trust-card-grid,
+  .testimonial-grid,
+  .phone-mockup-grid,
   .landing-path-grid,
   .business-area-slots,
   .trail-list,
@@ -5087,6 +5519,11 @@ button.tier-card.is-selected {
 
 @media (max-width: 480px) {
   .hero,
+  .home-hero,
+  .home-section,
+  .business-owner-section,
+  .coverage-section,
+  .final-home-cta,
   .simple-landing,
   .app-home,
   .app-hero,
@@ -5124,6 +5561,25 @@ button.tier-card.is-selected {
   .app-action-row,
   .app-proof-strip {
     grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    min-height: 40rem;
+    background-position: 58% center;
+  }
+
+  .home-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero-actions a,
+  .business-price-card a {
+    width: 100%;
+  }
+
+  .phone-mockup-screen {
+    min-height: 19rem;
   }
 
   .app-ride-card {

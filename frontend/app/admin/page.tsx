@@ -2,7 +2,7 @@ import { AdminDashboard } from "../../components/AdminDashboard";
 
 export default function AdminPage() {
   return (
-    <main className="page">
+    <main className="page admin-page">
       <section className="page-hero compact">
         <p className="eyebrow">Admin panel</p>
         <h1>Approve listings and manage featured partners.</h1>

@@ -7,8 +7,9 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Appalachia Offroad",
-  description: "ATV and UTV marketplace and trip planner for Appalachia.",
+  title: "Appalachia Offroad App | Trails, Lodging, Food, Deals & Events",
+  description:
+    "Discover offroad trails, lodging, food, recovery services, events, and exclusive rider deals across Appalachia. Built for ATV, UTV, Jeep, and SxS riders.",
 };
 
 export default function RootLayout({
@@ -30,7 +31,6 @@ export default function RootLayout({
             <Link href="/deals">Deals</Link>
             <Link href="/business">Business</Link>
             <Link href="/partner">Partner</Link>
-            <Link href="/admin">Admin</Link>
           </nav>
           <Link className="join-link" href="/business/join">
             Join
