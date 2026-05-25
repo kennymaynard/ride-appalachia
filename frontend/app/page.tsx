@@ -22,13 +22,46 @@ const howItWorks = [
   },
 ];
 
-const phoneScreens = ["Trail Map", "Local Listings", "Deals", "Events"];
+const phoneScreens = [
+  {
+    title: "Trail Map",
+    rows: ["Rush Off-Road", "Hatfield-McCoy", "Royal Blue"],
+    note: "Ride-area planning",
+  },
+  {
+    title: "Local Listings",
+    rows: ["Cabins", "Food", "Repair"],
+    note: "Approved partners only",
+  },
+  {
+    title: "Deals",
+    rows: ["Rider discounts", "Trail-town offers", "Weekend specials"],
+    note: "Business-submitted",
+  },
+  {
+    title: "Events",
+    rows: ["Rides", "Town weekends", "Meetups"],
+    note: "Built for trip planning",
+  },
+];
 
 const trustCards = [
-  "Local businesses",
-  "Rider-focused deals",
-  "Trail-town discovery",
-  "Appalachia-first platform",
+  {
+    title: "Real local partners",
+    copy: "The public marketplace only shows approved businesses.",
+  },
+  {
+    title: "Rider-focused deals",
+    copy: "Offers are organized around trail trips, not generic coupons.",
+  },
+  {
+    title: "Trail-town discovery",
+    copy: "Built around where riders actually stage, eat, stay, and recover.",
+  },
+  {
+    title: "Appalachia-first platform",
+    copy: "Focused on Kentucky, West Virginia, Virginia, Tennessee, Ohio, and nearby riding towns.",
+  },
 ];
 
 const businessTypes = [
@@ -116,11 +149,15 @@ export default function Home() {
         </div>
         <div className="phone-mockup-grid">
           {phoneScreens.map((screen) => (
-            <article key={screen} className="phone-mockup">
+            <article key={screen.title} className="phone-mockup">
               <div className="phone-mockup-screen">
-                <span>{screen}</span>
-                <div />
-                <small>App screenshot placeholder</small>
+                <span>{screen.title}</span>
+                <div>
+                  {screen.rows.map((row) => (
+                    <b key={row}>{row}</b>
+                  ))}
+                </div>
+                <small>{screen.note}</small>
               </div>
             </article>
           ))}
@@ -134,26 +171,11 @@ export default function Home() {
         </div>
         <div className="trust-card-grid">
           {trustCards.map((card) => (
-            <article key={card}>
-              <strong>{card}</strong>
+            <article key={card.title}>
+              <strong>{card.title}</strong>
+              <p>{card.copy}</p>
             </article>
           ))}
-        </div>
-        <div className="testimonial-grid" aria-label="Rider testimonials">
-          <figure>
-            <blockquote>
-              This is where riders will check before they book cabins, pick a
-              trail town, or look for recovery help.
-            </blockquote>
-            <figcaption>Rider testimonial placeholder</figcaption>
-          </figure>
-          <figure>
-            <blockquote>
-              A simple way for local businesses to show up when offroad traffic
-              is already planning the trip.
-            </blockquote>
-            <figcaption>Business testimonial placeholder</figcaption>
-          </figure>
         </div>
       </section>
 

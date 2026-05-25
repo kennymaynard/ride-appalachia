@@ -21,7 +21,7 @@ export default async function LodgingPage({ searchParams }: Props) {
         <Link href="/business/join">Add lodging</Link>
       </section>
       <section className="page-section">
-        <MarketplaceGrid listings={listings} emptyText="No lodging partners approved yet." />
+        <MarketplaceGrid listings={listings} emptyText="No approved lodging partners yet." />
       </section>
     </main>
   );
