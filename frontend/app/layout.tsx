@@ -49,9 +49,8 @@ export default function RootLayout({
             <span>Ride more. Plan less.</span>
           </div>
           <nav>
-            <Link href="https://www.facebook.com/" target="_blank">Facebook</Link>
+            <Link href="https://www.facebook.com/share/1TduokbB5m/?mibextid=wwXIfr" target="_blank">Facebook</Link>
             <Link href="https://www.instagram.com/" target="_blank">Instagram</Link>
-            <Link href="https://www.tiktok.com/" target="_blank">TikTok</Link>
             <Link href="/contact">Contact</Link>
             <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/rider-tools">Rider Tools</Link>
