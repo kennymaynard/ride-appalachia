@@ -6,7 +6,7 @@ export default function RefundsPage() {
         <h1>Refund and cancellation policy.</h1>
         <p>
           Appalachia Offroad partner tiers are marketplace subscriptions for
-          listing visibility, coupons, sponsorship placement, and business dashboard access.
+          listing visibility, coupons, and business dashboard access.
         </p>
       </section>
 
@@ -22,10 +22,6 @@ export default function RefundsPage() {
         <article>
           <h2>Billing Errors</h2>
           <p>If you believe a charge was made in error, contact support@appalachiaoffroadapp.com so the account can be reviewed.</p>
-        </article>
-        <article>
-          <h2>Sponsorships</h2>
-          <p>Monthly sponsorship placement is subject to listing approval and marketplace availability.</p>
         </article>
       </section>
     </main>

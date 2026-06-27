@@ -2,10 +2,10 @@ import type { Business, RideArea, Tier, TrailInfo, TrailReview } from "./types";
 
 export const categories = [
   { label: "Lodging", href: "/lodging", value: "lodging" },
-  { label: "Food", href: "/?category=food", value: "food" },
-  { label: "Rentals", href: "/?category=rentals", value: "rentals" },
-  { label: "Repairs", href: "/?category=repairs", value: "repairs" },
-  { label: "Fuel", href: "/?category=fuel", value: "fuel" },
+  { label: "Food", href: "/marketplace?category=food", value: "food" },
+  { label: "Rentals", href: "/marketplace?category=rentals", value: "rentals" },
+  { label: "Repairs", href: "/marketplace?category=repairs", value: "repairs" },
+  { label: "Fuel", href: "/marketplace?category=fuel", value: "fuel" },
   { label: "Deals", href: "/deals", value: "deals" },
 ] as const;
 
@@ -2075,24 +2075,10 @@ export const partnerTiers: Tier[] = [
     features: ["Everything in Local", "Lodging category placement", "Photo-forward listing", "Priority review badge"],
   },
   {
-    id: "featured_partner",
-    name: "Featured Partner",
-    price: "$99",
-    description: "For businesses that want homepage and category priority.",
-    features: ["Everything in Lodging", "Featured placement", "Priority admin review", "Expanded deal visibility"],
-  },
-  {
-    id: "monthly_sponsor",
-    name: "Monthly Sponsor",
-    price: "$149",
-    description: "For businesses that want monthly ride-area/category visibility.",
-    features: ["Ride-area sponsor placement", "Category boost", "Deal visibility", "Campaign status tracking"],
-  },
-  {
-    id: "cleaner_partner",
-    name: "Cleaner Partner",
-    price: "$29.99",
-    description: "For cleaners who want unlimited lodging turnover opportunities.",
-    features: ["Flat monthly fee", "No per-clean cut", "Unlimited cleanings", "Lodging request access"],
+    id: "veteran_owned",
+    name: "Veteran Owned",
+    price: "$29",
+    description: "For veteran-owned businesses that want rider visibility and a trusted marketplace presence.",
+    features: ["Marketplace listing", "Veteran-owned badge", "Phone and location CTA", "Deal or coupon"],
   },
 ];

@@ -29,6 +29,7 @@ export default function RootLayout({
             <Link href="/planner">Planner</Link>
             <Link href="/lodging">Lodging</Link>
             <Link href="/deals">Deals</Link>
+            <Link href="/heroes">Heroes</Link>
             <Link href="/business">Business</Link>
             <Link href="/partner">Partner</Link>
           </nav>

@@ -9,22 +9,21 @@ const businessCategories = [
   { title: "Repairs", copy: "Parts, tires, belts, emergency help" },
   { title: "Fuel", copy: "Gas, ice, snacks, supplies" },
   { title: "Deals", copy: "Coupons, specials, rider discounts" },
-  { title: "Cleaners", copy: "Turnover help for lodging owners" },
-  { title: "Sponsors", copy: "Featured placement and campaigns" },
+  { title: "Veteran owned", copy: "Trusted local operators and service providers" },
 ];
 
 const businessSteps = [
   ["1", "Join", "Create your business profile in minutes."],
   ["2", "Customize", "Add photos, phone, location, hours, and deals."],
   ["3", "Get discovered", "Riders find you while planning their trip."],
-  ["4", "Grow", "Track clicks, update specials, and sponsor key areas."],
+  ["4", "Grow", "Track clicks, update specials, and keep your listing fresh."],
 ];
 
 const launchBenefits = [
   "Get found by ATV/UTV riders",
   "Direct leads from trip planners",
   "Affordable monthly plans",
-  "Featured placement options",
+  "Veteran-owned plan available",
 ];
 
 const launchAreas = rideAreas.map((area) => [
@@ -33,13 +32,6 @@ const launchAreas = rideAreas.map((area) => [
 ]);
 
 export default function BusinessWelcomePage() {
-  const coreTiers = partnerTiers.filter((tier) =>
-    ["local_business", "lodging_partner", "featured_partner"].includes(tier.id),
-  );
-  const addOnTiers = partnerTiers.filter((tier) =>
-    ["cleaner_partner", "monthly_sponsor"].includes(tier.id),
-  );
-
   return (
     <main className="business-welcome">
       <section className="business-hero">
@@ -67,8 +59,8 @@ export default function BusinessWelcomePage() {
           <ul>
             <li>Coupons and specials</li>
             <li>Basic clicks dashboard</li>
-            <li>Sponsorship campaigns</li>
-            <li>Lodging cleaner requests</li>
+            <li>Lodging visibility</li>
+            <li>Veteran-owned business support</li>
           </ul>
         </div>
       </section>
@@ -99,7 +91,7 @@ export default function BusinessWelcomePage() {
           <h2>Simple monthly plans.</h2>
         </div>
         <div className="business-price-grid">
-          {coreTiers.map((tier) => (
+          {partnerTiers.map((tier) => (
             <article key={tier.id}>
               <span>{tier.name}</span>
               <h3>
@@ -112,15 +104,6 @@ export default function BusinessWelcomePage() {
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-            </article>
-          ))}
-        </div>
-        <div className="business-addon-row">
-          {addOnTiers.map((tier) => (
-            <article key={tier.id}>
-              <strong>{tier.name}</strong>
-              <span>{tier.price}/month</span>
-              <p>{tier.description}</p>
             </article>
           ))}
         </div>

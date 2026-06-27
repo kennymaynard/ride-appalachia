@@ -41,9 +41,7 @@ LEAD_NOTIFY_EMAIL=support@appalachiaoffroadapp.com
 STRIPE_SECRET_KEY=
 STRIPE_PRICE_LOCAL_BUSINESS=
 STRIPE_PRICE_LODGING_PARTNER=
-STRIPE_PRICE_FEATURED_PARTNER=
-STRIPE_PRICE_MONTHLY_SPONSOR=
-STRIPE_PRICE_CLEANER_PARTNER=
+STRIPE_PRICE_VETERAN_OWNED=
 STRIPE_WEBHOOK_SECRET=
 ```
 
@@ -56,15 +54,27 @@ NEXT_PUBLIC_API_URL=https://api.appalachiaoffroadapp.com
 
 ## Stripe Setup
 
-Create recurring monthly prices:
+In Stripe, create one product such as `Appalachia Offroad Partner Plans`, then
+create recurring monthly prices for each tier:
 
 - `$29` Local Business
 - `$59` Lodging Partner
-- `$99` Featured Partner
-- `$149` Monthly Sponsor
-- `$29.99` Cleaner Partner
+- `$29` Veteran Owned
 
-Add the live price IDs to the backend env vars.
+Copy each live mode price ID, which starts with `price_`, into the matching
+backend environment variable:
+
+```env
+STRIPE_PRICE_LOCAL_BUSINESS=price_...
+STRIPE_PRICE_LODGING_PARTNER=price_...
+STRIPE_PRICE_VETERAN_OWNED=price_...
+```
+
+Create a restricted or standard live secret key in Stripe, then set:
+
+```env
+STRIPE_SECRET_KEY=sk_live_...
+```
 
 Create a Stripe webhook endpoint:
 
@@ -81,6 +91,10 @@ customer.subscription.deleted
 ```
 
 Copy the webhook signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+For local testing, you can use test mode Stripe keys and test mode price IDs in
+your local `.env`. The app falls back to a stub checkout only when Stripe keys
+or a tier price are missing and `FRONTEND_URL` points at localhost.
 
 ## Email Setup
 

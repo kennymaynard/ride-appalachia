@@ -10,6 +10,22 @@ from app.services.stripe_service import construct_webhook_event, create_checkout
 
 router = APIRouter(tags=["subscriptions"])
 
+SUBSCRIPTION_STATUS_MAP = {
+    "active": "active",
+    "trialing": "trialing",
+    "past_due": "past_due",
+    "canceled": "canceled",
+    "cancelled": "canceled",
+    "unpaid": "past_due",
+    "paused": "past_due",
+    "incomplete": "incomplete",
+    "incomplete_expired": "incomplete",
+}
+
+
+def normalize_subscription_status(status: str) -> str:
+    return SUBSCRIPTION_STATUS_MAP.get(status, "incomplete")
+
 
 def apply_subscription_update(
     db: Session,
@@ -23,6 +39,7 @@ def apply_subscription_update(
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
 
+    subscription_status = normalize_subscription_status(subscription_status)
     business.subscription_status = subscription_status
     if stripe_customer_id:
         business.stripe_customer_id = stripe_customer_id
@@ -30,17 +47,6 @@ def apply_subscription_update(
         business.stripe_subscription_id = stripe_subscription_id
     if tier:
         business.subscription_tier = tier
-        if tier == "featured_partner":
-            business.is_featured = True
-
-    if business.subscription_tier == "monthly_sponsor" and subscription_status in {"active", "trialing"}:
-        pending_campaigns = (
-            db.query(Campaign)
-            .filter(Campaign.business_id == business.id, Campaign.status == "pending")
-            .all()
-        )
-        for campaign in pending_campaigns:
-            campaign.status = "active"
 
     if subscription_status in {"canceled", "past_due", "incomplete"}:
         active_campaigns = (
@@ -66,9 +72,7 @@ def create_subscription_checkout(
     allowed_tiers = {
         "local_business",
         "lodging_partner",
-        "featured_partner",
-        "monthly_sponsor",
-        "cleaner_partner",
+        "veteran_owned",
     }
     if payload.tier not in allowed_tiers:
         raise HTTPException(status_code=400, detail="Unknown subscription tier")
@@ -105,6 +109,7 @@ def mark_subscription_status(
         subscription_status=payload.subscription_status,
         stripe_customer_id=payload.stripe_customer_id,
         stripe_subscription_id=payload.stripe_subscription_id,
+        tier=payload.tier,
     )
     return CheckoutSessionRead(checkout_url=f"/business/success?business_id={business.id}")
 

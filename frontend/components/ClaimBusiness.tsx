@@ -12,7 +12,9 @@ type Props = {
 
 export function ClaimBusiness({ business }: Props) {
   const [tier, setTier] = useState<Tier["id"]>(
-    business.subscription_tier as Tier["id"],
+    partnerTiers.some((item) => item.id === business.subscription_tier)
+      ? (business.subscription_tier as Tier["id"])
+      : partnerTiers[0].id,
   );
   const [ownerEmail, setOwnerEmail] = useState(business.owner_email || "");
   const [phoneLast4, setPhoneLast4] = useState("");

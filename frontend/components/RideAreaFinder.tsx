@@ -151,8 +151,6 @@ function getBusinessCoordinates(business: Business, areas: RideArea[]) {
 function isSponsoredOrFeatured(business: Business) {
   return (
     business.is_featured ||
-    business.subscription_tier === "featured_partner" ||
-    business.subscription_tier === "monthly_sponsor" ||
     business.campaigns.some((campaign) => campaign.status === "active")
   );
 }
@@ -162,7 +160,7 @@ function getSearchCoordinates(city: string, coordinates: Coordinates | null) {
 }
 
 function getMarketplaceHref(category: Category | "deals", location: string, radius: number) {
-  const base = category === "lodging" ? "/lodging" : category === "deals" ? "/deals" : "/";
+  const base = category === "lodging" ? "/lodging" : category === "deals" ? "/deals" : "/marketplace";
   const params = new URLSearchParams();
   if (category !== "lodging" && category !== "deals") params.set("category", category);
   if (location) params.set("area", location);
@@ -265,6 +263,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
   const previewNearbyListings = featuredNearbyListings.length
     ? featuredNearbyListings
     : nearbyListings.slice(0, 3);
+  const marketplaceLocation = travelCity || (coordinates ? rankedAreas[0]?.locationQuery ?? "" : "");
 
   function useCurrentLocation() {
     setStatus("");
@@ -411,7 +410,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
                         "Waiting on local partners"}
                     </p>
                   </div>
-                  <Link href={getMarketplaceHref(category.value, travelCity, radiusMiles)}>
+                  <Link href={getMarketplaceHref(category.value, marketplaceLocation, radiusMiles)}>
                     Open
                   </Link>
                 </article>

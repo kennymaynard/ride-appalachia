@@ -32,9 +32,7 @@ const tierIds = partnerTiers.map((item) => item.id);
 const tierBestFor: Record<Tier["id"], string> = {
   local_business: "Best for food, fuel, repair, recovery, outfitters, and local shops.",
   lodging_partner: "Best for cabins, campgrounds, hotels, and trailer-friendly stays.",
-  featured_partner: "Best for priority category placement and higher visibility.",
-  monthly_sponsor: "Best for businesses sponsoring a ride area or campaign.",
-  cleaner_partner: "Best for cleaners serving lodging owners and turnover jobs.",
+  veteran_owned: "Best for veteran-owned businesses serving riders and trail towns.",
 };
 
 function slugify(value: string) {
@@ -131,8 +129,8 @@ export default function JoinPage() {
           Get found by ATV, UTV, Jeep, and SxS riders looking for lodging,
           food, fuel, repair, recovery, outfitter stops, and trail-town deals
           before they hit the road. Start with a $29 Local Business listing or
-          choose a higher-visibility tier for lodging, featured placement, or
-          sponsorships.
+          choose the Lodging Partner or Veteran Owned plan when it fits your
+          business.
         </p>
         <div className="join-hero-proof" aria-label="Signup details">
           <span>Plans start at $29/month</span>

@@ -5855,6 +5855,575 @@ button.tier-card.is-selected {
   line-height: 1.5;
 }
 
+.heroes-page {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(242, 106, 0, 0.17), transparent 28rem),
+    linear-gradient(180deg, #050505, #0a0a0a 45%, #050505);
+  color: #fff;
+  overflow: hidden;
+}
+
+.heroes-hero {
+  min-height: 720px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.92)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(120, 18, 18, 0.55) 0 44px,
+      rgba(245, 245, 245, 0.16) 44px 88px
+    ),
+    radial-gradient(circle at 20% 18%, rgba(20, 40, 82, 0.72), transparent 28rem),
+    url("/appalachia-offroad-hero.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.heroes-overlay {
+  min-height: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 1.5rem 4rem;
+}
+
+.heroes-content {
+  width: min(72rem, 100%);
+  text-align: center;
+}
+
+.heroes-logo {
+  display: block;
+  width: min(21rem, 86vw);
+  margin: 0 auto 1.5rem;
+  filter: drop-shadow(0 1.4rem 2rem rgba(0, 0, 0, 0.75));
+}
+
+.heroes-badge,
+.heroes-kicker,
+.hero-kicker {
+  color: var(--orange);
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heroes-badge {
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #050505;
+  padding: 0.65rem 1.1rem;
+}
+
+.heroes-content h1 {
+  margin: 1.1rem 0 0.7rem;
+  font-size: clamp(3rem, 9vw, 7.8rem);
+  font-weight: 950;
+  line-height: 0.86;
+  text-transform: uppercase;
+}
+
+.heroes-line {
+  margin: 0 auto 0.75rem;
+  color: #fff;
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.heroes-subtitle,
+.heroes-content blockquote {
+  max-width: 52rem;
+  margin: 0 auto;
+  color: #ddd;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  line-height: 1.55;
+}
+
+.heroes-content blockquote {
+  margin-top: 1rem;
+  color: #fff;
+  font-style: italic;
+}
+
+.heroes-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.heroes-buttons a,
+.heroes-cta,
+.hero-card a,
+.heroes-card-actions a,
+.heroes-org-grid a,
+.heroes-two-column a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.9rem;
+  border: 1px solid var(--orange);
+  border-radius: 0.5rem;
+  background: var(--orange);
+  color: #050505;
+  padding: 0.8rem 1.1rem;
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.heroes-section,
+.heroes-directory-section,
+.heroes-badge-system,
+.heroes-two-column,
+.heroes-callout {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.heroes-section {
+  padding: 4.5rem 0 2rem;
+  text-align: center;
+}
+
+.heroes-section h2,
+.heroes-section-heading h2,
+.hero-verified-text h2,
+.heroes-map-section h2,
+.heroes-stories-section h2,
+.heroes-badge-system h2,
+.heroes-two-column h2,
+.heroes-callout h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.3rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.heroes-section p,
+.heroes-section-heading p,
+.hero-verified-text p,
+.heroes-list-card p,
+.heroes-map-section p,
+.heroes-stories-section p,
+.heroes-two-column p,
+.heroes-callout p,
+.heroes-org-grid p {
+  color: #d2d2d2;
+  line-height: 1.6;
+}
+
+.hero-verified-badge-section {
+  padding: 3rem 1rem;
+}
+
+.hero-verified-inner {
+  display: grid;
+  grid-template-columns: minmax(15rem, 22rem) 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  width: min(70rem, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(242, 106, 0, 0.55);
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.77), rgba(0, 0, 0, 0.94)),
+    repeating-linear-gradient(
+      160deg,
+      rgba(120, 18, 18, 0.35) 0 36px,
+      rgba(255, 255, 255, 0.1) 36px 72px
+    );
+  padding: 2.4rem;
+}
+
+.hero-verified-badge {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 0.82;
+  border: 0.35rem solid var(--orange);
+  clip-path: polygon(50% 0, 92% 18%, 82% 82%, 50% 100%, 18% 82%, 8% 18%);
+  background:
+    radial-gradient(circle at 50% 26%, rgba(242, 106, 0, 0.4), transparent 7rem),
+    linear-gradient(180deg, #222, #060606);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 1.6rem 3rem rgba(0, 0, 0, 0.45);
+}
+
+.hero-verified-badge span {
+  font-size: 3rem;
+}
+
+.hero-verified-badge strong {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.hero-verified-badge small {
+  color: var(--orange);
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-tags,
+.heroes-filter-list,
+.heroes-story-tags,
+.heroes-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.hero-tags span,
+.heroes-filter-list span,
+.heroes-story-tags span,
+.heroes-badge-row span {
+  border: 1px solid rgba(242, 106, 0, 0.7);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.6rem 0.8rem;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.heroes-grid,
+.heroes-list-grid,
+.heroes-pill-grid,
+.heroes-event-grid,
+.heroes-org-grid,
+.heroes-resource-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.heroes-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4.5rem;
+}
+
+.hero-card,
+.heroes-list-card,
+.heroes-pill-grid article,
+.heroes-event-grid article,
+.heroes-org-grid article,
+.heroes-two-column article {
+  border: 1px solid rgba(242, 106, 0, 0.45);
+  border-radius: 0.65rem;
+  background: linear-gradient(180deg, rgba(22, 22, 22, 0.96), rgba(8, 8, 8, 0.96));
+  padding: 1.4rem;
+}
+
+.hero-card {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  text-align: center;
+}
+
+.hero-card span {
+  font-size: 2.5rem;
+}
+
+.hero-card h3,
+.heroes-list-card h3 {
+  margin: 1rem 0 0.65rem;
+  color: var(--orange);
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hero-card p {
+  min-height: 5rem;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.hero-card a {
+  width: 100%;
+  margin-top: 0.6rem;
+  background: transparent;
+  color: var(--orange);
+}
+
+.heroes-directory-section {
+  padding: 3.5rem 0;
+}
+
+.heroes-section-heading {
+  max-width: 54rem;
+  margin-bottom: 1.5rem;
+}
+
+.heroes-list-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.heroes-list-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+
+.heroes-list-card dt {
+  color: #a6a6a6;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.heroes-list-card dd {
+  margin: 0.2rem 0 0;
+  color: #fff;
+  font-weight: 900;
+}
+
+.heroes-owned-badge,
+.heroes-search-panel span,
+.heroes-pill-grid span {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #050505;
+  padding: 0.45rem 0.7rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.heroes-list-card strong {
+  display: block;
+  color: #fff;
+}
+
+.heroes-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.heroes-card-actions a {
+  min-height: 2.5rem;
+  background: transparent;
+  color: var(--orange);
+  padding: 0.55rem 0.75rem;
+}
+
+.heroes-search-panel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.heroes-search-panel input {
+  width: 100%;
+  border: 1px solid rgba(242, 106, 0, 0.45);
+  border-radius: 0.55rem;
+  background: #101010;
+  color: #fff;
+  padding: 1rem;
+}
+
+.heroes-pill-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.heroes-pill-grid article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.heroes-pill-grid strong,
+.heroes-event-grid strong,
+.heroes-org-grid strong,
+.heroes-two-column strong {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.heroes-pill-grid span {
+  background: #35d36f;
+  white-space: nowrap;
+}
+
+.heroes-map-section,
+.heroes-stories-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3.5rem 0;
+}
+
+.heroes-map-preview {
+  display: grid;
+  align-content: end;
+  min-height: 24rem;
+  border: 1px solid rgba(242, 106, 0, 0.45);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.9)),
+    radial-gradient(circle at 26% 30%, rgba(242, 106, 0, 0.75), transparent 0.55rem),
+    radial-gradient(circle at 64% 44%, rgba(242, 106, 0, 0.7), transparent 0.55rem),
+    radial-gradient(circle at 48% 68%, rgba(242, 106, 0, 0.6), transparent 0.55rem),
+    linear-gradient(145deg, #17211a, #0a0d0b);
+  padding: 1.4rem;
+}
+
+.heroes-map-preview span,
+.heroes-map-preview b {
+  text-transform: uppercase;
+}
+
+.heroes-map-preview span {
+  color: var(--orange);
+  font-weight: 950;
+}
+
+.heroes-event-grid,
+.heroes-org-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.heroes-event-grid article span {
+  color: var(--orange);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.heroes-org-grid a {
+  width: fit-content;
+  min-height: 2.4rem;
+  background: transparent;
+  color: var(--orange);
+  padding: 0.55rem 0.75rem;
+}
+
+.heroes-stories-section {
+  border-top: 1px solid rgba(242, 106, 0, 0.22);
+  border-bottom: 1px solid rgba(242, 106, 0, 0.22);
+}
+
+.heroes-resource-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.heroes-resource-grid a {
+  border: 1px solid rgba(242, 106, 0, 0.4);
+  border-radius: 0.55rem;
+  background: #101010;
+  color: #fff;
+  padding: 1rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.heroes-badge-system {
+  padding: 3.5rem 0;
+}
+
+.heroes-two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 2rem 0 3.5rem;
+}
+
+.heroes-two-column a {
+  width: fit-content;
+  margin-top: 1rem;
+}
+
+.heroes-callout {
+  border: 2px solid var(--orange);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.6), #050505),
+    url("/appalachia-offroad-hero.png");
+  background-size: cover;
+  background-position: center;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+}
+
+.heroes-cta {
+  margin-top: 1rem;
+}
+
+@media (max-width: 950px) {
+  .heroes-grid,
+  .heroes-event-grid,
+  .heroes-org-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-verified-inner,
+  .heroes-map-section,
+  .heroes-stories-section,
+  .heroes-two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .heroes-hero,
+  .heroes-overlay {
+    min-height: 620px;
+  }
+
+  .heroes-buttons,
+  .heroes-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heroes-grid,
+  .heroes-list-grid,
+  .heroes-pill-grid,
+  .heroes-event-grid,
+  .heroes-org-grid,
+  .heroes-resource-grid,
+  .heroes-search-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .heroes-pill-grid article,
+  .heroes-search-panel {
+    align-items: start;
+  }
+
+  .hero-verified-inner {
+    padding: 1.4rem;
+    text-align: center;
+  }
+
+  .hero-tags,
+  .heroes-story-tags,
+  .heroes-badge-row {
+    justify-content: center;
+  }
+}
+
 @media print {
   body {
     background: #fff;

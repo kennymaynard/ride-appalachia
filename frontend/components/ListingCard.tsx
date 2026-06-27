@@ -9,9 +9,14 @@ type Props = {
 
 export function ListingCard({ business }: Props) {
   const activeDeal = business.deals.find((deal) => deal.is_active);
-  const isSponsored =
-    business.campaigns.some((campaign) => campaign.status === "active") ||
-    business.subscription_tier === "monthly_sponsor";
+  const isSponsored = business.campaigns.some((campaign) => campaign.status === "active");
+  const listingBadge = isSponsored
+    ? "Sponsored"
+    : business.is_featured
+      ? "Featured"
+      : business.subscription_tier === "veteran_owned"
+        ? "Veteran Owned"
+        : business.category;
 
   return (
     <article className={isSponsored ? "listing-card is-sponsored" : "listing-card"}>
@@ -21,9 +26,7 @@ export function ListingCard({ business }: Props) {
           category={business.category}
           src={business.photo_url}
         />
-        <span>
-          {isSponsored ? "Sponsored" : business.is_featured ? "Featured" : business.category}
-        </span>
+        <span>{listingBadge}</span>
       </div>
       <div className="listing-body">
         <div className="listing-meta">

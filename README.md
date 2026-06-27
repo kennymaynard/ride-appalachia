@@ -38,17 +38,15 @@ Built first:
 - Password-protected admin API and dashboard
 - Business listing claim flow with owner email capture
 - Business login emails through Resend, with a local development fallback link
-- Monthly sponsorship placement and sponsored listing badges
 - Lodging-owner service requests for cleaners, turnover help, laundry, hot tub service, trash, maintenance, and lawn care
-- Cleaner partner tier at $29.99/month with no per-clean cut and unlimited cleaning opportunities
+- Veteran-owned partner tier for rider-facing marketplace visibility
 
 ## Launch Prep
 
 - Copy `.env.example` to `.env` and fill Stripe values.
 - Set `ADMIN_PASSWORD` before sharing the admin page. Local default is `ride-admin`.
 - Add `RESEND_API_KEY` and `EMAIL_FROM` to send real business login emails.
-- Create Stripe subscription prices for the $29, $59, $99, and $149 tiers, then paste their price IDs into `.env`.
-- Create the `$29.99` Cleaner Partner Stripe price and paste it into `STRIPE_PRICE_CLEANER_PARTNER`.
+- Create Stripe subscription prices for the $29 Local Business, $59 Lodging Partner, and $29 Veteran Owned tiers, then paste their price IDs into `.env`.
 - Add the Stripe webhook endpoint `/api/subscriptions/webhook` in Stripe and paste the signing secret into `STRIPE_WEBHOOK_SECRET`.
 - Local app runs with `docker compose up --build`.
 - Render deployment config is in `render.yaml`.

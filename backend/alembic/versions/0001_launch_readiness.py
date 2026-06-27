@@ -16,7 +16,7 @@ depends_on = None
 
 
 category_values = "'lodging','food','rentals','repairs','fuel','deals'"
-tier_values = "'local_business','lodging_partner','featured_partner','monthly_sponsor','cleaner_partner'"
+tier_values = "'local_business','lodging_partner','veteran_owned'"
 listing_status_values = "'pending','approved','needs_changes','rejected','unpublished'"
 subscription_status_values = "'trialing','active','past_due','canceled','incomplete'"
 
@@ -91,7 +91,7 @@ def upgrade() -> None:
         "campaigns",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("business_id", sa.Integer(), nullable=False),
-        sa.Column("campaign_type", sa.String(length=60), server_default="monthly_sponsor", nullable=False),
+        sa.Column("campaign_type", sa.String(length=60), server_default="visibility_campaign", nullable=False),
         sa.Column("title", sa.String(length=160), nullable=False),
         sa.Column("description", sa.Text(), server_default="", nullable=False),
         sa.Column("target_area", sa.String(length=120), server_default="", nullable=False),

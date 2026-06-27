@@ -8,9 +8,7 @@ from app.database import Settings
 TIER_LABELS = {
     "local_business": "$29 Local Business",
     "lodging_partner": "$59 Lodging Partner",
-    "featured_partner": "$99 Featured Partner",
-    "monthly_sponsor": "$149 Monthly Sponsorship",
-    "cleaner_partner": "$29.99 Cleaner Partner",
+    "veteran_owned": "$29 Veteran Owned",
 }
 
 
@@ -18,9 +16,7 @@ def get_price_id(settings: Settings, tier: str) -> str:
     price_ids = {
         "local_business": settings.stripe_price_local_business,
         "lodging_partner": settings.stripe_price_lodging_partner,
-        "featured_partner": settings.stripe_price_featured_partner,
-        "monthly_sponsor": settings.stripe_price_monthly_sponsor,
-        "cleaner_partner": settings.stripe_price_cleaner_partner,
+        "veteran_owned": settings.stripe_price_veteran_owned,
     }
     return price_ids.get(tier, "")
 
@@ -34,7 +30,10 @@ def create_checkout_session(
     price_id = get_price_id(settings, tier)
     business_query = f"&business_id={business_id}" if business_id else ""
     access_query = f"&access_token={owner_access_token}" if owner_access_token else ""
-    success_url = f"{settings.frontend_url}/business/success?checkout=success&tier={tier}{business_query}{access_query}"
+    success_url = (
+        f"{settings.frontend_url}/business/success"
+        f"?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&tier={tier}{business_query}{access_query}"
+    )
     cancel_url = f"{settings.frontend_url}/business/join?checkout=cancelled&tier={tier}{business_query}"
 
     if not settings.stripe_secret_key or not price_id:

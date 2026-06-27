@@ -7,9 +7,7 @@ BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel"}
 SUBSCRIPTION_TIERS = {
     "local_business",
     "lodging_partner",
-    "featured_partner",
-    "monthly_sponsor",
-    "cleaner_partner",
+    "veteran_owned",
 }
 LISTING_STATUSES = {"pending", "approved", "needs_changes", "rejected", "unpublished"}
 LEAD_TYPES = {"launch_access", "business_availability"}
@@ -42,7 +40,7 @@ class DealRead(DealBase):
 
 
 class CampaignBase(BaseModel):
-    campaign_type: str = "monthly_sponsor"
+    campaign_type: str = "visibility_campaign"
     title: str
     description: str = ""
     target_area: str = ""
@@ -230,6 +228,7 @@ class StripeWebhookPayload(BaseModel):
     subscription_status: str = "active"
     stripe_customer_id: str = ""
     stripe_subscription_id: str = ""
+    tier: str = ""
 
 
 class BusinessLoginRequest(BaseModel):

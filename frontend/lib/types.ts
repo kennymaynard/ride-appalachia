@@ -136,12 +136,7 @@ export type CampaignCreateInput = {
 export type LodgingServiceRequestCreateInput = Omit<LodgingServiceRequest, "id" | "status">;
 
 export type Tier = {
-  id:
-    | "local_business"
-    | "lodging_partner"
-    | "featured_partner"
-    | "monthly_sponsor"
-    | "cleaner_partner";
+  id: "local_business" | "lodging_partner" | "veteran_owned";
   name: string;
   price: string;
   description: string;

@@ -19,9 +19,7 @@ class Category(str, Enum):
 class SubscriptionTier(str, Enum):
     local_business = "local_business"
     lodging_partner = "lodging_partner"
-    featured_partner = "featured_partner"
-    monthly_sponsor = "monthly_sponsor"
-    cleaner_partner = "cleaner_partner"
+    veteran_owned = "veteran_owned"
 
 
 class ListingStatus(str, Enum):
@@ -111,7 +109,7 @@ class Campaign(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"))
-    campaign_type: Mapped[str] = mapped_column(String(60), default="monthly_sponsor")
+    campaign_type: Mapped[str] = mapped_column(String(60), default="visibility_campaign")
     title: Mapped[str] = mapped_column(String(160))
     description: Mapped[str] = mapped_column(Text, default="")
     target_area: Mapped[str] = mapped_column(String(120), default="")

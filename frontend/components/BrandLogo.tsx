@@ -12,7 +12,7 @@ export function BrandLogo() {
         <img
           alt="Appalachia Offroad"
           className="brand-logo"
-          src="/ride-appalachia-logo.png"
+          src="/appalachia-offroad-logo.png"
           onError={() => setShowImage(false)}
         />
       ) : null}

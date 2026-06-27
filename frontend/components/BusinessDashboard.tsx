@@ -3,8 +3,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   addDeal,
-  createCampaign,
-  createCheckout,
   createLodgingServiceRequest,
   deleteDeal,
   updateBusiness,
@@ -27,8 +25,12 @@ const categories: Exclude<Category, "deals">[] = [
 const tiers = [
   { id: "local_business", label: "$29 local business" },
   { id: "lodging_partner", label: "$59 lodging partner" },
-  { id: "featured_partner", label: "$99 featured partner" },
+  { id: "veteran_owned", label: "$29 veteran owned" },
 ] as const;
+
+function getActiveTier(tier: string) {
+  return tiers.some((item) => item.id === tier) ? tier : tiers[0].id;
+}
 
 type ListingForm = {
   name: string;
@@ -52,7 +54,7 @@ function toListingForm(business: Business): ListingForm {
     photo_url: business.photo_url,
     website_url: business.website_url,
     owner_email: business.owner_email || "",
-    subscription_tier: business.subscription_tier,
+    subscription_tier: getActiveTier(business.subscription_tier),
   };
 }
 
@@ -61,15 +63,6 @@ function emptyDealForm() {
     title: "",
     code: "",
     description: "",
-  };
-}
-
-function emptyCampaignForm() {
-  return {
-    title: "Monthly Appalachia Offroad Sponsorship",
-    description: "Featured placement for riders planning trips this month.",
-    target_area: "",
-    monthly_budget: 149,
   };
 }
 
@@ -94,13 +87,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     selectedBusiness ? toListingForm(selectedBusiness) : null,
   );
   const [dealForm, setDealForm] = useState(emptyDealForm);
-  const [campaignForm, setCampaignForm] = useState(emptyCampaignForm);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm(selectedBusiness));
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [savingListing, setSavingListing] = useState(false);
   const [savingDeal, setSavingDeal] = useState(false);
-  const [savingCampaign, setSavingCampaign] = useState(false);
   const [savingServiceRequest, setSavingServiceRequest] = useState(false);
 
   const totals = useMemo(() => {
@@ -238,39 +229,6 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       setStatus("Special deleted.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to delete special.");
-    }
-  }
-
-  async function launchCampaign(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedBusiness) return;
-
-    setSavingCampaign(true);
-    setError("");
-    setStatus("");
-
-    try {
-      const campaign = await createCampaign(
-        {
-          business_id: selectedBusiness.id,
-          campaign_type: "monthly_sponsor",
-          ...campaignForm,
-        },
-        selectedBusiness.owner_access_token,
-      );
-      replaceBusiness({
-        ...selectedBusiness,
-        campaigns: [campaign, ...selectedBusiness.campaigns],
-      });
-      const checkoutUrl = await createCheckout(
-        "monthly_sponsor",
-        selectedBusiness.id,
-        selectedBusiness.owner_access_token,
-      );
-      window.location.href = checkoutUrl;
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to start campaign.");
-      setSavingCampaign(false);
     }
   }
 
@@ -556,8 +514,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             <h2>Lodging Help</h2>
             <p className="field-help">
               Request cleaner, turnover, laundry, hot tub, trash, lawn, or
-              maintenance help. Cleaners pay Appalachia Offroad $29.99/month for
-              unlimited cleaning opportunities. No per-clean cut.
+              maintenance help from local service providers.
             </p>
             <label>
               Service needed
@@ -665,67 +622,6 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             </div>
           </form>
         ) : null}
-
-        <form className="dashboard-card" onSubmit={launchCampaign}>
-          <h2>Monthly Sponsorship</h2>
-          <p className="field-help">
-            $149/month sponsorship for ride-area/category visibility. Campaigns
-            start pending until admin approval.
-          </p>
-          <label>
-            Campaign title
-            <input
-              required
-              value={campaignForm.title}
-              onChange={(event) =>
-                setCampaignForm({ ...campaignForm, title: event.target.value })
-              }
-            />
-          </label>
-          <label>
-            Ride area / target
-            <input
-              placeholder="Rush KY, Inez KY, Matewan WV..."
-              value={campaignForm.target_area}
-              onChange={(event) =>
-                setCampaignForm({ ...campaignForm, target_area: event.target.value })
-              }
-            />
-          </label>
-          <label>
-            Campaign message
-            <textarea
-              required
-              value={campaignForm.description}
-              onChange={(event) =>
-                setCampaignForm({
-                  ...campaignForm,
-                  description: event.target.value,
-                })
-              }
-            />
-          </label>
-          <button type="submit" disabled={savingCampaign}>
-            {savingCampaign ? "Starting Checkout..." : "Start $149 Sponsorship"}
-          </button>
-
-          <div className="deal-list">
-            <h3>Campaigns</h3>
-            {selectedBusiness.campaigns.length ? (
-              selectedBusiness.campaigns.map((campaign) => (
-                <article key={campaign.id}>
-                  <strong>{campaign.title}</strong>
-                  <span>{campaign.status}</span>
-                  <p>
-                    {campaign.target_area || "All areas"} · ${campaign.monthly_budget}/mo
-                  </p>
-                </article>
-              ))
-            ) : (
-              <p>No sponsorship campaigns yet.</p>
-            )}
-          </div>
-        </form>
       </div>
     </section>
   );

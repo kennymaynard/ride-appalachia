@@ -27,7 +27,7 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
         "html": (
             "<h1>Open your Appalachia Offroad dashboard</h1>"
             f"<p>Use this secure link to manage {business_name}, update your listing, "
-            "add specials, and run sponsorship campaigns.</p>"
+            "add specials, and track rider activity.</p>"
             f'<p><a href="{access_url}">Open Business Portal</a></p>'
             "<p>If you did not request this, you can ignore this email.</p>"
         ),

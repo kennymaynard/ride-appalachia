@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <section className="legal-page">
         <article>
           <h2>Information We Collect</h2>
-          <p>Business listing details, owner email addresses, submitted deals, sponsorship campaigns, trail reviews, and basic click activity.</p>
+          <p>Business listing details, owner email addresses, submitted deals, trail reviews, and basic click activity.</p>
         </article>
         <article>
           <h2>Payments</h2>

@@ -49,7 +49,6 @@ def list_marketplace(
         key=lambda business: (
             any(campaign.status == "active" for campaign in business.campaigns),
             business.is_featured,
-            business.subscription_tier == "featured_partner",
             business.created_at,
         ),
         reverse=True,

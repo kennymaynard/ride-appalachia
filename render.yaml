@@ -18,11 +18,7 @@ services:
         sync: false
       - key: STRIPE_PRICE_LODGING_PARTNER
         sync: false
-      - key: STRIPE_PRICE_FEATURED_PARTNER
-        sync: false
-      - key: STRIPE_PRICE_MONTHLY_SPONSOR
-        sync: false
-      - key: STRIPE_PRICE_CLEANER_PARTNER
+      - key: STRIPE_PRICE_VETERAN_OWNED
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false

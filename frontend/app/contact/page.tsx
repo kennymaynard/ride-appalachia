@@ -14,7 +14,7 @@ export default function ContactPage() {
         <article>
           <h2>Business Support</h2>
           <p>Email: support@appalachiaoffroadapp.com</p>
-          <p>Use this for listing claims, coupon updates, sponsorship questions, and billing help.</p>
+          <p>Use this for listing claims, coupon updates, plan questions, and billing help.</p>
         </article>
         <article>
           <h2>Rider Feedback</h2>
