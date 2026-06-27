@@ -6436,13 +6436,14 @@ button.tier-card.is-selected {
 }
 
 .compact-heroes-hero {
-  min-height: min(82vh, 760px);
+  min-height: clamp(34rem, 68vh, 43rem);
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.82)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.55) 52%, rgba(0, 0, 0, 0.82)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.88)),
     repeating-linear-gradient(
       180deg,
-      rgba(104, 14, 14, 0.62) 0 42px,
-      rgba(245, 245, 245, 0.12) 42px 84px
+      rgba(104, 14, 14, 0.72) 0 38px,
+      rgba(245, 245, 245, 0.11) 38px 76px
     ),
     radial-gradient(circle at 20% 12%, rgba(22, 42, 88, 0.68), transparent 24rem),
     url("/appalachia-offroad-hero.png");
@@ -6451,32 +6452,52 @@ button.tier-card.is-selected {
 }
 
 .compact-heroes-overlay {
-  min-height: min(82vh, 760px);
+  min-height: clamp(34rem, 68vh, 43rem);
   align-content: end;
   align-items: end;
   display: grid;
   grid-template-rows: 1fr auto;
-  padding: clamp(1.25rem, 3vw, 2.8rem);
+  padding: clamp(1rem, 2.4vw, 2rem);
 }
 
 .compact-heroes-content {
   display: grid;
-  grid-template-columns: minmax(18rem, 32rem) minmax(20rem, 1fr);
-  gap: clamp(1rem, 4vw, 3rem);
-  align-items: center;
+  grid-template-columns: minmax(15rem, 26rem) minmax(24rem, 1fr);
+  gap: clamp(1.4rem, 5vw, 4.6rem);
+  align-items: end;
   width: min(72rem, 100%);
   margin: 0 auto;
   text-align: left;
 }
 
 .compact-heroes-logo {
-  width: min(32rem, 100%);
+  width: min(25rem, 100%);
   margin: 0;
+  border-radius: 0;
+  mix-blend-mode: screen;
+  opacity: 0.96;
 }
 
 .compact-heroes-copy h1 {
   max-width: 42rem;
-  font-size: clamp(3.3rem, 7.5vw, 7.2rem);
+  margin: 0.95rem 0 0.45rem;
+  font-size: clamp(3rem, 6.2vw, 6rem);
+  letter-spacing: 0;
+}
+
+.compact-heroes-copy h1 span,
+.compact-heroes-copy h1 strong {
+  display: block;
+}
+
+.compact-heroes-copy h1 span {
+  color: #f3f3f3;
+}
+
+.compact-heroes-copy h1 strong {
+  color: var(--orange);
+  font-size: 1.05em;
+  text-shadow: 0 0.12rem 0 #111, 0 0.45rem 1.5rem rgba(0, 0, 0, 0.75);
 }
 
 .compact-heroes-copy .heroes-subtitle,
@@ -6489,7 +6510,7 @@ button.tier-card.is-selected {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   width: min(68rem, 100%);
-  margin: clamp(1.25rem, 3vw, 2rem) auto 0;
+  margin: clamp(0.9rem, 2vw, 1.4rem) auto 0;
   border: 1px solid var(--orange);
   border-radius: 0.55rem;
   background: rgba(5, 5, 5, 0.86);
@@ -6499,11 +6520,11 @@ button.tier-card.is-selected {
 .compact-heroes-nav a {
   display: grid;
   place-items: center;
-  min-height: 4rem;
+  min-height: 3.45rem;
   border-right: 1px solid rgba(242, 106, 0, 0.45);
   color: #fff;
   padding: 0.55rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 950;
   line-height: 1.05;
   text-align: center;
@@ -6516,7 +6537,7 @@ button.tier-card.is-selected {
 }
 
 .compact-support-section {
-  padding: 2.3rem 0 1rem;
+  padding: 1.7rem 0 0.75rem;
 }
 
 .compact-support-section h2 {
@@ -6530,16 +6551,20 @@ button.tier-card.is-selected {
 
 .compact-card-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 1rem 0 1.6rem;
+  padding: 0.75rem 0 1.2rem;
 }
 
 .compact-hero-card {
-  padding: 0.7rem;
+  border-color: rgba(242, 106, 0, 0.8);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.92)),
+    #0b0b0b;
+  padding: 0.58rem;
 }
 
 .compact-card-image {
   width: 100%;
-  aspect-ratio: 1.32;
+  aspect-ratio: 1.2;
   border: 1px solid rgba(242, 106, 0, 0.38);
   border-radius: 0.45rem;
   background-position: center;
@@ -6561,7 +6586,9 @@ button.tier-card.is-selected {
 
 .compact-hero-card h3 {
   margin: 0.7rem 0 0.45rem;
-  font-size: clamp(1rem, 2.1vw, 1.45rem);
+  color: #f3f3f3;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  text-shadow: 0 0.15rem 0.6rem rgba(0, 0, 0, 0.75);
 }
 
 .compact-hero-card p {
@@ -6573,6 +6600,8 @@ button.tier-card.is-selected {
 .compact-hero-card a {
   min-height: 2.45rem;
   margin-top: 0.8rem;
+  border-color: var(--orange);
+  background: rgba(0, 0, 0, 0.58);
   padding: 0.55rem 0.7rem;
 }
 
@@ -6617,6 +6646,17 @@ button.tier-card.is-selected {
 
 .compact-heroes-callout {
   margin-bottom: 1rem;
+  border-color: var(--orange);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.84)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(104, 14, 14, 0.45) 0 36px,
+      rgba(245, 245, 245, 0.08) 36px 72px
+    ),
+    url("/appalachia-offroad-hero.png");
+  background-position: center;
+  background-size: cover;
   padding: clamp(1.5rem, 4vw, 3rem) 1rem;
 }
 
@@ -6658,7 +6698,7 @@ button.tier-card.is-selected {
   gap: 0.55rem;
   min-height: 4rem;
   border-right: 1px solid rgba(242, 106, 0, 0.45);
-  background: rgba(0, 0, 0, 0.7);
+  background: linear-gradient(180deg, rgba(12, 12, 12, 0.96), rgba(0, 0, 0, 0.96));
   padding: 0.55rem;
   font-size: 0.8rem;
   font-weight: 950;

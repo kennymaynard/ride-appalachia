@@ -80,7 +80,10 @@ export default function HeroesPage() {
             />
             <div className="compact-heroes-copy">
               <p className="heroes-badge">Veteran Owned & Operated</p>
-              <h1>Heroes of Appalachia</h1>
+              <h1>
+                <span>Heroes of</span>
+                <strong>Appalachia</strong>
+              </h1>
               <p className="heroes-subtitle">
                 Honoring Veterans • First Responders • Gold Star Families
               </p>
