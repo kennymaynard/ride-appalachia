@@ -30,8 +30,23 @@ type TrackerState = {
   points: number;
 };
 
+type MapLayer = {
+  id: string;
+  label: string;
+  query: string;
+};
+
 const savedTrailsKey = "aoa_saved_trails";
 const rideHistoryKey = "aoa_ride_history";
+
+const mapLayers: MapLayer[] = [
+  { id: "food", label: "Food", query: "food" },
+  { id: "fuel", label: "Gas / Fuel", query: "gas station fuel" },
+  { id: "lodging", label: "Lodging", query: "cabins campgrounds hotels lodging" },
+  { id: "repairs", label: "Repairs", query: "ATV UTV repair parts recovery" },
+  { id: "rentals", label: "Rentals", query: "ATV UTV rentals" },
+  { id: "deals", label: "Deals", query: "restaurants lodging fuel ATV deals" },
+];
 
 function trailId(area: RideArea, trail: TrailInfo) {
   return `${area.slug}:${trail.name}`;
@@ -67,6 +82,7 @@ function formatDuration(startedAt: number, endedAt = Date.now()) {
 
 export function RiderTools({ areas }: Props) {
   const [selectedAreaSlug, setSelectedAreaSlug] = useState(areas[0]?.slug || "");
+  const [selectedLayers, setSelectedLayers] = useState<string[]>(["food", "fuel", "lodging"]);
   const [savedTrails, setSavedTrails] = useState<SavedTrail[]>([]);
   const [rideHistory, setRideHistory] = useState<RideSession[]>([]);
   const [tracker, setTracker] = useState<TrackerState | null>(null);
@@ -152,6 +168,20 @@ export function RiderTools({ areas }: Props) {
     ]);
   }
 
+  function toggleLayer(layerId: string) {
+    setSelectedLayers((current) =>
+      current.includes(layerId)
+        ? current.filter((item) => item !== layerId)
+        : [...current, layerId],
+    );
+  }
+
+  function getMapSearchUrl(query: string) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${query} near ${selectedArea?.name || "Appalachia"} ${selectedArea?.state || ""}`,
+    )}`;
+  }
+
   function startRide() {
     setTracker({
       startedAt: Date.now(),
@@ -182,6 +212,39 @@ export function RiderTools({ areas }: Props) {
 
   return (
     <div className="rider-tools-layout">
+      <section className="rider-tool-panel rider-map-layer-panel">
+        <div className="section-heading">
+          <p>Map layers</p>
+          <h2>Pick what to find nearby</h2>
+        </div>
+        <p className="field-help">
+          Trail and hiking pins are shown on the map above. Business categories
+          open focused nearby map searches until exact partner coordinates are
+          added to listings.
+        </p>
+        <div className="rider-layer-controls" aria-label="Nearby map layers">
+          {mapLayers.map((layer) => (
+            <button
+              key={layer.id}
+              className={selectedLayers.includes(layer.id) ? "is-active" : ""}
+              type="button"
+              onClick={() => toggleLayer(layer.id)}
+            >
+              {layer.label}
+            </button>
+          ))}
+        </div>
+        <div className="rider-layer-links">
+          {mapLayers
+            .filter((layer) => selectedLayers.includes(layer.id))
+            .map((layer) => (
+              <a href={getMapSearchUrl(layer.query)} key={layer.id} rel="noreferrer" target="_blank">
+                Open {layer.label} Map
+              </a>
+            ))}
+        </div>
+      </section>
+
       <section className="rider-tool-panel">
         <div className="section-heading">
           <p>Saved trails</p>

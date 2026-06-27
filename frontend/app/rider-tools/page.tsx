@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RideAreaMap } from "../../components/RideAreaMap";
 import { RiderTools } from "../../components/RiderTools";
 import { rideAreas } from "../../lib/sample-data";
 
@@ -18,6 +19,10 @@ export default function RiderToolsPage() {
           Build a personal ride list, start a simple GPS ride tracker, and keep
           your recent ride stats on this device.
         </p>
+      </section>
+
+      <section className="page-section rider-public-map-section">
+        <RideAreaMap areas={rideAreas} compact />
       </section>
 
       <section className="page-section">

@@ -7107,6 +7107,7 @@ button.tier-card.is-selected {
 }
 
 .trail-talk-filters button,
+.rider-layer-controls button,
 .rider-trail-list button,
 .ride-tracker-panel button {
   border: 1px solid rgba(242, 106, 0, 0.7);
@@ -7121,6 +7122,8 @@ button.tier-card.is-selected {
 
 .trail-talk-filters button.is-active,
 .trail-talk-filters button:hover,
+.rider-layer-controls button.is-active,
+.rider-layer-controls button:hover,
 .rider-trail-list button:hover,
 .ride-tracker-panel button:hover {
   background: var(--orange);
@@ -7170,6 +7173,41 @@ button.tier-card.is-selected {
 
 .rider-tools-layout {
   grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+}
+
+.rider-public-map-section .trail-map-shell {
+  margin-top: 0;
+}
+
+.rider-map-layer-panel {
+  grid-column: 1 / -1;
+}
+
+.rider-layer-controls,
+.rider-layer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.rider-layer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  border: 1px solid rgba(242, 106, 0, 0.38);
+  border-radius: 0.45rem;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  padding: 0 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.rider-layer-links a:hover {
+  border-color: var(--orange);
+  color: var(--orange);
 }
 
 .rider-tool-panel label,
