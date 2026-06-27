@@ -6862,63 +6862,51 @@ button.tier-card.is-selected {
 
   .heroes-poster-art {
     width: 100%;
-    height: min(86vh, 42rem);
-    min-height: 34rem;
-    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 2 / 3;
     background-position: center top;
     background-size: cover;
   }
 
   .heroes-poster-hotspots {
-    top: auto;
-    bottom: 0.75rem;
-    left: 0.75rem;
-    right: 0.75rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
-    width: auto;
-    height: auto;
+    top: 42.35%;
+    left: 5%;
+    right: auto;
+    bottom: auto;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    width: 90%;
+    min-height: 4.5%;
   }
 
   .heroes-poster-hotspots a,
   .heroes-poster-card-links a,
   .heroes-poster-join {
-    min-height: 2.35rem;
-    border: 1px solid var(--orange);
-    border-radius: 0.4rem;
-    background: rgba(0, 0, 0, 0.78);
-    color: #fff;
-    padding: 0.35rem 0.45rem;
-    font-size: 0.66rem;
-    font-weight: 950;
-    line-height: 1.05;
-    text-align: center;
-    text-transform: uppercase;
+    min-height: 0;
   }
 
   .heroes-poster-card-links {
-    top: auto;
-    bottom: 8.3rem;
-    left: 0.75rem;
-    right: 0.75rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
-    width: auto;
-    height: auto;
+    top: 76.95%;
+    left: 4.85%;
+    right: auto;
+    bottom: auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.15%;
+    width: 90.3%;
+    height: 3.08%;
   }
 
   .heroes-poster-join {
-    top: auto;
-    bottom: 18.5rem;
-    left: 0.75rem;
-    width: calc(100% - 1.5rem);
-    height: auto;
-    background: var(--orange);
-    color: #050505;
+    top: 89.18%;
+    bottom: auto;
+    left: 45.2%;
+    width: 31.2%;
+    height: 2.82%;
   }
 
   .heroes-poster-footer-links {
-    display: none;
+    display: grid;
   }
 
   .compact-heroes-hero,
