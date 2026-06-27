@@ -6435,6 +6435,68 @@ button.tier-card.is-selected {
     #050505;
 }
 
+.heroes-poster-shell {
+  display: grid;
+  place-items: start center;
+  min-height: calc(100vh - 6rem);
+  background: #050505;
+  padding: 0;
+}
+
+.heroes-poster-art {
+  position: relative;
+  width: min(80rem, 100%);
+  aspect-ratio: 2 / 3;
+  background: url("/images/heroes-of-appalachia-poster.png") center top / cover no-repeat;
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.65);
+}
+
+.heroes-poster-copy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.heroes-poster-hotspots {
+  position: absolute;
+  top: 42.45%;
+  left: 5.1%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 89.8%;
+  height: 4.35%;
+}
+
+.heroes-poster-hotspots a,
+.heroes-poster-join {
+  display: grid;
+  place-items: center;
+  color: transparent;
+  text-decoration: none;
+}
+
+.heroes-poster-hotspots a:focus-visible,
+.heroes-poster-hotspots a:hover,
+.heroes-poster-join:focus-visible,
+.heroes-poster-join:hover {
+  outline: 2px solid var(--orange);
+  outline-offset: -3px;
+  background: rgba(242, 106, 0, 0.12);
+}
+
+.heroes-poster-join {
+  position: absolute;
+  top: 88.8%;
+  left: 46.4%;
+  width: 30%;
+  height: 4.15%;
+  border-radius: 0.5rem;
+}
+
 .compact-heroes-hero {
   min-height: clamp(34rem, 68vh, 43rem);
   background:
@@ -6717,6 +6779,55 @@ button.tier-card.is-selected {
 }
 
 @media (max-width: 760px) {
+  .heroes-poster-shell {
+    min-height: auto;
+  }
+
+  .heroes-poster-art {
+    width: 100%;
+    height: min(86vh, 42rem);
+    min-height: 34rem;
+    aspect-ratio: auto;
+    background-position: center top;
+    background-size: cover;
+  }
+
+  .heroes-poster-hotspots {
+    top: auto;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    width: auto;
+    height: auto;
+  }
+
+  .heroes-poster-hotspots a,
+  .heroes-poster-join {
+    min-height: 2.35rem;
+    border: 1px solid var(--orange);
+    border-radius: 0.4rem;
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.66rem;
+    font-weight: 950;
+    line-height: 1.05;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .heroes-poster-join {
+    top: auto;
+    bottom: 8.9rem;
+    left: 0.75rem;
+    width: calc(100% - 1.5rem);
+    height: auto;
+    background: var(--orange);
+    color: #050505;
+  }
+
   .compact-heroes-hero,
   .compact-heroes-overlay {
     min-height: auto;
