@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { createCheckout } from "../lib/api";
 import type { Tier } from "../lib/types";
 
 type Props = {
@@ -9,23 +7,10 @@ type Props = {
 };
 
 export function TierCard({ tier }: Props) {
-  const [isLoading, setIsLoading] = useState(false);
   const isFreeTier = tier.id === "veteran_owned";
 
-  async function startCheckout() {
-    if (isFreeTier) {
-      window.location.href = `/business/join?tier=${tier.id}`;
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const checkoutUrl = await createCheckout(tier.id);
-      window.location.href = checkoutUrl;
-    } catch {
-      setIsLoading(false);
-      alert("Checkout is not available yet. Add Stripe keys to enable this tier.");
-    }
+  function startSignup() {
+    window.location.href = `/business/join?tier=${tier.id}`;
   }
 
   return (
@@ -43,8 +28,8 @@ export function TierCard({ tier }: Props) {
           <li key={feature}>{feature}</li>
         ))}
       </ul>
-      <button type="button" onClick={startCheckout} disabled={isLoading}>
-        {isLoading ? "Opening..." : isFreeTier ? "Join For Free" : "Choose Plan"}
+      <button type="button" onClick={startSignup}>
+        {isFreeTier ? "Join For Free" : "Start Signup"}
       </button>
     </article>
   );

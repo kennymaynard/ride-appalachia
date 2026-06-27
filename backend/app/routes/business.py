@@ -32,6 +32,15 @@ def digits_only(value: str) -> str:
     return re.sub(r"\D+", "", value)
 
 
+def send_business_access_email(business: Business) -> None:
+    if not business.owner_email or not business.owner_access_token:
+        return
+
+    settings = get_settings()
+    access_url = f"{settings.frontend_url}/business/access/{business.owner_access_token}"
+    send_business_login_email(business.owner_email, business.name, access_url)
+
+
 def require_business_access(
     business_id: int,
     x_business_token: str = Header(default=""),
@@ -101,6 +110,7 @@ def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> B
     db.add(business)
     db.commit()
     db.refresh(business)
+    send_business_access_email(business)
     return business
 
 
@@ -198,6 +208,7 @@ def claim_business(
 
     db.commit()
     db.refresh(business)
+    send_business_access_email(business)
     return business
 
 

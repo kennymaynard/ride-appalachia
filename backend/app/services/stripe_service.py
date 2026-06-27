@@ -25,6 +25,7 @@ def create_checkout_session(
     tier: str,
     business_id: Optional[int] = None,
     owner_access_token: str = "",
+    customer_email: str = "",
 ) -> str:
     price_id = get_price_id(settings, tier)
     business_query = f"&business_id={business_id}" if business_id else ""
@@ -41,23 +42,29 @@ def create_checkout_session(
         raise RuntimeError("Stripe is not configured for this subscription tier")
 
     stripe.api_key = settings.stripe_secret_key
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
+    session_params = {
+        "mode": "subscription",
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata": {
             "tier": tier,
             "business_id": str(business_id or ""),
             "tier_label": TIER_LABELS.get(tier, tier),
         },
-        subscription_data={
+        "subscription_data": {
             "metadata": {
                 "tier": tier,
                 "business_id": str(business_id or ""),
                 "tier_label": TIER_LABELS.get(tier, tier),
             },
         },
+    }
+    if customer_email:
+        session_params["customer_email"] = customer_email
+
+    session = stripe.checkout.Session.create(
+        **session_params,
     )
     return session.url
 

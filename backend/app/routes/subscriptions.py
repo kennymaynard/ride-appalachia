@@ -78,6 +78,7 @@ def create_subscription_checkout(
         raise HTTPException(status_code=400, detail="Unknown subscription tier")
 
     owner_access_token = ""
+    customer_email = ""
     if payload.business_id:
         business = db.get(Business, payload.business_id)
         if not business:
@@ -85,6 +86,7 @@ def create_subscription_checkout(
         if not business.owner_access_token or x_business_token != business.owner_access_token:
             raise HTTPException(status_code=401, detail="Business access token required")
         owner_access_token = business.owner_access_token
+        customer_email = business.owner_email
 
     if payload.tier == "veteran_owned":
         if not payload.business_id:
@@ -111,6 +113,7 @@ def create_subscription_checkout(
             payload.tier,
             payload.business_id,
             owner_access_token,
+            customer_email,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
