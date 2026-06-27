@@ -27,6 +27,8 @@ export default function RootLayout({
           <nav>
             <Link href="/ride-areas">Find Nearby</Link>
             <Link href="/planner">Planner</Link>
+            <Link href="/rider-tools">Tools</Link>
+            <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/lodging">Lodging</Link>
             <Link href="/deals">Deals</Link>
             <Link href="/heroes">Heroes</Link>
@@ -51,6 +53,8 @@ export default function RootLayout({
             <Link href="https://www.instagram.com/" target="_blank">Instagram</Link>
             <Link href="https://www.tiktok.com/" target="_blank">TikTok</Link>
             <Link href="/contact">Contact</Link>
+            <Link href="/trail-talk">Trail Talk</Link>
+            <Link href="/rider-tools">Rider Tools</Link>
             <Link href="/business">FAQ</Link>
             <Link href="/business/join">Business Signup</Link>
             <Link href="/terms">Terms</Link>

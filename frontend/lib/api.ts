@@ -16,6 +16,8 @@ import type {
   MarketingLeadCreateInput,
   TrailReview,
   TrailReviewCreateInput,
+  TrailTalkPost,
+  TrailTalkPostCreateInput,
 } from "./types";
 
 function getApiUrl() {
@@ -398,6 +400,44 @@ export async function createTrailReview(payload: TrailReviewCreateInput): Promis
   return mapTrailReview((await response.json()) as ApiTrailReview);
 }
 
+export async function getTrailTalkPosts(filters?: {
+  category?: string;
+  areaSlug?: string;
+}): Promise<TrailTalkPost[]> {
+  if (shouldSkipApiDuringBuild()) {
+    return [];
+  }
+
+  const params = new URLSearchParams();
+  if (filters?.category) params.set("category", filters.category);
+  if (filters?.areaSlug) params.set("area_slug", filters.areaSlug);
+
+  try {
+    const response = await apiFetch(`/api/trail-talk?${params.toString()}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error("Unable to load Trail Talk posts");
+    return response.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function createTrailTalkPost(
+  payload: TrailTalkPostCreateInput,
+): Promise<TrailTalkPost> {
+  const response = await fetch(`${getApiUrl()}/api/trail-talk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to submit Trail Talk post");
+  }
+  return response.json();
+}
+
 function getAdminHeaders(adminPassword?: string): Record<string, string> {
   const trimmedPassword = adminPassword?.trim();
   return trimmedPassword ? { "x-admin-password": trimmedPassword } : {};
@@ -432,6 +472,17 @@ export async function getAdminTrailReviews(adminPassword?: string): Promise<Trai
   }
   const reviews = (await response.json()) as ApiTrailReview[];
   return reviews.map(mapTrailReview);
+}
+
+export async function getAdminTrailTalkPosts(adminPassword?: string): Promise<TrailTalkPost[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/trail-talk?status=pending`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to load pending Trail Talk posts");
+  }
+  return response.json();
 }
 
 export async function getAdminServiceRequests(
@@ -510,6 +561,22 @@ export async function moderateTrailReview(
     throw new Error("Unable to moderate trail review");
   }
   return mapTrailReview((await response.json()) as ApiTrailReview);
+}
+
+export async function moderateTrailTalkPost(
+  postId: number,
+  status: "approved" | "rejected",
+  adminPassword?: string,
+): Promise<TrailTalkPost> {
+  const response = await fetch(`${getApiUrl()}/api/admin/trail-talk/${postId}/moderate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to moderate Trail Talk post");
+  }
+  return response.json();
 }
 
 export async function approveBusiness(

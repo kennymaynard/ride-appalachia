@@ -198,3 +198,26 @@ export type TrailReview = {
 };
 
 export type TrailReviewCreateInput = Omit<TrailReview, "id" | "status">;
+
+export type TrailTalkCategory =
+  | "group_ride"
+  | "trail_conditions"
+  | "events"
+  | "buy_sell_trade"
+  | "help_repairs"
+  | "lodging_food"
+  | "heroes_rides";
+
+export type TrailTalkPost = {
+  id: number;
+  rider_name: string;
+  email?: string;
+  category: TrailTalkCategory;
+  area_slug: string;
+  ride_date: string;
+  title: string;
+  message: string;
+  status: "pending" | "approved" | "rejected";
+};
+
+export type TrailTalkPostCreateInput = Omit<TrailTalkPost, "id" | "status">;

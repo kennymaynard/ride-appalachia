@@ -12,6 +12,15 @@ SUBSCRIPTION_TIERS = {
 LISTING_STATUSES = {"pending", "approved", "needs_changes", "rejected", "unpublished"}
 LEAD_TYPES = {"launch_access", "business_availability"}
 LEAD_STATUSES = {"new", "contacted", "converted", "closed"}
+TRAIL_TALK_CATEGORIES = {
+    "group_ride",
+    "trail_conditions",
+    "events",
+    "buy_sell_trade",
+    "help_repairs",
+    "lodging_food",
+    "heroes_rides",
+}
 
 
 class DealBase(BaseModel):
@@ -111,6 +120,41 @@ class TrailReviewRead(TrailReviewBase):
 
 
 class TrailReviewModerationUpdate(BaseModel):
+    status: str
+
+
+class TrailTalkPostBase(BaseModel):
+    rider_name: str = Field(min_length=2, max_length=120)
+    category: str
+    area_slug: str = ""
+    ride_date: str = ""
+    title: str = Field(min_length=4, max_length=180)
+    message: str = Field(min_length=10)
+
+    @field_validator("category")
+    @classmethod
+    def validate_trail_talk_category(cls, value: str) -> str:
+        if value not in TRAIL_TALK_CATEGORIES:
+            raise ValueError("Unknown Trail Talk category")
+        return value
+
+
+class TrailTalkPostCreate(TrailTalkPostBase):
+    email: str = ""
+
+
+class TrailTalkPostRead(TrailTalkPostBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: str = "pending"
+
+
+class TrailTalkPostAdminRead(TrailTalkPostRead):
+    email: str = ""
+
+
+class TrailTalkModerationUpdate(BaseModel):
     status: str
 
 

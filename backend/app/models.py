@@ -51,6 +51,12 @@ class ReviewStatus(str, Enum):
     rejected = "rejected"
 
 
+class TrailTalkStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
 class LeadStatus(str, Enum):
     new = "new"
     contacted = "contacted"
@@ -135,6 +141,21 @@ class TrailReview(Base):
     trail_condition: Mapped[str] = mapped_column(String(220), default="")
     comment: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(40), default=ReviewStatus.pending.value, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class TrailTalkPost(Base):
+    __tablename__ = "trail_talk_posts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_name: Mapped[str] = mapped_column(String(120))
+    email: Mapped[str] = mapped_column(String(180), default="")
+    category: Mapped[str] = mapped_column(String(60), index=True)
+    area_slug: Mapped[str] = mapped_column(String(120), default="", index=True)
+    ride_date: Mapped[str] = mapped_column(String(80), default="")
+    title: Mapped[str] = mapped_column(String(180))
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), default=TrailTalkStatus.pending.value, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

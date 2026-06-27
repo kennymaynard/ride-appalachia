@@ -6,15 +6,24 @@ import {
   getAdminBusinesses,
   getAdminMarketingLeads,
   getAdminServiceRequests,
+  getAdminTrailTalkPosts,
   getAdminTrailReviews,
   moderateBusiness,
+  moderateTrailTalkPost,
   moderateTrailReview,
   setBusinessFeatured,
   updateAdminBusiness,
   updateMarketingLeadStatus,
   updateServiceRequestStatus,
 } from "../lib/api";
-import type { Business, BusinessUpdateInput, LodgingServiceRequest, MarketingLead, TrailReview } from "../lib/types";
+import type {
+  Business,
+  BusinessUpdateInput,
+  LodgingServiceRequest,
+  MarketingLead,
+  TrailReview,
+  TrailTalkPost,
+} from "../lib/types";
 
 type Props = {
   initialBusinesses?: Business[];
@@ -31,6 +40,7 @@ function statusLabel(business: Business) {
 export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [pendingReviews, setPendingReviews] = useState<TrailReview[]>([]);
+  const [pendingTrailTalkPosts, setPendingTrailTalkPosts] = useState<TrailTalkPost[]>([]);
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
   const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
   const [adminPassword, setAdminPassword] = useState("");
@@ -65,10 +75,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     try {
       const loadedBusinesses = await getAdminBusinesses(adminPassword);
       const loadedReviews = await getAdminTrailReviews(adminPassword);
+      const loadedTrailTalkPosts = await getAdminTrailTalkPosts(adminPassword);
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
       const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
+      setPendingTrailTalkPosts(loadedTrailTalkPosts);
       setServiceRequests(loadedServiceRequests);
       setMarketingLeads(loadedMarketingLeads);
       setIsUnlocked(true);
@@ -145,6 +157,23 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         caughtError instanceof Error
           ? caughtError.message
           : "Unable to moderate review.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function runTrailTalkAction(postId: number, status: "approved" | "rejected") {
+    setError("");
+    setWorkingId(postId);
+    try {
+      await moderateTrailTalkPost(postId, status, adminPassword);
+      setPendingTrailTalkPosts((current) => current.filter((post) => post.id !== postId));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to moderate Trail Talk post.",
       );
     } finally {
       setWorkingId(null);
@@ -230,7 +259,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <span>Needs Changes</span>
         </article>
         <article>
-          <strong>{pendingReviews.length + serviceRequests.length + marketingLeads.length}</strong>
+          <strong>
+            {pendingReviews.length +
+              pendingTrailTalkPosts.length +
+              serviceRequests.length +
+              marketingLeads.length}
+          </strong>
           <span>Queues</span>
         </article>
       </div>
@@ -355,6 +389,61 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           </div>
         ) : (
           <p className="empty-state">No pending trail reviews.</p>
+        )}
+      </div>
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Community queue</p>
+          <h2>Pending Trail Talk posts</h2>
+        </div>
+        {pendingTrailTalkPosts.length ? (
+          <div className="admin-list">
+            {pendingTrailTalkPosts.map((post) => (
+              <article className="admin-business-card" key={post.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{post.category.replaceAll("_", " ")}</span>
+                    <span>{post.area_slug ? post.area_slug.replaceAll("-", " ") : "all areas"}</span>
+                  </div>
+                  <h2>{post.title}</h2>
+                  <p>{post.message}</p>
+                  <dl>
+                    <div>
+                      <dt>Rider</dt>
+                      <dd>{post.rider_name}</dd>
+                    </div>
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{post.email || "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt>Ride date</dt>
+                      <dd>{post.ride_date || "Not set"}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    disabled={workingId === post.id}
+                    onClick={() => runTrailTalkAction(post.id, "approved")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === post.id}
+                    onClick={() => runTrailTalkAction(post.id, "rejected")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No pending Trail Talk posts.</p>
         )}
       </div>
 
