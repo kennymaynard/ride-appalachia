@@ -8,7 +8,7 @@ from app.database import Settings
 TIER_LABELS = {
     "local_business": "$29 Local Business",
     "lodging_partner": "$59 Lodging Partner",
-    "veteran_owned": "$29 Veteran Owned",
+    "veteran_owned": "$0 Veteran Owned",
 }
 
 
@@ -16,7 +16,6 @@ def get_price_id(settings: Settings, tier: str) -> str:
     price_ids = {
         "local_business": settings.stripe_price_local_business,
         "lodging_partner": settings.stripe_price_lodging_partner,
-        "veteran_owned": settings.stripe_price_veteran_owned,
     }
     return price_ids.get(tier, "")
 

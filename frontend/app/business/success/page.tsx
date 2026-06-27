@@ -13,6 +13,7 @@ type Props = {
 };
 
 function checkoutLabel(checkout?: string) {
+  if (checkout === "free") return "Free plan submitted";
   if (checkout === "stub") return "Checkout stub complete";
   return "Checkout complete";
 }
@@ -24,6 +25,7 @@ export default async function BusinessSuccessPage({ searchParams }: Props) {
     : null;
   const selectedTier =
     partnerTiers.find((tier) => tier.id === params.tier) || partnerTiers[0];
+  const isFreeTier = selectedTier.id === "veteran_owned";
 
   return (
     <main className="page">
@@ -54,7 +56,7 @@ export default async function BusinessSuccessPage({ searchParams }: Props) {
         <article className="success-card">
           <p className="eyebrow">Selected tier</p>
           <h2>{selectedTier.name}</h2>
-          <strong>{selectedTier.price}/mo</strong>
+          <strong>{isFreeTier ? selectedTier.price : `${selectedTier.price}/mo`}</strong>
           <p>{selectedTier.description}</p>
         </article>
 

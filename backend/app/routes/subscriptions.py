@@ -86,6 +86,25 @@ def create_subscription_checkout(
             raise HTTPException(status_code=401, detail="Business access token required")
         owner_access_token = business.owner_access_token
 
+    if payload.tier == "veteran_owned":
+        if not payload.business_id:
+            return CheckoutSessionRead(
+                checkout_url=f"{settings.frontend_url}/business/join?tier=veteran_owned",
+            )
+        business = apply_subscription_update(
+            db,
+            business_id=payload.business_id,
+            subscription_status="active",
+            tier=payload.tier,
+        )
+        return CheckoutSessionRead(
+            checkout_url=(
+                f"{settings.frontend_url}/business/success"
+                f"?checkout=free&tier={payload.tier}&business_id={business.id}"
+                f"&access_token={owner_access_token}"
+            ),
+        )
+
     try:
         checkout_url = create_checkout_session(
             settings,

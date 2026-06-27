@@ -2077,8 +2077,8 @@ export const partnerTiers: Tier[] = [
   {
     id: "veteran_owned",
     name: "Veteran Owned",
-    price: "$29",
-    description: "For veteran-owned businesses that want rider visibility and a trusted marketplace presence.",
+    price: "$0.00",
+    description: "Free for veteran-owned businesses that want rider visibility and a trusted marketplace presence.",
     features: ["Marketplace listing", "Veteran-owned badge", "Phone and location CTA", "Deal or coupon"],
   },
 ];

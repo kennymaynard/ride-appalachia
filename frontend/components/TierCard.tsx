@@ -10,8 +10,14 @@ type Props = {
 
 export function TierCard({ tier }: Props) {
   const [isLoading, setIsLoading] = useState(false);
+  const isFreeTier = tier.id === "veteran_owned";
 
   async function startCheckout() {
+    if (isFreeTier) {
+      window.location.href = `/business/join?tier=${tier.id}`;
+      return;
+    }
+
     setIsLoading(true);
     try {
       const checkoutUrl = await createCheckout(tier.id);
@@ -28,7 +34,7 @@ export function TierCard({ tier }: Props) {
         <p>{tier.name}</p>
         <h3>
           {tier.price}
-          <span>/mo</span>
+          {isFreeTier ? null : <span>/mo</span>}
         </h3>
         <strong>{tier.description}</strong>
       </div>
@@ -38,7 +44,7 @@ export function TierCard({ tier }: Props) {
         ))}
       </ul>
       <button type="button" onClick={startCheckout} disabled={isLoading}>
-        {isLoading ? "Opening..." : "Choose Plan"}
+        {isLoading ? "Opening..." : isFreeTier ? "Join For Free" : "Choose Plan"}
       </button>
     </article>
   );

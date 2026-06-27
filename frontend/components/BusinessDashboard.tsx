@@ -25,7 +25,7 @@ const categories: Exclude<Category, "deals">[] = [
 const tiers = [
   { id: "local_business", label: "$29 local business" },
   { id: "lodging_partner", label: "$59 lodging partner" },
-  { id: "veteran_owned", label: "$29 veteran owned" },
+  { id: "veteran_owned", label: "$0.00 veteran owned" },
 ] as const;
 
 function getActiveTier(tier: string) {

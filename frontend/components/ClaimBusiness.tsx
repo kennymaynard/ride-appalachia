@@ -25,6 +25,7 @@ export function ClaimBusiness({ business }: Props) {
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
     [tier],
   );
+  const isFreeTier = tier === "veteran_owned";
 
   async function claimBusiness() {
     setError("");
@@ -88,7 +89,7 @@ export function ClaimBusiness({ business }: Props) {
               <p>{item.name}</p>
               <h3>
                 {item.price}
-                <span>/mo</span>
+                {item.id === "veteran_owned" ? null : <span>/mo</span>}
               </h3>
               <strong>{item.description}</strong>
             </div>
@@ -138,7 +139,13 @@ export function ClaimBusiness({ business }: Props) {
           disabled={isSubmitting || !ownerEmail.trim() || phoneLast4.length !== 4}
           onClick={claimBusiness}
         >
-          {isSubmitting ? "Starting Checkout..." : "Claim And Continue To Checkout"}
+          {isSubmitting
+            ? isFreeTier
+              ? "Submitting..."
+              : "Starting Checkout..."
+            : isFreeTier
+              ? "Claim Free Veteran Listing"
+              : "Claim And Continue To Checkout"}
         </button>
         <Link href={`/business/${business.slug}`}>Back to listing</Link>
       </div>

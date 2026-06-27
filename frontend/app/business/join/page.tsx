@@ -56,6 +56,7 @@ export default function JoinPage() {
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
     [tier],
   );
+  const isFreeTier = tier === "veteran_owned";
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -129,11 +130,11 @@ export default function JoinPage() {
           Get found by ATV, UTV, Jeep, and SxS riders looking for lodging,
           food, fuel, repair, recovery, outfitter stops, and trail-town deals
           before they hit the road. Start with a $29 Local Business listing or
-          choose the Lodging Partner or Veteran Owned plan when it fits your
+          choose the Lodging Partner or free Veteran Owned plan when it fits your
           business.
         </p>
         <div className="join-hero-proof" aria-label="Signup details">
-          <span>Plans start at $29/month</span>
+          <span>Veteran Owned is $0.00</span>
           <span>Cancel anytime</span>
           <span>Reviewed before going live</span>
         </div>
@@ -152,7 +153,7 @@ export default function JoinPage() {
         </article>
         <article>
           <span>3</span>
-          <strong>Continue to secure checkout</strong>
+          <strong>{isFreeTier ? "Submit for review" : "Continue to secure checkout"}</strong>
         </article>
       </section>
 
@@ -168,7 +169,7 @@ export default function JoinPage() {
               <p>{item.name}</p>
               <h3>
                 {item.price}
-                <span>/mo</span>
+                {item.id === "veteran_owned" ? null : <span>/mo</span>}
               </h3>
               <strong>{item.description}</strong>
               <small>{tierBestFor[item.id]}</small>
@@ -192,11 +193,12 @@ export default function JoinPage() {
             </div>
             <strong>
               {selectedTier.price}
-              <span>/month</span>
+              {isFreeTier ? null : <span>/month</span>}
             </strong>
             <p>
-              Your listing is created first, then you continue to secure Stripe
-              checkout to activate the monthly plan.
+              {isFreeTier
+                ? "Your listing is created first, then submitted for admin review as a free Veteran Owned plan."
+                : "Your listing is created first, then you continue to secure Stripe checkout to activate the monthly plan."}
             </p>
           </div>
 
@@ -287,7 +289,13 @@ export default function JoinPage() {
           {error ? <p className="form-error">{error}</p> : null}
 
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Opening Checkout..." : `Continue to ${selectedTier.price}/month Checkout`}
+            {isSubmitting
+              ? isFreeTier
+                ? "Submitting..."
+                : "Opening Checkout..."
+              : isFreeTier
+                ? "Submit Free Veteran Listing"
+                : `Continue to ${selectedTier.price}/month Checkout`}
           </button>
         </form>
       </section>
