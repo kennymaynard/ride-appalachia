@@ -6474,47 +6474,102 @@ button.tier-card.is-selected {
 }
 
 .heroes-poster-hotspots a,
+.heroes-poster-card-links a,
+.heroes-poster-footer-links a,
 .heroes-poster-join {
   display: grid;
   place-items: center;
-  border: 1px solid rgba(242, 106, 0, 0.9);
-  background: rgba(0, 0, 0, 0.62);
-  color: #fff;
+  border: 1px solid rgba(242, 106, 0, 0.52);
+  background: rgba(5, 5, 5, 0.34);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  font-size: clamp(0.58rem, 1vw, 0.92rem);
+  font-size: clamp(0.52rem, 0.82vw, 0.82rem);
   font-weight: 950;
   line-height: 1;
-  padding: 0.35rem;
+  padding: 0.28rem;
   text-align: center;
   text-decoration: none;
+  text-shadow: 0 0.12rem 0.4rem rgba(0, 0, 0, 0.92);
   text-transform: uppercase;
   transition:
     background 160ms ease,
+    border-color 160ms ease,
     color 160ms ease,
     transform 160ms ease;
 }
 
 .heroes-poster-hotspots a:focus-visible,
 .heroes-poster-hotspots a:hover,
+.heroes-poster-card-links a:focus-visible,
+.heroes-poster-card-links a:hover,
+.heroes-poster-footer-links a:focus-visible,
+.heroes-poster-footer-links a:hover,
 .heroes-poster-join:focus-visible,
 .heroes-poster-join:hover {
   outline: 2px solid var(--orange);
   outline-offset: -3px;
-  background: var(--orange);
+  border-color: var(--orange);
+  background: rgba(242, 106, 0, 0.92);
   color: #050505;
+  text-shadow: none;
   transform: translateY(-1px);
+}
+
+.heroes-poster-card-links {
+  position: absolute;
+  top: 76.95%;
+  left: 4.85%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.15%;
+  width: 90.3%;
+  height: 3.08%;
+  z-index: 3;
+}
+
+.heroes-poster-card-links a {
+  border-color: rgba(242, 106, 0, 0.7);
+  border-radius: 0.32rem;
+  background: rgba(5, 5, 5, 0.24);
+  color: rgba(242, 106, 0, 0.98);
+  font-size: clamp(0.52rem, 0.78vw, 0.78rem);
 }
 
 .heroes-poster-join {
   position: absolute;
-  top: 88.8%;
-  left: 46.4%;
-  width: 30%;
-  height: 4.15%;
-  border-radius: 0.5rem;
+  top: 89.18%;
+  left: 45.2%;
+  width: 31.2%;
+  height: 2.82%;
+  border-color: rgba(255, 121, 26, 0.9);
+  border-radius: 0.38rem;
   z-index: 3;
-  background: var(--orange);
+  background: rgba(242, 106, 0, 0.78);
   color: #050505;
+  font-size: clamp(0.64rem, 1.04vw, 1rem);
+  text-shadow: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0.55rem 1.5rem rgba(0, 0, 0, 0.26);
+}
+
+.heroes-poster-footer-links {
+  position: absolute;
+  top: 94.92%;
+  left: 3.75%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  width: 92.5%;
+  height: 3.46%;
+  z-index: 3;
+}
+
+.heroes-poster-footer-links a {
+  border-color: rgba(242, 106, 0, 0.32);
+  background: rgba(5, 5, 5, 0.18);
+  color: transparent;
+  font-size: 0;
 }
 
 .compact-heroes-hero {
@@ -6824,6 +6879,7 @@ button.tier-card.is-selected {
   }
 
   .heroes-poster-hotspots a,
+  .heroes-poster-card-links a,
   .heroes-poster-join {
     min-height: 2.35rem;
     border: 1px solid var(--orange);
@@ -6838,14 +6894,29 @@ button.tier-card.is-selected {
     text-transform: uppercase;
   }
 
+  .heroes-poster-card-links {
+    top: auto;
+    bottom: 8.3rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    width: auto;
+    height: auto;
+  }
+
   .heroes-poster-join {
     top: auto;
-    bottom: 8.9rem;
+    bottom: 18.5rem;
     left: 0.75rem;
     width: calc(100% - 1.5rem);
     height: auto;
     background: var(--orange);
     color: #050505;
+  }
+
+  .heroes-poster-footer-links {
+    display: none;
   }
 
   .compact-heroes-hero,
