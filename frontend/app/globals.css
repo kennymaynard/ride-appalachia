@@ -6486,6 +6486,7 @@ button.tier-card.is-selected {
   font-size: clamp(0.52rem, 0.82vw, 0.82rem);
   font-weight: 950;
   line-height: 1;
+  opacity: 0;
   padding: 0.28rem;
   text-align: center;
   text-decoration: none;
@@ -6495,6 +6496,7 @@ button.tier-card.is-selected {
     background 160ms ease,
     border-color 160ms ease,
     color 160ms ease,
+    opacity 160ms ease,
     transform 160ms ease;
 }
 
