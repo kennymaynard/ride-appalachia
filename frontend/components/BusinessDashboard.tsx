@@ -156,6 +156,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       views: selectedBusiness?.view_clicks ?? 0,
       actions: selectedBusiness?.action_clicks ?? 0,
       deals: dealClicks,
+      properties: selectedBusiness?.bookable_listings?.length ?? 0,
     };
   }, [selectedBusiness]);
 
@@ -428,10 +429,10 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       });
       setBookableForm(emptyBookableForm(selectedBusiness));
       setCalendarForm({ ...emptyCalendarForm(), listing_id: String(listing.id) });
-      setStatus("Bookable listing added. Add an iCal calendar next.");
+      setStatus("Property added to this account. Add an iCal calendar next if it has outside bookings.");
     } catch (caughtError) {
       setError(
-        caughtError instanceof Error ? caughtError.message : "Unable to add bookable listing.",
+        caughtError instanceof Error ? caughtError.message : "Unable to add property.",
       );
     } finally {
       setSavingBookable(false);
@@ -801,14 +802,19 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             <strong>{totals.deals}</strong>
             <span>Coupon claims</span>
           </div>
+          <div>
+            <strong>{totals.properties}</strong>
+            <span>Properties / bookables</span>
+          </div>
           <a href={`/business/${selectedBusiness.slug}`}>View public listing</a>
         </section>
 
         <section className="dashboard-card booking-dashboard-card">
-          <h2>Booking Setup</h2>
+          <h2>Property Booking Setup</h2>
           <p className="field-help">
-            Connect Stripe payouts before accepting paid bookings. Request-to-book
-            protects your calendar while iCal sync is being proven.
+            Keep every cabin, RV site, rental, guide service, or event under this
+            one business account. Add each property below, then attach its own
+            calendar links and booking requests.
           </p>
           <div className="booking-status-row">
             <span>
@@ -826,9 +832,13 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         </section>
 
         <form className="dashboard-card" onSubmit={publishBookableListing}>
-          <h2>Bookable Listing</h2>
+          <h2>Add Property / Booking Item</h2>
+          <p className="field-help">
+            Add as many properties or bookable services as this business owns.
+            They will all stay under this same login.
+          </p>
           <label>
-            Listing title
+            Property / item name
             <input
               required
               value={bookableForm.title}
@@ -911,7 +921,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             />
           </label>
           <button type="submit" disabled={savingBookable}>
-            {savingBookable ? "Adding..." : "Add Bookable Listing"}
+            {savingBookable ? "Adding..." : "Add Property"}
           </button>
         </form>
 
@@ -921,7 +931,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             Paste Airbnb, Vrbo, Booking.com, Google Calendar, or any iCal link.
           </p>
           <label>
-            Listing
+            Property / item
             <select
               required
               value={calendarForm.listing_id}
@@ -929,7 +939,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                 setCalendarForm({ ...calendarForm, listing_id: event.target.value })
               }
             >
-              <option value="">Choose listing</option>
+              <option value="">Choose property</option>
               {(selectedBusiness.bookable_listings || []).map((listing) => (
                 <option key={listing.id} value={listing.id}>
                   {listing.title}
@@ -968,7 +978,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           </button>
 
           <div className="deal-list">
-            <h3>Bookable Inventory</h3>
+            <h3>Properties on this account</h3>
             {selectedBusiness.bookable_listings?.length ? (
               selectedBusiness.bookable_listings.map((listing) => (
                 <article key={listing.id}>
@@ -999,7 +1009,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                 </article>
               ))
             ) : (
-              <p>No bookable listings yet.</p>
+              <p>No properties added yet.</p>
             )}
           </div>
         </form>
