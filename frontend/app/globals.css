@@ -3012,6 +3012,12 @@ button.tier-card.is-selected {
   text-transform: none;
 }
 
+.coordinate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
 .dashboard-card button:disabled {
   cursor: wait;
   opacity: 0.72;
@@ -4454,6 +4460,15 @@ button.tier-card.is-selected {
   color: #03190c;
 }
 
+.trail-layer-controls button.is-business {
+  border-color: rgba(59, 184, 117, 0.55);
+}
+
+.trail-layer-controls button.is-business.is-active {
+  background: #3bb875;
+  color: #02150b;
+}
+
 .trail-leaflet-map .leaflet-container {
   background: #dce9ee;
   filter: saturate(0.9) contrast(1.08);
@@ -4504,6 +4519,57 @@ button.tier-card.is-selected {
 }
 
 .leaflet-trail-pin strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaflet-business-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content !important;
+  height: auto !important;
+  max-width: min(15rem, 48vw);
+  transform: translateY(-50%);
+  border: 1px solid rgba(59, 184, 117, 0.45);
+  border-radius: 999px;
+  background: rgba(1, 24, 13, 0.84);
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.28);
+  color: var(--text);
+  padding: 0.28rem 0.55rem 0.28rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.leaflet-business-pin span {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid #06150c;
+  border-radius: 999px;
+  background: #3bb875;
+  box-shadow: 0 0 0 0.18rem rgba(59, 184, 117, 0.25);
+  flex: 0 0 auto;
+}
+
+.leaflet-business-pin.is-food span {
+  background: #ffc857;
+  box-shadow: 0 0 0 0.18rem rgba(255, 200, 87, 0.25);
+}
+
+.leaflet-business-pin.is-fuel span {
+  background: #5d94ba;
+  box-shadow: 0 0 0 0.18rem rgba(93, 148, 186, 0.25);
+}
+
+.leaflet-business-pin.is-lodging span {
+  background: #f26a1b;
+  box-shadow: 0 0 0 0.18rem rgba(242, 106, 27, 0.25);
+}
+
+.leaflet-business-pin strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -7270,6 +7336,10 @@ button.tier-card.is-selected {
 @media (max-width: 900px) {
   .trail-talk-layout,
   .rider-tools-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .coordinate-grid {
     grid-template-columns: 1fr;
   }
 

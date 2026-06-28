@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -74,6 +74,8 @@ class Business(Base):
     description: Mapped[str] = mapped_column(Text)
     phone: Mapped[str] = mapped_column(String(40))
     location: Mapped[str] = mapped_column(String(180), index=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     photo_url: Mapped[str] = mapped_column(Text)
     website_url: Mapped[str] = mapped_column(Text, default="")
     owner_email: Mapped[str] = mapped_column(String(180), default="", index=True)

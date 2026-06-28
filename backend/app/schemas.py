@@ -165,6 +165,8 @@ class BusinessBase(BaseModel):
     description: str
     phone: str = Field(min_length=7, max_length=40)
     location: str = Field(min_length=2, max_length=180)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     photo_url: str
     website_url: str = ""
     subscription_tier: str = "local_business"
@@ -194,6 +196,8 @@ class BusinessUpdate(BaseModel):
     description: Optional[str] = None
     phone: Optional[str] = Field(default=None, min_length=7, max_length=40)
     location: Optional[str] = Field(default=None, min_length=2, max_length=180)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     photo_url: Optional[str] = None
     website_url: Optional[str] = None
     subscription_tier: Optional[str] = None

@@ -60,6 +60,8 @@ export type Business = {
   description: string;
   phone: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
   photo_url: string;
   website_url: string;
   owner_email?: string;
@@ -86,6 +88,8 @@ export type BusinessCreateInput = {
   description: string;
   phone: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   photo_url: string;
   website_url: string;
   subscription_tier: Tier["id"];
@@ -100,6 +104,8 @@ export type BusinessUpdateInput = Partial<
     | "description"
     | "phone"
     | "location"
+    | "latitude"
+    | "longitude"
     | "photo_url"
     | "website_url"
     | "subscription_tier"

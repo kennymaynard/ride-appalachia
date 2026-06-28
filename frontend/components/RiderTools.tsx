@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { RideArea, TrailInfo } from "../lib/types";
+import type { Business, RideArea, TrailInfo } from "../lib/types";
 
 type Props = {
   areas: RideArea[];
+  listings: Business[];
 };
 
 type SavedTrail = {
@@ -80,7 +81,18 @@ function formatDuration(startedAt: number, endedAt = Date.now()) {
   return `${seconds}s`;
 }
 
-export function RiderTools({ areas }: Props) {
+function hasBusinessCoordinates(business: Business) {
+  return typeof business.latitude === "number" && typeof business.longitude === "number";
+}
+
+function businessMatchesLayer(business: Business, layerId: string) {
+  return (
+    business.category === layerId ||
+    (layerId === "deals" && business.deals?.some((deal) => deal.is_active))
+  );
+}
+
+export function RiderTools({ areas, listings }: Props) {
   const [selectedAreaSlug, setSelectedAreaSlug] = useState(areas[0]?.slug || "");
   const [selectedLayers, setSelectedLayers] = useState<string[]>(["food", "fuel", "lodging"]);
   const [savedTrails, setSavedTrails] = useState<SavedTrail[]>([]);
@@ -92,6 +104,17 @@ export function RiderTools({ areas }: Props) {
   const selectedArea = useMemo(
     () => areas.find((area) => area.slug === selectedAreaSlug) || areas[0],
     [areas, selectedAreaSlug],
+  );
+  const mapReadyListings = useMemo(
+    () => listings.filter(hasBusinessCoordinates),
+    [listings],
+  );
+  const selectedLayerPinCount = useMemo(
+    () =>
+      mapReadyListings.filter((business) =>
+        selectedLayers.some((layerId) => businessMatchesLayer(business, layerId)),
+      ).length,
+    [mapReadyListings, selectedLayers],
   );
 
   useEffect(() => {
@@ -218,9 +241,9 @@ export function RiderTools({ areas }: Props) {
           <h2>Pick what to find nearby</h2>
         </div>
         <p className="field-help">
-          Trail and hiking pins are shown on the map above. Business categories
-          open focused nearby map searches until exact partner coordinates are
-          added to listings.
+          Trail, hiking, and partner pins are shown on the map above. There are
+          {` ${mapReadyListings.length} `}businesses with exact map pins, and
+          {` ${selectedLayerPinCount} `}match your selected categories.
         </p>
         <div className="rider-layer-controls" aria-label="Nearby map layers">
           {mapLayers.map((layer) => (

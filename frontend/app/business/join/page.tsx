@@ -22,6 +22,8 @@ const initialForm = {
   category: "lodging" as Exclude<Category, "deals">,
   phone: "",
   location: "",
+  latitude: "",
+  longitude: "",
   website_url: "",
   description: "",
   photo_url: "",
@@ -43,6 +45,13 @@ function slugify(value: string) {
     .replace(/(^-|-$)/g, "");
 
   return `${slug || "business"}-${Date.now().toString(36)}`;
+}
+
+function parseCoordinate(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const coordinate = Number(trimmed);
+  return Number.isFinite(coordinate) ? coordinate : undefined;
 }
 
 export default function JoinPage() {
@@ -94,6 +103,21 @@ export default function JoinPage() {
     setError("");
     setIsSubmitting(true);
 
+    const latitude = parseCoordinate(form.latitude);
+    const longitude = parseCoordinate(form.longitude);
+    const hasLatitude = Boolean(form.latitude.trim());
+    const hasLongitude = Boolean(form.longitude.trim());
+
+    if (
+      hasLatitude !== hasLongitude ||
+      (hasLatitude && latitude === undefined) ||
+      (hasLongitude && longitude === undefined)
+    ) {
+      setIsSubmitting(false);
+      setError("Enter both valid latitude and longitude numbers, or leave both blank.");
+      return;
+    }
+
     const payload: BusinessCreateInput = {
       name: form.name.trim(),
       slug: slugify(form.name),
@@ -101,6 +125,8 @@ export default function JoinPage() {
       description: form.description.trim(),
       phone: form.phone.trim(),
       location: form.location.trim(),
+      latitude,
+      longitude,
       photo_url: form.photo_url || categoryPhotos[form.category],
       website_url: form.website_url.trim(),
       subscription_tier: tier,
@@ -255,6 +281,30 @@ export default function JoinPage() {
               onChange={(event) => updateForm("location", event.target.value)}
             />
           </label>
+          <div className="coordinate-grid">
+            <label>
+              Latitude
+              <input
+                inputMode="decimal"
+                placeholder="37.6223"
+                value={form.latitude}
+                onChange={(event) => updateForm("latitude", event.target.value)}
+              />
+            </label>
+            <label>
+              Longitude
+              <input
+                inputMode="decimal"
+                placeholder="-82.1571"
+                value={form.longitude}
+                onChange={(event) => updateForm("longitude", event.target.value)}
+              />
+            </label>
+          </div>
+          <p className="field-help">
+            Optional, but adding map coordinates places your business pin on
+            Rider Tools. You can also add this later from your business dashboard.
+          </p>
           <label>
             Website or booking link
             <input

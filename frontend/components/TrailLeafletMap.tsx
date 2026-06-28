@@ -12,6 +12,7 @@ import {
   Tooltip,
   useMap,
 } from "react-leaflet";
+import type { Business, Category } from "../lib/types";
 import type { MapPoint } from "./RideAreaMap";
 
 type Props = {
@@ -20,6 +21,27 @@ type Props = {
   hikingCount: number;
   ohvCount: number;
   points: MapPoint[];
+  businesses?: Business[];
+};
+
+type BusinessLayer = Exclude<Category, "deals"> | "deals";
+
+const businessLayerOptions: { id: BusinessLayer; label: string }[] = [
+  { id: "food", label: "Food" },
+  { id: "fuel", label: "Gas" },
+  { id: "lodging", label: "Lodging" },
+  { id: "repairs", label: "Repairs" },
+  { id: "rentals", label: "Rentals" },
+  { id: "deals", label: "Deals" },
+];
+
+const businessLayerLabels: Record<BusinessLayer, string> = {
+  food: "Food",
+  fuel: "Gas / Fuel",
+  lodging: "Lodging",
+  repairs: "Repairs",
+  rentals: "Rentals",
+  deals: "Deal",
 };
 
 function escapeXml(value: string) {
@@ -208,15 +230,44 @@ function makeIcon(point: MapPoint) {
   });
 }
 
+function getBusinessLayer(business: Business): BusinessLayer {
+  return business.category === "deals" ? "food" : business.category;
+}
+
+function hasActiveDeal(business: Business) {
+  return business.deals?.some((deal) => deal.is_active) ?? false;
+}
+
+function makeBusinessIcon(business: Business) {
+  const label = business.name.length > 24 ? `${business.name.slice(0, 21)}...` : business.name;
+  const layer = getBusinessLayer(business);
+
+  return L.divIcon({
+    className: `leaflet-business-pin is-${layer}`,
+    html: `<span></span><strong>${escapeXml(label)}</strong>`,
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
+
 export function TrailLeafletMap({
   activeTitle,
   bounds,
+  businesses = [],
   hikingCount,
   ohvCount,
   points,
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
   const [showHiking, setShowHiking] = useState(true);
+  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([
+    "food",
+    "fuel",
+    "lodging",
+    "repairs",
+    "rentals",
+    "deals",
+  ]);
   const [mapStyle, setMapStyle] = useState<"standard" | "topo">("topo");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [userLocation, setUserLocation] = useState<[number, number]>();
@@ -237,6 +288,19 @@ export function TrailLeafletMap({
             : showOhv,
       ),
     [points, selectedTrailId, showHiking, showOhv],
+  );
+  const visibleBusinesses = useMemo(
+    () =>
+      selectedTrailId
+        ? []
+        : businesses.filter((business) => {
+            const layer = getBusinessLayer(business);
+            return (
+              businessLayers.includes(layer) ||
+              (businessLayers.includes("deals") && hasActiveDeal(business))
+            );
+          }),
+    [businessLayers, businesses, selectedTrailId],
   );
   const trailLine = hasExactRoute
     ? (selectedTrail?.routeLine.map((coordinate) => [
@@ -279,6 +343,13 @@ export function TrailLeafletMap({
       "application/geo+json;charset=utf-8",
     );
   };
+  const toggleBusinessLayer = (layer: BusinessLayer) => {
+    setBusinessLayers((current) =>
+      current.includes(layer)
+        ? current.filter((item) => item !== layer)
+        : [...current, layer],
+    );
+  };
 
   return (
     <div className="trail-leaflet-map">
@@ -314,6 +385,20 @@ export function TrailLeafletMap({
         >
           {mapStyle === "topo" ? "Topo on" : "Topo off"}
         </button>
+        {businessLayerOptions.map((layer) => (
+          <button
+            className={
+              businessLayers.includes(layer.id)
+                ? "is-active is-business"
+                : "is-business"
+            }
+            key={layer.id}
+            type="button"
+            onClick={() => toggleBusinessLayer(layer.id)}
+          >
+            {layer.label}
+          </button>
+        ))}
         {selectedTrail && hasExactRoute ? (
           <>
             <button type="button" onClick={handleDownloadGpx}>
@@ -424,6 +509,32 @@ export function TrailLeafletMap({
             </Popup>
           </Marker>
         ))}
+        {visibleBusinesses.map((business) => (
+          <Marker
+            icon={makeBusinessIcon(business)}
+            key={`business-${business.id}`}
+            position={[business.latitude as number, business.longitude as number]}
+          >
+            <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
+              {business.name}
+            </Tooltip>
+            <Popup>
+              <div className="trail-popup">
+                <strong>{business.name}</strong>
+                <span>
+                  {businessLayerLabels[getBusinessLayer(business)]} • {business.location}
+                </span>
+                <p>{business.description}</p>
+                {hasActiveDeal(business) ? (
+                  <p>
+                    Deal: {business.deals.find((deal) => deal.is_active)?.title}
+                  </p>
+                ) : null}
+                <a href={`/business/${business.slug}`}>View listing</a>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
       <div className="trail-map-overlay">
         {selectedTrail ? (
@@ -457,12 +568,13 @@ export function TrailLeafletMap({
           <>
             <strong>{activeTitle}</strong>
             <span>
-              {ohvCount} OHV / ride pins, {hikingCount} hiking pins, and rider review
-              signals for the planning area.
+              {ohvCount} OHV / ride pins, {hikingCount} hiking pins, and{" "}
+              {visibleBusinesses.length} partner pins for the planning area.
             </span>
             <div className="trail-map-legend" aria-label="Map legend">
               <span><i /> OHV / ride</span>
               <span><i /> Hiking</span>
+              <span><i /> Partner</span>
             </div>
           </>
         )}

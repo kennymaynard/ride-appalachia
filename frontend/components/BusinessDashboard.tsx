@@ -8,7 +8,7 @@ import {
   updateBusiness,
   updateDeal,
 } from "../lib/api";
-import type { Business, Category } from "../lib/types";
+import type { Business, BusinessUpdateInput, Category } from "../lib/types";
 
 type Props = {
   initialBusinesses: Business[];
@@ -38,6 +38,8 @@ type ListingForm = {
   description: string;
   phone: string;
   location: string;
+  latitude: string;
+  longitude: string;
   photo_url: string;
   website_url: string;
   owner_email: string;
@@ -51,6 +53,8 @@ function toListingForm(business: Business): ListingForm {
     description: business.description,
     phone: business.phone,
     location: business.location,
+    latitude: business.latitude?.toString() || "",
+    longitude: business.longitude?.toString() || "",
     photo_url: business.photo_url,
     website_url: business.website_url,
     owner_email: business.owner_email || "",
@@ -77,6 +81,13 @@ function emptyServiceForm(business?: Business) {
     date_needed: "",
     notes: "",
   };
+}
+
+function parseCoordinate(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const coordinate = Number(trimmed);
+  return Number.isFinite(coordinate) ? coordinate : undefined;
 }
 
 export function BusinessDashboard({ initialBusinesses }: Props) {
@@ -143,9 +154,29 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setStatus("");
 
     try {
+      const latitude = parseCoordinate(listingForm.latitude);
+      const longitude = parseCoordinate(listingForm.longitude);
+      const hasLatitude = Boolean(listingForm.latitude.trim());
+      const hasLongitude = Boolean(listingForm.longitude.trim());
+
+      if (
+        hasLatitude !== hasLongitude ||
+        (hasLatitude && latitude === undefined) ||
+        (hasLongitude && longitude === undefined)
+      ) {
+        setError("Enter both valid latitude and longitude numbers, or leave both blank.");
+        return;
+      }
+
+      const payload: BusinessUpdateInput = {
+        ...listingForm,
+        latitude,
+        longitude,
+      };
+
       const updatedBusiness = await updateBusiness(
         selectedBusiness.id,
-        listingForm,
+        payload,
         selectedBusiness.owner_access_token,
       );
       replaceBusiness(updatedBusiness);
@@ -364,6 +395,33 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
               }
             />
           </label>
+          <div className="coordinate-grid">
+            <label>
+              Latitude
+              <input
+                inputMode="decimal"
+                placeholder="37.6223"
+                value={listingForm.latitude}
+                onChange={(event) =>
+                  setListingForm({ ...listingForm, latitude: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Longitude
+              <input
+                inputMode="decimal"
+                placeholder="-82.1571"
+                value={listingForm.longitude}
+                onChange={(event) =>
+                  setListingForm({ ...listingForm, longitude: event.target.value })
+                }
+              />
+            </label>
+          </div>
+          <p className="field-help">
+            Add coordinates to show this business as a pin in Rider Tools.
+          </p>
           <label>
             Website
             <input

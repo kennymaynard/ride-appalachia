@@ -102,6 +102,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       description: business.description,
       phone: business.phone,
       location: business.location,
+      latitude: business.latitude,
+      longitude: business.longitude,
       website_url: business.website_url,
       photo_url: business.photo_url,
     });
@@ -542,6 +544,36 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                     onChange={(event) => setEditForm({ ...editForm, location: event.target.value })}
                   />
                 </label>
+                <div className="coordinate-grid">
+                  <label>
+                    Latitude
+                    <input
+                      inputMode="decimal"
+                      placeholder="37.6223"
+                      value={editForm.latitude ?? ""}
+                      onChange={(event) =>
+                        setEditForm({
+                          ...editForm,
+                          latitude: event.target.value === "" ? undefined : Number(event.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Longitude
+                    <input
+                      inputMode="decimal"
+                      placeholder="-82.1571"
+                      value={editForm.longitude ?? ""}
+                      onChange={(event) =>
+                        setEditForm({
+                          ...editForm,
+                          longitude: event.target.value === "" ? undefined : Number(event.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                </div>
                 <label>
                   Website
                   <input
@@ -590,6 +622,14 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                 <div>
                   <dt>Location</dt>
                   <dd>{business.location}</dd>
+                </div>
+                <div>
+                  <dt>Map pin</dt>
+                  <dd>
+                    {business.latitude != null && business.longitude != null
+                      ? `${business.latitude}, ${business.longitude}`
+                      : "Not set"}
+                  </dd>
                 </div>
                 <div>
                   <dt>Status</dt>

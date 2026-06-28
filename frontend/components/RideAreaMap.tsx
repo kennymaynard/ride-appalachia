@@ -1,11 +1,12 @@
 import Link from "next/link";
-import type { RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
+import type { Business, RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
 import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
 import { TrailMapShell } from "./TrailMapShell";
 
 type Props = {
   areas: RideArea[];
   activeSlug?: string;
+  businesses?: Business[];
   compact?: boolean;
   reviews?: TrailReview[];
 };
@@ -98,9 +99,20 @@ function getMapPoints(areas: RideArea[], reviews: TrailReview[], activeArea?: Ri
   );
 }
 
-function getMapBounds(points: MapPoint[]): MapBounds {
-  const latitudes = points.map((item) => item.latitude);
-  const longitudes = points.map((item) => item.longitude);
+function hasBusinessCoordinates(business: Business) {
+  return typeof business.latitude === "number" && typeof business.longitude === "number";
+}
+
+function getMapBounds(points: MapPoint[], businesses: Business[] = []): MapBounds {
+  const businessesWithCoordinates = businesses.filter(hasBusinessCoordinates);
+  const latitudes = [
+    ...points.map((item) => item.latitude),
+    ...businessesWithCoordinates.map((business) => business.latitude as number),
+  ];
+  const longitudes = [
+    ...points.map((item) => item.longitude),
+    ...businessesWithCoordinates.map((business) => business.longitude as number),
+  ];
   const minLat = Math.min(...latitudes);
   const maxLat = Math.max(...latitudes);
   const minLon = Math.min(...longitudes);
@@ -129,10 +141,17 @@ function getLeafletBounds(bounds: MapBounds): [[number, number], [number, number
   ];
 }
 
-export function RideAreaMap({ areas, activeSlug, compact = false, reviews = [] }: Props) {
+export function RideAreaMap({
+  areas,
+  activeSlug,
+  businesses = [],
+  compact = false,
+  reviews = [],
+}: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
   const mapPoints = getMapPoints(areas, reviews, activeArea);
-  const mapBounds = getMapBounds(mapPoints);
+  const mapBusinesses = businesses.filter(hasBusinessCoordinates);
+  const mapBounds = getMapBounds(mapPoints, mapBusinesses);
   const ohvCount = mapPoints.filter((point) => point.activity !== "Hiking").length;
   const hikingCount = mapPoints.filter((point) => point.activity === "Hiking").length;
   const visibleAreas = activeArea ? [activeArea] : areas;
@@ -153,6 +172,7 @@ export function RideAreaMap({ areas, activeSlug, compact = false, reviews = [] }
             hikingCount={hikingCount}
             ohvCount={ohvCount}
             points={mapPoints}
+            businesses={mapBusinesses}
           />
         </div>
 
