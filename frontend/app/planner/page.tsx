@@ -16,10 +16,10 @@ export default async function PlannerPage({ searchParams }: Props) {
     <main className="page">
       <section className="page-hero compact">
         <p className="eyebrow">Trip planner</p>
-        <h1>Check what you need. We build the ride road map.</h1>
+        <h1>Pick the ride. Build the weekend.</h1>
         <p>
-          Start with the weekend essentials, then turn the list into lodging,
-          food, fuel, rental, repair, and deal stops.
+          Choose a town, trails, lodging, food, fuel, wash bays, family stops,
+          and backup services. Save the finished plan before you lose service.
         </p>
       </section>
 

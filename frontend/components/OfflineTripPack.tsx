@@ -8,6 +8,10 @@ type OfflineTripPack = {
   savedAt: string;
   checklist: string[];
   directions: string;
+  mapLinks?: Array<{
+    label: string;
+    url: string;
+  }>;
   trails: Array<{
     area: string;
     name: string;
@@ -30,17 +34,32 @@ type OfflineTripPack = {
 
 const offlinePackKey = "ride-appalachia-offline-trip-pack";
 
+function readStoredValue(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function removeStoredValue(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+  }
+}
+
 export function OfflineTripPack() {
   const [pack, setPack] = useState<OfflineTripPack>();
 
   useEffect(() => {
-    const savedPack = window.localStorage.getItem(offlinePackKey);
+    const savedPack = readStoredValue(offlinePackKey);
     if (!savedPack) return;
 
     try {
       setPack(JSON.parse(savedPack));
     } catch {
-      window.localStorage.removeItem(offlinePackKey);
+      removeStoredValue(offlinePackKey);
     }
   }, []);
 
@@ -85,6 +104,22 @@ export function OfflineTripPack() {
           <p>{pack.directions || "No custom directions saved yet."}</p>
         </article>
       </div>
+
+      {pack.mapLinks?.length ? (
+        <div className="offline-pack-section">
+          <div className="section-heading">
+            <p>Map searches</p>
+            <h2>Quick local searches.</h2>
+          </div>
+          <div className="planner-map-link-grid">
+            {pack.mapLinks.map((link) => (
+              <a href={link.url} key={link.label} rel="noreferrer" target="_blank">
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="offline-pack-section">
         <div className="section-heading">

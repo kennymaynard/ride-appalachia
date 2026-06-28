@@ -38,6 +38,10 @@ type OfflineTripPack = {
   savedAt: string;
   checklist: string[];
   directions: string;
+  mapLinks: Array<{
+    label: string;
+    url: string;
+  }>;
   trails: Array<{
     area: string;
     name: string;
@@ -78,9 +82,19 @@ const plannerItems: PlannerItem[] = [
   },
   {
     id: "fuel",
-    label: "Fuel and supplies",
-    detail: "Gas, ice, straps, gloves, snacks, and trailhead basics.",
+    label: "Gas / fuel",
+    detail: "Gas, diesel, ice, snacks, and trailer-friendly stops.",
     category: "fuel",
+  },
+  {
+    id: "wash",
+    label: "Wash bay",
+    detail: "Find car washes and spray bays before heading home.",
+  },
+  {
+    id: "family",
+    label: "Family activities",
+    detail: "Easy stops for kids, non-riders, rainy days, and evenings.",
   },
   {
     id: "rent",
@@ -117,6 +131,36 @@ const knownTravelCities: Array<Coordinates & { names: string[] }> = [
 const defaultSelected = ["trails", "sleep", "eat", "fuel"];
 const storageKey = "ride-appalachia-trip-planner";
 const offlinePackKey = "ride-appalachia-offline-trip-pack";
+const planSelectionKey = "ride-appalachia-trip-planner-selections";
+
+type PlanSelections = {
+  trails: string[];
+  stops: number[];
+};
+
+function readStoredValue(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredValue(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeStoredValue(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+  }
+}
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -178,6 +222,34 @@ function isPlannerCategory(category: Category): category is Exclude<Category, "d
   return category !== "deals";
 }
 
+function getTrailKey(trail: NearbyTrail) {
+  return `${trail.area.slug}-${trail.name}`;
+}
+
+function getMapSearchUrl(destination: string, query: string) {
+  const target = destination.trim() || "Appalachia";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query} near ${target}`)}`;
+}
+
+function getNeedMapLinks(selectedIds: string[], destination: string) {
+  const links = [
+    selectedIds.includes("wash")
+      ? { label: "Wash bays", url: getMapSearchUrl(destination, "self service car wash wash bay") }
+      : undefined,
+    selectedIds.includes("family")
+      ? { label: "Family activities", url: getMapSearchUrl(destination, "family activities parks attractions") }
+      : undefined,
+    selectedIds.includes("fuel")
+      ? { label: "Gas and diesel", url: getMapSearchUrl(destination, "gas diesel fuel") }
+      : undefined,
+    selectedIds.includes("eat")
+      ? { label: "Food nearby", url: getMapSearchUrl(destination, "restaurants food") }
+      : undefined,
+  ].filter(Boolean);
+
+  return links as Array<{ label: string; url: string }>;
+}
+
 export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [selected, setSelected] = useState<string[]>(defaultSelected);
   const [locationFilter, setLocationFilter] = useState(initialLocation);
@@ -185,6 +257,10 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [copyStatus, setCopyStatus] = useState("");
   const [directions, setDirections] = useState("");
   const [offlineStatus, setOfflineStatus] = useState("");
+  const [planSelections, setPlanSelections] = useState<PlanSelections>({
+    trails: [],
+    stops: [],
+  });
 
   const searchCoordinates = findKnownCity(locationFilter);
   const selectedItems = useMemo(
@@ -254,19 +330,33 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       .sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999))
       .slice(0, 9);
   }, [areas, listings, locationFilter, radiusMiles, searchCoordinates, selectedCategories]);
+  const plannedTrails = useMemo(
+    () => nearbyTrails.filter((trail) => planSelections.trails.includes(getTrailKey(trail))),
+    [nearbyTrails, planSelections.trails],
+  );
+  const plannedStops = useMemo(
+    () => nearbyStops.filter((business) => planSelections.stops.includes(business.id)),
+    [nearbyStops, planSelections.stops],
+  );
+  const planTrails = plannedTrails.length ? plannedTrails : nearbyTrails.slice(0, 5);
+  const planStops = plannedStops.length ? plannedStops : nearbyStops.slice(0, 8);
+  const mapLinks = useMemo(
+    () => getNeedMapLinks(selected, locationFilter),
+    [locationFilter, selected],
+  );
 
   const tripSummary = useMemo(() => {
-    const trailText = nearbyTrails
-      .slice(0, 5)
+    const trailText = planTrails
       .map((trail) => `- ${trail.name} (${trail.area.name})${trail.distanceMiles !== undefined ? ` - ${Math.round(trail.distanceMiles)} mi` : ""}`)
       .join("\n");
-    const stopText = nearbyStops
+    const stopText = planStops
       .map((business) => {
         const activeDeal = business.deals.find((deal) => deal.is_active);
         const dealText = activeDeal ? `\n  Deal: ${activeDeal.title}` : "";
         return `- ${business.name} (${business.category})\n  ${business.location}\n  ${business.phone}${dealText}`;
       })
       .join("\n\n");
+    const mapText = mapLinks.map((link) => `- ${link.label}: ${link.url}`).join("\n");
 
     return [
       "Appalachia Offroad Trip Plan",
@@ -283,40 +373,60 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       "Local stops:",
       stopText || "- No local stops match yet",
       "",
+      "Map searches:",
+      mapText || "- No extra map searches selected",
+      "",
       "Your directions:",
       directions || "- Add road notes, meetup points, parking, and backup routes.",
     ].join("\n");
-  }, [directions, locationFilter, nearbyStops, nearbyTrails, radiusMiles, selectedItems]);
+  }, [directions, locationFilter, mapLinks, planStops, planTrails, radiusMiles, selectedItems]);
 
   useEffect(() => {
-    const savedValue = window.localStorage.getItem(storageKey);
-    if (!savedValue) return;
-
+    const savedValue = readStoredValue(storageKey);
     try {
-      const savedSelected = JSON.parse(savedValue);
-      if (Array.isArray(savedSelected)) {
-        const validIds = new Set(plannerItems.map((item) => item.id));
-        const nextSelected = savedSelected.filter((item) => validIds.has(item));
-        if (nextSelected.length) setSelected(nextSelected);
+      if (savedValue) {
+        const savedSelected = JSON.parse(savedValue);
+        if (Array.isArray(savedSelected)) {
+          const validIds = new Set(plannerItems.map((item) => item.id));
+          const nextSelected = savedSelected.filter((item) => validIds.has(item));
+          if (nextSelected.length) setSelected(nextSelected);
+        }
       }
     } catch {
-      window.localStorage.removeItem(storageKey);
+      removeStoredValue(storageKey);
     }
 
-    const savedPack = window.localStorage.getItem(offlinePackKey);
-    if (!savedPack) return;
-
+    const savedPack = readStoredValue(offlinePackKey);
     try {
-      const pack = JSON.parse(savedPack) as Partial<OfflineTripPack>;
-      if (typeof pack.directions === "string") setDirections(pack.directions);
+      if (savedPack) {
+        const pack = JSON.parse(savedPack) as Partial<OfflineTripPack>;
+        if (typeof pack.directions === "string") setDirections(pack.directions);
+      }
     } catch {
-      window.localStorage.removeItem(offlinePackKey);
+      removeStoredValue(offlinePackKey);
+    }
+
+    const savedSelections = readStoredValue(planSelectionKey);
+    try {
+      if (savedSelections) {
+        const nextSelections = JSON.parse(savedSelections) as Partial<PlanSelections>;
+        setPlanSelections({
+          trails: Array.isArray(nextSelections.trails) ? nextSelections.trails : [],
+          stops: Array.isArray(nextSelections.stops) ? nextSelections.stops : [],
+        });
+      }
+    } catch {
+      removeStoredValue(planSelectionKey);
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKey, JSON.stringify(selected));
+    writeStoredValue(storageKey, JSON.stringify(selected));
   }, [selected]);
+
+  useEffect(() => {
+    writeStoredValue(planSelectionKey, JSON.stringify(planSelections));
+  }, [planSelections]);
 
   function toggleItem(id: string) {
     setCopyStatus("");
@@ -330,7 +440,28 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     setLocationFilter(initialLocation);
     setRadiusMiles(50);
     setCopyStatus("");
-    window.localStorage.setItem(storageKey, JSON.stringify(defaultSelected));
+    setPlanSelections({ trails: [], stops: [] });
+    writeStoredValue(storageKey, JSON.stringify(defaultSelected));
+    writeStoredValue(planSelectionKey, JSON.stringify({ trails: [], stops: [] }));
+  }
+
+  function toggleTrailPlan(trail: NearbyTrail) {
+    const key = getTrailKey(trail);
+    setPlanSelections((current) => ({
+      ...current,
+      trails: current.trails.includes(key)
+        ? current.trails.filter((item) => item !== key)
+        : [...current.trails, key],
+    }));
+  }
+
+  function toggleStopPlan(id: number) {
+    setPlanSelections((current) => ({
+      ...current,
+      stops: current.stops.includes(id)
+        ? current.stops.filter((item) => item !== id)
+        : [...current.stops, id],
+    }));
   }
 
   async function copyTripPlan() {
@@ -351,7 +482,8 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       savedAt: new Date().toISOString(),
       checklist: selectedItems.map((item) => item.label),
       directions,
-      trails: nearbyTrails.slice(0, 12).map((trail) => ({
+      mapLinks,
+      trails: (plannedTrails.length ? plannedTrails : nearbyTrails.slice(0, 12)).map((trail) => ({
         area: trail.area.name,
         name: trail.name,
         access: trail.access,
@@ -361,7 +493,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         longitude: trail.longitude ?? trail.area.longitude,
         url: trail.url,
       })),
-      stops: nearbyStops.slice(0, 12).map((business) => {
+      stops: (plannedStops.length ? plannedStops : nearbyStops.slice(0, 12)).map((business) => {
         const activeDeal = business.deals.find((deal) => deal.is_active);
 
         return {
@@ -378,8 +510,11 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
 
   function saveOfflinePack() {
     const pack = buildOfflinePack();
-    window.localStorage.setItem(offlinePackKey, JSON.stringify(pack));
-    setOfflineStatus("Offline pack saved on this device.");
+    if (writeStoredValue(offlinePackKey, JSON.stringify(pack))) {
+      setOfflineStatus("Offline pack saved on this device.");
+    } else {
+      setOfflineStatus("Offline save was blocked. Download the pack instead.");
+    }
   }
 
   function downloadOfflinePack() {
@@ -432,8 +567,8 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       <div className="planner-main-grid">
         <section className="planner-card">
           <div className="section-heading">
-            <p>Checklist</p>
-            <h2>Pick what matters.</h2>
+            <p>Step 2</p>
+            <h2>Pick what you need.</h2>
           </div>
           <div className="planner-options clean">
             {plannerItems.map((item) => (
@@ -459,8 +594,13 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
 
         <aside className="planner-card planner-roadmap-card">
           <div className="section-heading">
-            <p>Road map</p>
-            <h2>Trip at a glance.</h2>
+            <p>Your plan</p>
+            <h2>{plannedTrails.length + plannedStops.length ? "Saved picks." : "Start adding picks."}</h2>
+          </div>
+          <div className="planner-pick-summary">
+            <span>{plannedTrails.length || "Auto"} trail picks</span>
+            <span>{plannedStops.length || "Auto"} local stops</span>
+            <span>{mapLinks.length} map searches</span>
           </div>
           <ol className="roadmap-list">
             <li>
@@ -477,7 +617,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
             </li>
             <li>
               <span>4</span>
-              Copy or print the plan before you haul out.
+              Save, download, or print before you haul out.
             </li>
           </ol>
           <div className="planner-tools">
@@ -505,19 +645,26 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
 
       <section className="planner-card">
         <div className="section-heading">
-          <p>Trails</p>
-          <h2>Trail options near {locationFilter || "your trip"}.</h2>
+          <p>Step 3</p>
+          <h2>Choose trails near {locationFilter || "your trip"}.</h2>
         </div>
         <div className="planner-trail-grid">
-          {nearbyTrails.map((trail) => (
-            <article key={`${trail.area.slug}-${trail.name}`}>
-              <span>{trail.area.name}</span>
+          {nearbyTrails.map((trail) => {
+            const trailKey = getTrailKey(trail);
+            const isPlanned = planSelections.trails.includes(trailKey);
+
+            return (
+            <article className={isPlanned ? "is-planned" : ""} key={trailKey}>
+              <span>{trail.area.name} • {trail.activity ?? "OHV"}</span>
               <h3>{trail.name}</h3>
               <p>
                 {trail.access}
                 {trail.distanceMiles !== undefined ? ` • ${Math.round(trail.distanceMiles)} miles` : ""}
               </p>
               <div className="trail-actions">
+                <button type="button" onClick={() => toggleTrailPlan(trail)}>
+                  {isPlanned ? "Added" : "Add trail"}
+                </button>
                 <a href={trail.url} rel="noreferrer" target="_blank">
                   {trail.activity === "Hiking" ? "Hiking Info" : "Trail Map"}
                 </a>
@@ -528,7 +675,8 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
                 ) : null}
               </div>
             </article>
-          ))}
+            );
+          })}
           {!nearbyTrails.length ? (
             <p className="empty-state">No trail matches yet. Try a nearby town or larger range.</p>
           ) : null}
@@ -537,16 +685,17 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
 
       <section className="planner-card">
         <div className="section-heading">
-          <p>Local stops</p>
-          <h2>Useful stops for this plan.</h2>
+          <p>Step 4</p>
+          <h2>Pick lodging, food, fuel, and backup stops.</h2>
         </div>
         {nearbyStops.length ? (
           <div className="planner-match-grid">
             {nearbyStops.map((business) => {
               const activeDeal = business.deals.find((deal) => deal.is_active);
+              const isPlanned = planSelections.stops.includes(business.id);
 
               return (
-                <article className="planner-match" key={business.id}>
+                <article className={isPlanned ? "planner-match is-planned" : "planner-match"} key={business.id}>
                   <div>
                     <span>{business.category}</span>
                     <h3>{business.name}</h3>
@@ -557,6 +706,9 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
                     {activeDeal ? <strong>{activeDeal.title}</strong> : null}
                   </div>
                   <div>
+                    <button type="button" onClick={() => toggleStopPlan(business.id)}>
+                      {isPlanned ? "Added" : "Add"}
+                    </button>
                     <TrackedAction
                       businessId={business.id}
                       href={`/business/${business.slug}`}
@@ -577,10 +729,26 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         )}
       </section>
 
+      {mapLinks.length ? (
+        <section className="planner-card">
+          <div className="section-heading">
+            <p>Step 5</p>
+            <h2>Open quick map searches.</h2>
+          </div>
+          <div className="planner-map-link-grid">
+            {mapLinks.map((link) => (
+              <a href={link.url} key={link.label} rel="noreferrer" target="_blank">
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="planner-card planner-summary">
         <div className="section-heading">
-          <p>Shareable summary</p>
-          <h2>Weekend plan.</h2>
+          <p>Final step</p>
+          <h2>Downloadable weekend plan.</h2>
         </div>
         <label className="planner-directions">
           Build your own directions

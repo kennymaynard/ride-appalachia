@@ -3557,11 +3557,12 @@ button.tier-card.is-selected {
 
 .planner-match div:last-child {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
-.planner-match a {
+.planner-match a,
+.planner-match button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3571,13 +3572,40 @@ button.tier-card.is-selected {
   background: var(--orange);
   color: #160801;
   padding: 0 0.75rem;
+  font: inherit;
   font-weight: 950;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
-.planner-match a:last-child {
+.planner-match a:last-child,
+.planner-match button {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
+}
+
+.planner-match.is-planned button,
+.planner-trail-grid article.is-planned .trail-actions button {
+  background: var(--orange);
+  color: #160801;
+}
+
+.planner-map-link-grid {
+  margin-bottom: 0;
+}
+
+.planner-map-link-grid a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.45rem;
+  border: 1px solid rgba(242, 106, 27, 0.55);
+  border-radius: 0.45rem;
+  background: rgba(242, 106, 27, 0.12);
+  color: var(--orange-soft);
+  padding: 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .planner-summary pre {
@@ -4062,6 +4090,29 @@ button.tier-card.is-selected {
   align-content: start;
 }
 
+.planner-pick-summary,
+.planner-map-link-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.planner-pick-summary span {
+  border: 1px solid rgba(242, 106, 27, 0.34);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  color: var(--orange-soft);
+  padding: 0.42rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-map-link-grid {
+  margin-bottom: 0;
+}
+
 .planner-trail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4075,6 +4126,14 @@ button.tier-card.is-selected {
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.04);
   padding: 0.85rem;
+}
+
+.planner-trail-grid article.is-planned,
+.planner-match.is-planned {
+  border-color: rgba(242, 106, 27, 0.78);
+  background:
+    linear-gradient(rgba(242, 106, 27, 0.13), rgba(242, 106, 27, 0.05)),
+    rgba(255, 255, 255, 0.04);
 }
 
 .planner-trail-grid span {
@@ -5183,7 +5242,8 @@ button.tier-card.is-selected {
   gap: 0.5rem;
 }
 
-.trail-actions a {
+.trail-actions a,
+.trail-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5193,9 +5253,11 @@ button.tier-card.is-selected {
   background: rgba(242, 106, 27, 0.1);
   padding: 0 0.7rem;
   color: var(--orange-soft);
+  font: inherit;
   font-size: 0.78rem;
   font-weight: 950;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .trail-reviews {
@@ -5944,6 +6006,15 @@ button.tier-card.is-selected {
     right: 0.6rem;
     bottom: 0.6rem;
     padding: 0.65rem;
+  }
+
+  .planner-match div:last-child {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-map-link-grid a {
+    width: 100%;
+    justify-content: center;
   }
 
   .brand span {
