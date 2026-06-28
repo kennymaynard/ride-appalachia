@@ -167,6 +167,27 @@ def create_booking_checkout_session(
     return session.url
 
 
+def create_connected_account_transfer(
+    settings: Settings,
+    amount_cents: int,
+    destination_account_id: str,
+    booking_id: int,
+) -> str:
+    if not settings.stripe_secret_key:
+        if settings.frontend_url.startswith("http://localhost"):
+            return f"tr_stub_{booking_id}"
+        raise RuntimeError("Stripe is not configured for booking transfers")
+
+    stripe.api_key = settings.stripe_secret_key
+    transfer = stripe.Transfer.create(
+        amount=amount_cents,
+        currency="usd",
+        destination=destination_account_id,
+        metadata={"booking_id": str(booking_id)},
+    )
+    return transfer.id
+
+
 def construct_webhook_event(settings: Settings, payload: bytes, signature: str) -> stripe.Event:
     if not settings.stripe_webhook_secret:
         raise ValueError("Stripe webhook secret is not configured")

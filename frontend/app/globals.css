@@ -3244,6 +3244,30 @@ button.tier-card.is-selected {
   font-weight: 850;
 }
 
+.calendar-sync-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.calendar-sync-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.55rem;
+}
+
+.calendar-sync-list span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .rider-dashboard {
   display: grid;
   gap: 1rem;
@@ -5996,6 +6020,10 @@ button.tier-card.is-selected {
   }
 
   .booking-status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-sync-list div {
     grid-template-columns: 1fr;
   }
 

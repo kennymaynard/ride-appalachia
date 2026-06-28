@@ -4,9 +4,9 @@ import stripe
 from sqlalchemy.orm import Session
 
 from app.database import Settings, get_db, get_settings
-from app.models import Booking, BookingPayment, Business, Campaign
+from app.models import Booking, BookingPayment, BookingTransfer, Business, Campaign
 from app.schemas import CheckoutSessionRead, StripeWebhookPayload, SubscriptionRequest
-from app.services.stripe_service import construct_webhook_event, create_checkout_session
+from app.services.stripe_service import construct_webhook_event, create_checkout_session, create_connected_account_transfer
 
 router = APIRouter(tags=["subscriptions"])
 
@@ -179,6 +179,8 @@ async def stripe_webhook(
         ]
         if booking_ids:
             bookings = db.query(Booking).filter(Booking.id.in_(booking_ids)).all()
+            business_ids = {booking.business_id for booking in bookings}
+            connected_account_id = metadata.get("connected_account_id") or ""
             for booking in bookings:
                 booking.status = "paid"
                 booking.stripe_checkout_session_id = data_object.get("id") or ""
@@ -192,6 +194,33 @@ async def stripe_webhook(
                     payment.status = "paid"
                     payment.stripe_checkout_session_id = data_object.get("id") or ""
                     payment.stripe_payment_intent_id = data_object.get("payment_intent") or ""
+                existing_transfer = (
+                    db.query(BookingTransfer)
+                    .filter(BookingTransfer.booking_id == booking.id)
+                    .first()
+                )
+                if not existing_transfer and (len(business_ids) > 1 or not connected_account_id):
+                    business = db.get(Business, booking.business_id)
+                    transfer = BookingTransfer(
+                        booking_id=booking.id,
+                        business_id=booking.business_id,
+                        amount_cents=booking.subtotal_cents,
+                        status="pending",
+                    )
+                    if business and business.stripe_connect_account_id:
+                        try:
+                            transfer.stripe_transfer_id = create_connected_account_transfer(
+                                settings,
+                                booking.subtotal_cents,
+                                business.stripe_connect_account_id,
+                                booking.id,
+                            )
+                            transfer.status = "paid"
+                        except RuntimeError:
+                            transfer.status = "failed"
+                    else:
+                        transfer.status = "missing_connect_account"
+                    db.add(transfer)
             db.commit()
             return {"received": True}
 

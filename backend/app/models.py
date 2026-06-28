@@ -337,6 +337,23 @@ class ListingCalendar(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     listing: Mapped[BookableListing] = relationship(back_populates="calendars")
+    blocked_ranges: Mapped[list["ListingCalendarBlock"]] = relationship(back_populates="calendar", cascade="all, delete-orphan")
+
+
+class ListingCalendarBlock(Base):
+    __tablename__ = "listing_calendar_blocks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    calendar_id: Mapped[int] = mapped_column(ForeignKey("listing_calendars.id"), index=True)
+    listing_id: Mapped[int] = mapped_column(ForeignKey("bookable_listings.id"), index=True)
+    source_uid: Mapped[str] = mapped_column(String(220), default="", index=True)
+    start_date: Mapped[str] = mapped_column(String(40), index=True)
+    end_date: Mapped[str] = mapped_column(String(40), index=True)
+    summary: Mapped[str] = mapped_column(String(220), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    calendar: Mapped[ListingCalendar] = relationship(back_populates="blocked_ranges")
+    listing: Mapped[BookableListing] = relationship()
 
 
 class Booking(Base):
@@ -379,3 +396,18 @@ class BookingPayment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     booking: Mapped[Booking] = relationship(back_populates="payment")
+
+
+class BookingTransfer(Base):
+    __tablename__ = "booking_transfers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    stripe_transfer_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    booking: Mapped[Booking] = relationship()
+    business: Mapped[Business] = relationship()

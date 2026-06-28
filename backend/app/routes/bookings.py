@@ -1,10 +1,18 @@
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import Settings, get_db, get_settings
-from app.models import BookableListing, Booking, BookingPayment, Business, ListingCalendar, Rider
+from app.models import (
+    BookableListing,
+    Booking,
+    BookingPayment,
+    Business,
+    ListingCalendar,
+    ListingCalendarBlock,
+    Rider,
+)
 from app.routes.business import require_business_access
 from app.schemas import (
     BookableListingCreate,
@@ -19,6 +27,7 @@ from app.schemas import (
     StripeConnectOnboardingRead,
 )
 from app.services.stripe_service import create_booking_checkout_session, create_connect_onboarding_link
+from app.services.calendar_sync import fetch_ical_blocks
 
 router = APIRouter(tags=["booking marketplace"])
 
@@ -36,6 +45,43 @@ def calculate_nights(start_date: str, end_date: str) -> int:
     if nights < 1:
         raise HTTPException(status_code=400, detail="End date must be after start date")
     return nights
+
+
+def listing_has_booking_conflict(db: Session, listing_id: int, start_date: str, end_date: str) -> bool:
+    return (
+        db.query(Booking)
+        .filter(
+            Booking.listing_id == listing_id,
+            Booking.status.in_(["approved", "checkout_sent", "paid"]),
+            Booking.start_date < end_date,
+            Booking.end_date > start_date,
+        )
+        .first()
+        is not None
+    )
+
+
+def listing_has_calendar_conflict(db: Session, listing_id: int, start_date: str, end_date: str) -> bool:
+    return (
+        db.query(ListingCalendarBlock)
+        .filter(
+            ListingCalendarBlock.listing_id == listing_id,
+            ListingCalendarBlock.start_date < end_date,
+            ListingCalendarBlock.end_date > start_date,
+        )
+        .first()
+        is not None
+    )
+
+
+def listing_is_available(db: Session, listing_id: int, start_date: str, end_date: str) -> bool:
+    calculate_nights(start_date, end_date)
+    return not listing_has_booking_conflict(db, listing_id, start_date, end_date) and not listing_has_calendar_conflict(
+        db,
+        listing_id,
+        start_date,
+        end_date,
+    )
 
 
 def calculate_booking_totals(listing: BookableListing, start_date: str, end_date: str) -> tuple[int, int, int]:
@@ -80,7 +126,14 @@ def list_public_bookable_listings(
         query = query.filter(BookableListing.listing_type == listing_type)
     if start_date and end_date:
         calculate_nights(start_date, end_date)
-    return query.order_by(BookableListing.created_at.desc()).all()
+    listings = query.order_by(BookableListing.created_at.desc()).all()
+    if start_date and end_date:
+        listings = [
+            listing
+            for listing in listings
+            if listing_is_available(db, listing.id, start_date, end_date)
+        ]
+    return listings
 
 
 @router.get("/businesses/{business_id}/bookable-listings", response_model=list[BookableListingRead])
@@ -143,6 +196,52 @@ def add_listing_calendar(
     return calendar
 
 
+@router.post(
+    "/businesses/{business_id}/bookable-listings/{listing_id}/calendars/{calendar_id}/sync",
+    response_model=ListingCalendarRead,
+)
+def sync_listing_calendar(
+    listing_id: int,
+    calendar_id: int,
+    business: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> ListingCalendar:
+    require_listing_owner(business.id, listing_id, business, db)
+    calendar = (
+        db.query(ListingCalendar)
+        .filter(ListingCalendar.id == calendar_id, ListingCalendar.listing_id == listing_id)
+        .first()
+    )
+    if not calendar:
+        raise HTTPException(status_code=404, detail="Calendar link not found")
+
+    try:
+        blocks = fetch_ical_blocks(calendar.ical_url)
+    except RuntimeError as exc:
+        calendar.last_sync_status = str(exc)[:120]
+        db.commit()
+        db.refresh(calendar)
+        return calendar
+
+    db.query(ListingCalendarBlock).filter(ListingCalendarBlock.calendar_id == calendar.id).delete()
+    for block in blocks:
+        db.add(
+            ListingCalendarBlock(
+                calendar_id=calendar.id,
+                listing_id=listing_id,
+                source_uid=block.source_uid,
+                start_date=block.start_date,
+                end_date=block.end_date,
+                summary=block.summary,
+            )
+        )
+    calendar.last_synced_at = datetime.utcnow()
+    calendar.last_sync_status = f"Synced {len(blocks)} blocked date range{'s' if len(blocks) != 1 else ''}"
+    db.commit()
+    db.refresh(calendar)
+    return calendar
+
+
 @router.post("/booking-requests", response_model=BookingRead)
 def create_booking_request(
     payload: BookingRequestCreate,
@@ -152,6 +251,8 @@ def create_booking_request(
     listing = db.get(BookableListing, payload.listing_id)
     if not listing or not listing.is_active:
         raise HTTPException(status_code=404, detail="Bookable listing not found")
+    if not listing_is_available(db, listing.id, payload.start_date, payload.end_date):
+        raise HTTPException(status_code=409, detail="Those dates are not available")
 
     rider = db.query(Rider).filter(Rider.access_token == x_rider_token).first() if x_rider_token else None
     subtotal, platform_fee, total = calculate_booking_totals(listing, payload.start_date, payload.end_date)
@@ -193,6 +294,8 @@ def approve_booking_request(
     booking = db.query(Booking).filter(Booking.id == booking_id, Booking.business_id == business.id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if not listing_is_available(db, booking.listing_id, booking.start_date, booking.end_date):
+        raise HTTPException(status_code=409, detail="Those dates are no longer available")
     booking.status = "approved"
     db.commit()
     db.refresh(booking)

@@ -10,6 +10,7 @@ import {
   createStripeConnectOnboarding,
   deleteDeal,
   geocodeLocation,
+  syncListingCalendar,
   updateBusiness,
   updateDeal,
 } from "../lib/api";
@@ -144,6 +145,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [savingServiceRequest, setSavingServiceRequest] = useState(false);
   const [savingBookable, setSavingBookable] = useState(false);
   const [savingCalendar, setSavingCalendar] = useState(false);
+  const [syncingCalendarId, setSyncingCalendarId] = useState(0);
   const [connectingStripe, setConnectingStripe] = useState(false);
 
   const totals = useMemo(() => {
@@ -468,6 +470,40 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to add calendar.");
     } finally {
       setSavingCalendar(false);
+    }
+  }
+
+  async function syncCalendarLink(listingId: number, calendarId: number) {
+    if (!selectedBusiness) return;
+    setSyncingCalendarId(calendarId);
+    setError("");
+    setStatus("");
+
+    try {
+      const calendar = await syncListingCalendar(
+        selectedBusiness.id,
+        listingId,
+        calendarId,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        bookable_listings: (selectedBusiness.bookable_listings || []).map((listing) =>
+          listing.id === listingId
+            ? {
+                ...listing,
+                calendars: listing.calendars.map((item) =>
+                  item.id === calendar.id ? calendar : item,
+                ),
+              }
+            : listing,
+        ),
+      });
+      setStatus(calendar.last_sync_status);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to sync calendar.");
+    } finally {
+      setSyncingCalendarId(0);
     }
   }
 
@@ -942,6 +978,24 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     {listing.listing_type} • {listing.calendars.length} calendar link
                     {listing.calendars.length === 1 ? "" : "s"}
                   </p>
+                  {listing.calendars.length ? (
+                    <div className="calendar-sync-list">
+                      {listing.calendars.map((calendar) => (
+                        <div key={calendar.id}>
+                          <span>
+                            {calendar.provider}: {calendar.last_sync_status}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => syncCalendarLink(listing.id, calendar.id)}
+                            disabled={syncingCalendarId === calendar.id}
+                          >
+                            {syncingCalendarId === calendar.id ? "Syncing" : "Sync"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </article>
               ))
             ) : (

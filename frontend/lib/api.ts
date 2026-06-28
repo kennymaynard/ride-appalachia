@@ -524,6 +524,28 @@ export async function addListingCalendar(
   return response.json();
 }
 
+export async function syncListingCalendar(
+  businessId: number,
+  listingId: number,
+  calendarId: number,
+  ownerAccessToken?: string,
+): Promise<BookableListing["calendars"][number]> {
+  const response = await fetch(
+    `${getApiUrl()}/api/businesses/${businessId}/bookable-listings/${listingId}/calendars/${calendarId}/sync`,
+    {
+      method: "POST",
+      headers: getBusinessHeaders(ownerAccessToken),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to sync calendar");
+  }
+
+  return response.json();
+}
+
 export async function approveBooking(
   businessId: number,
   bookingId: number,
