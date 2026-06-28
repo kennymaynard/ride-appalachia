@@ -51,8 +51,11 @@ export function TrailMapSourceChecklist({ areas }: Props) {
               ))}
             </ul>
             <div className="map-source-actions">
+              <a href="#in-app-map">
+                View in app map
+              </a>
               <a href={source.mapUrl} rel="noreferrer" target="_blank">
-                Open map
+                Source reference
               </a>
               {source.passUrl ? (
                 <a href={source.passUrl} rel="noreferrer" target="_blank">

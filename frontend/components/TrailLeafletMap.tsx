@@ -250,6 +250,14 @@ function makeBusinessIcon(business: Business) {
   });
 }
 
+function getTrailColor(point: MapPoint) {
+  return point.activity === "Hiking" ? "#5cd68e" : "#f26a1b";
+}
+
+function getTrailDash(point: MapPoint) {
+  return point.routeAccuracy === "exact" ? undefined : "8 8";
+}
+
 export function TrailLeafletMap({
   activeTitle,
   bounds,
@@ -277,7 +285,9 @@ export function TrailLeafletMap({
     (bounds[0][1] + bounds[1][1]) / 2,
   ];
   const selectedTrail = points.find((point) => point.id === selectedTrailId);
-  const hasExactRoute = Boolean(selectedTrail?.routeLine.length);
+  const hasExactRoute = Boolean(
+    selectedTrail?.routeLine.length && selectedTrail.routeAccuracy === "exact",
+  );
   const visiblePoints = useMemo(
     () =>
       points.filter((point) =>
@@ -302,13 +312,6 @@ export function TrailLeafletMap({
           }),
     [businessLayers, businesses, selectedTrailId],
   );
-  const trailLine = hasExactRoute
-    ? (selectedTrail?.routeLine.map((coordinate) => [
-        coordinate.latitude,
-        coordinate.longitude,
-      ]) as [number, number][])
-    : undefined;
-
   const handleTrackMe = () => {
     if (!navigator.geolocation) {
       setTrackingStatus("Location unavailable");
@@ -432,14 +435,41 @@ export function TrailLeafletMap({
         )}
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
-        {trailLine ? (
+        {!selectedTrail
+          ? visiblePoints
+              .filter((point) => point.routeLine.length)
+              .map((point) => (
+                <Polyline
+                  key={`route-${point.id}`}
+                  pathOptions={{
+                    color: getTrailColor(point),
+                    dashArray: getTrailDash(point),
+                    opacity: point.routeAccuracy === "exact" ? 0.76 : 0.48,
+                    weight: point.routeAccuracy === "exact" ? 4 : 3,
+                  }}
+                  positions={
+                    point.routeLine.map((coordinate) => [
+                      coordinate.latitude,
+                      coordinate.longitude,
+                    ]) as [number, number][]
+                  }
+                />
+              ))
+          : null}
+        {selectedTrail?.routeLine.length ? (
           <Polyline
             pathOptions={{
-              color: selectedTrail?.activity === "Hiking" ? "#5cd68e" : "#f26a1b",
-              opacity: 0.95,
+              color: getTrailColor(selectedTrail),
+              dashArray: getTrailDash(selectedTrail),
+              opacity: hasExactRoute ? 0.95 : 0.72,
               weight: 6,
             }}
-            positions={trailLine}
+            positions={
+              selectedTrail.routeLine.map((coordinate) => [
+                coordinate.latitude,
+                coordinate.longitude,
+              ]) as [number, number][]
+            }
           />
         ) : null}
         {selectedTrail?.photoStops.map((stop) => (
@@ -500,6 +530,12 @@ export function TrailLeafletMap({
                   {point.areaName} • {point.activity} • {point.difficulty} •{" "}
                   {point.lengthMiles ? `${point.lengthMiles} mi` : "Length pending"}
                 </span>
+                <span>
+                  {point.routeAccuracy === "exact"
+                    ? "Exact in-app route"
+                    : "Approximate in-app planning line"}
+                  {" "}• {point.sourceLabel}
+                </span>
                 <p>{point.access}</p>
                 <p>{point.reviewText}</p>
                 <a href={point.href} rel="noreferrer" target="_blank">
@@ -552,8 +588,9 @@ export function TrailLeafletMap({
               </p>
             ) : (
               <p>
-                Exact trail line has not been imported yet. Use the official map
-                link for this trail until the GPX/KMZ file is loaded.
+                This in-app line is an approximate planning corridor based on
+                the verified trail source point. Exact GPX/KMZ route geometry
+                still needs to be imported.
               </p>
             )}
             {selectedTrail.photoStops.length ? (
@@ -574,6 +611,7 @@ export function TrailLeafletMap({
             <div className="trail-map-legend" aria-label="Map legend">
               <span><i /> OHV / ride</span>
               <span><i /> Hiking</span>
+              <span><i /> Dashed = approximate</span>
               <span><i /> Partner</span>
             </div>
           </>

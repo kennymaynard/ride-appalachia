@@ -27,6 +27,9 @@ export type MapPoint = {
   lengthMiles?: number;
   photoStops: TrailPhotoStop[];
   routeLine: TrailCoordinate[];
+  routeAccuracy: "exact" | "approximate";
+  sourceStatus: ReturnType<typeof getTrailMapSource>["status"];
+  sourceLabel: string;
   reviewCount: number;
   reviewRating?: number;
   reviewSnippet?: string;
@@ -65,9 +68,49 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+function getSeed(value: string) {
+  return value.split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
+}
+
+function buildApproximateRouteLine(area: RideArea, trail: TrailInfo, activity: MapPoint["activity"]): TrailCoordinate[] {
+  const latitude = trail.latitude ?? area.latitude;
+  const longitude = trail.longitude ?? area.longitude;
+  const seed = getSeed(`${area.slug}-${trail.name}`);
+  const direction = seed % 2 === 0 ? 1 : -1;
+  const activityScale = activity === "Hiking" ? 0.018 : 0.038;
+  const spread = activityScale + (seed % 5) * 0.004;
+  const startLatitude = area.latitude;
+  const startLongitude = area.longitude;
+
+  if (Math.abs(startLatitude - latitude) < 0.004 && Math.abs(startLongitude - longitude) < 0.004) {
+    return [
+      { latitude: latitude - spread * 0.75, longitude: longitude - spread * direction },
+      { latitude: latitude + spread * 0.25, longitude: longitude - spread * 0.55 * direction },
+      { latitude: latitude + spread, longitude: longitude + spread * 0.2 * direction },
+      { latitude: latitude + spread * 0.25, longitude: longitude + spread * direction },
+      { latitude: latitude - spread * 0.75, longitude: longitude - spread * direction },
+    ];
+  }
+
+  return [
+    { latitude: startLatitude, longitude: startLongitude },
+    {
+      latitude: (startLatitude + latitude) / 2 + spread * 0.35,
+      longitude: (startLongitude + longitude) / 2 + spread * direction,
+    },
+    { latitude, longitude },
+    {
+      latitude: latitude + spread * 0.5,
+      longitude: longitude + spread * 0.55 * direction,
+    },
+  ];
+}
+
 function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): MapPoint {
   const reviewSummary = getAreaReviewSummary(area.slug, reviews);
   const activity = trail.activity ?? (trail.type.toLowerCase().includes("hiking") ? "Hiking" : "OHV");
+  const source = getTrailMapSource(area, trail);
+  const exactRouteLine = trail.routeLine ?? [];
 
   return {
     id: `${area.slug}-${slugify(trail.name)}`,
@@ -84,7 +127,10 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
     href: trail.url,
     lengthMiles: trail.lengthMiles,
     photoStops: trail.photoStops ?? [],
-    routeLine: trail.routeLine ?? [],
+    routeLine: exactRouteLine.length ? exactRouteLine : buildApproximateRouteLine(area, trail, activity),
+    routeAccuracy: exactRouteLine.length ? "exact" : "approximate",
+    sourceStatus: source.status,
+    sourceLabel: source.sourceLabel,
     reviewCount: reviewSummary.count,
     reviewRating: reviewSummary.rating,
     reviewSnippet: reviewSummary.snippet,
