@@ -1180,7 +1180,14 @@ const importedTrailRoutes: ImportedTrailRoute[] = [
 ];
 
 export function getImportedTrailRouteSegments(areaSlug: string, trailName: string) {
+  const importedTrailName =
+    areaSlug === "first-frontier-ky" && trailName === "Van Lear / Wolf Creek map"
+      ? "Van Lear / Wolf Creek KMZ download"
+      : areaSlug === "first-frontier-ky" && trailName === "Fish Pond Trails map"
+        ? "Fish Pond Trails KMZ download"
+        : trailName;
+
   return importedTrailRoutes.find(
-    (route) => route.areaSlug === areaSlug && route.trailName === trailName,
+    (route) => route.areaSlug === areaSlug && route.trailName === importedTrailName,
   )?.segments ?? [];
 }
