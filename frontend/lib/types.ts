@@ -113,6 +113,12 @@ export type BusinessUpdateInput = Partial<
   >
 >;
 
+export type GeocodeResult = {
+  display_name: string;
+  latitude: number;
+  longitude: number;
+};
+
 export type BusinessModerationInput = {
   listing_status: Business["listing_status"];
   admin_notes: string;

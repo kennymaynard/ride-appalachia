@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createBusiness, createCheckout } from "../../../lib/api";
+import { createBusiness, createCheckout, geocodeLocation } from "../../../lib/api";
 import { partnerTiers } from "../../../lib/sample-data";
 import type { BusinessCreateInput, Category, Tier } from "../../../lib/types";
 
@@ -60,6 +60,7 @@ export default function JoinPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [checkoutNotice, setCheckoutNotice] = useState("");
+  const [geocodeStatus, setGeocodeStatus] = useState("");
 
   const selectedTier = useMemo(
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
@@ -96,6 +97,33 @@ export default function JoinPage() {
       }
     };
     reader.readAsDataURL(file);
+  }
+
+  async function findCoordinates() {
+    setError("");
+    setGeocodeStatus("");
+    if (!form.location.trim()) {
+      setError("Enter a location or address before finding coordinates.");
+      return;
+    }
+
+    setGeocodeStatus("Finding coordinates...");
+    try {
+      const result = await geocodeLocation(form.location.trim());
+      setForm((current) => ({
+        ...current,
+        latitude: result.latitude.toFixed(6),
+        longitude: result.longitude.toFixed(6),
+      }));
+      setGeocodeStatus(`Pinned near ${result.display_name}.`);
+    } catch (caughtError) {
+      setGeocodeStatus("");
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to find coordinates for that location.",
+      );
+    }
   }
 
   async function submitJoinForm(event: FormEvent<HTMLFormElement>) {
@@ -305,6 +333,10 @@ export default function JoinPage() {
             Optional, but adding map coordinates places your business pin on
             Rider Tools. You can also add this later from your business dashboard.
           </p>
+          <button className="secondary-action" type="button" onClick={findCoordinates}>
+            Find Coordinates From Location
+          </button>
+          {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
           <label>
             Website or booking link
             <input

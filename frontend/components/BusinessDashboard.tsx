@@ -5,6 +5,7 @@ import {
   addDeal,
   createLodgingServiceRequest,
   deleteDeal,
+  geocodeLocation,
   updateBusiness,
   updateDeal,
 } from "../lib/api";
@@ -101,6 +102,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [serviceForm, setServiceForm] = useState(emptyServiceForm(selectedBusiness));
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [geocodeStatus, setGeocodeStatus] = useState("");
   const [savingListing, setSavingListing] = useState(false);
   const [savingDeal, setSavingDeal] = useState(false);
   const [savingServiceRequest, setSavingServiceRequest] = useState(false);
@@ -124,6 +126,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setServiceForm(emptyServiceForm(nextBusiness));
     setStatus("");
     setError("");
+    setGeocodeStatus("");
   }
 
   function replaceBusiness(updatedBusiness: Business) {
@@ -188,6 +191,34 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       );
     } finally {
       setSavingListing(false);
+    }
+  }
+
+  async function findListingCoordinates() {
+    if (!listingForm) return;
+    setError("");
+    setGeocodeStatus("");
+    if (!listingForm.location.trim()) {
+      setError("Enter a location or address before finding coordinates.");
+      return;
+    }
+
+    setGeocodeStatus("Finding coordinates...");
+    try {
+      const result = await geocodeLocation(listingForm.location.trim());
+      setListingForm({
+        ...listingForm,
+        latitude: result.latitude.toFixed(6),
+        longitude: result.longitude.toFixed(6),
+      });
+      setGeocodeStatus(`Pinned near ${result.display_name}.`);
+    } catch (caughtError) {
+      setGeocodeStatus("");
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to find coordinates for that location.",
+      );
     }
   }
 
@@ -329,6 +360,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
 
       {error ? <p className="form-error">{error}</p> : null}
       {status ? <p className="form-success">{status}</p> : null}
+      {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
       {selectedBusiness.admin_notes ? (
         <p className="form-error">{selectedBusiness.admin_notes}</p>
       ) : null}
@@ -422,6 +454,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           <p className="field-help">
             Add coordinates to show this business as a pin in Rider Tools.
           </p>
+          <button className="secondary-action" type="button" onClick={findListingCoordinates}>
+            Find Coordinates From Location
+          </button>
           <label>
             Website
             <input

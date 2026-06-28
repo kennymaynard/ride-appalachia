@@ -10,6 +10,7 @@ import type {
   Deal,
   DealCreateInput,
   DealUpdateInput,
+  GeocodeResult,
   LodgingServiceRequest,
   LodgingServiceRequestCreateInput,
   MarketingLead,
@@ -146,6 +147,19 @@ export async function getBusiness(businessId: number): Promise<Business | null> 
 
 function getBusinessHeaders(ownerAccessToken?: string): Record<string, string> {
   return ownerAccessToken ? { "x-business-token": ownerAccessToken } : {};
+}
+
+export async function geocodeLocation(query: string): Promise<GeocodeResult> {
+  const response = await fetch(
+    `${getApiUrl()}/api/geocode?query=${encodeURIComponent(query)}`,
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to find that location");
+  }
+
+  return response.json();
 }
 
 export async function getBusinessByAccessToken(ownerAccessToken: string): Promise<Business | null> {

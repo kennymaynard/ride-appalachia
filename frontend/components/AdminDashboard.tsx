@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   approveBusiness,
+  geocodeLocation,
   getAdminBusinesses,
   getAdminMarketingLeads,
   getAdminServiceRequests,
@@ -50,6 +51,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<BusinessUpdateInput>({});
   const [error, setError] = useState("");
+  const [geocodeStatus, setGeocodeStatus] = useState("");
 
   const stats = useMemo(
     () => ({
@@ -108,6 +110,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       photo_url: business.photo_url,
     });
     setError("");
+    setGeocodeStatus("");
   }
 
   async function saveAdminEdit(event: FormEvent<HTMLFormElement>, businessId: number) {
@@ -118,6 +121,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       replaceBusiness(await updateAdminBusiness(businessId, editForm, adminPassword));
       setEditingId(null);
       setEditForm({});
+      setGeocodeStatus("");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -126,6 +130,33 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setWorkingId(null);
+    }
+  }
+
+  async function findAdminCoordinates() {
+    setError("");
+    setGeocodeStatus("");
+    if (!editForm.location?.trim()) {
+      setError("Enter a location or address before finding coordinates.");
+      return;
+    }
+
+    setGeocodeStatus("Finding coordinates...");
+    try {
+      const result = await geocodeLocation(editForm.location.trim());
+      setEditForm({
+        ...editForm,
+        latitude: result.latitude,
+        longitude: result.longitude,
+      });
+      setGeocodeStatus(`Pinned near ${result.display_name}.`);
+    } catch (caughtError) {
+      setGeocodeStatus("");
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to find coordinates for that location.",
+      );
     }
   }
 
@@ -272,6 +303,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       </div>
 
       {error ? <p className="form-error">{error}</p> : null}
+      {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
       <div className="admin-review-queue">
         <div className="section-heading">
@@ -574,6 +606,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                     />
                   </label>
                 </div>
+                <button className="secondary-action" type="button" onClick={findAdminCoordinates}>
+                  Find Coordinates From Location
+                </button>
                 <label>
                   Website
                   <input

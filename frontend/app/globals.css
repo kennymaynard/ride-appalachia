@@ -3023,6 +3023,19 @@ button.tier-card.is-selected {
   opacity: 0.72;
 }
 
+.dashboard-card button.secondary-action {
+  justify-self: start;
+  border-color: rgba(242, 106, 27, 0.42);
+  background: rgba(0, 0, 0, 0.36);
+  color: var(--orange-soft);
+}
+
+.dashboard-card button.secondary-action:hover {
+  border-color: var(--orange);
+  background: rgba(242, 106, 27, 0.12);
+  color: #fff;
+}
+
 .stats-card div {
   display: grid;
   border: 1px solid var(--line);
