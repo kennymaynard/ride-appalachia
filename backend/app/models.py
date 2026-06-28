@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -64,6 +64,13 @@ class LeadStatus(str, Enum):
     closed = "closed"
 
 
+class VeteranVerificationStatus(str, Enum):
+    unverified = "unverified"
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+
+
 class Business(Base):
     __tablename__ = "businesses"
 
@@ -95,6 +102,7 @@ class Business(Base):
     deals: Mapped[list["Deal"]] = relationship(back_populates="business", cascade="all, delete-orphan")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="business", cascade="all, delete-orphan")
     service_requests: Mapped[list["LodgingServiceRequest"]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    reviews: Mapped[list["BusinessReview"]] = relationship(back_populates="business", cascade="all, delete-orphan")
 
 
 class Deal(Base):
@@ -195,3 +203,97 @@ class MarketingLead(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(40), default=LeadStatus.new.value, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Rider(Base):
+    __tablename__ = "riders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(120))
+    email: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    phone: Mapped[str] = mapped_column(String(40), default="")
+    access_token: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    veteran_verification_status: Mapped[str] = mapped_column(
+        String(40),
+        default=VeteranVerificationStatus.unverified.value,
+        index=True,
+    )
+    veteran_verification_notes: Mapped[str] = mapped_column(Text, default="")
+    veteran_document_name: Mapped[str] = mapped_column(String(220), default="")
+    alert_phone_opt_in: Mapped[bool] = mapped_column(Boolean, default=False)
+    alert_email_opt_in: Mapped[bool] = mapped_column(Boolean, default=True)
+    storm_alerts_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    trail_alerts_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    badges: Mapped[list["RiderBadge"]] = relationship(back_populates="rider", cascade="all, delete-orphan")
+    progress: Mapped[list["RiderTrailProgress"]] = relationship(back_populates="rider", cascade="all, delete-orphan")
+    partner_visits: Mapped[list["PartnerVisit"]] = relationship(back_populates="rider", cascade="all, delete-orphan")
+    business_reviews: Mapped[list["BusinessReview"]] = relationship(back_populates="rider", cascade="all, delete-orphan")
+
+
+class RiderTrailProgress(Base):
+    __tablename__ = "rider_trail_progress"
+    __table_args__ = (
+        UniqueConstraint("rider_id", "area_slug", "trail_name", name="uq_rider_trail_progress"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    area_slug: Mapped[str] = mapped_column(String(120), index=True)
+    trail_name: Mapped[str] = mapped_column(String(180), index=True)
+    activity: Mapped[str] = mapped_column(String(40), default="ohv", index=True)
+    status: Mapped[str] = mapped_column(String(40), default="saved", index=True)
+    source: Mapped[str] = mapped_column(String(40), default="manual")
+    is_group_ride: Mapped[bool] = mapped_column(Boolean, default=False)
+    distance_miles: Mapped[float | None] = mapped_column(Float, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    rider: Mapped[Rider] = relationship(back_populates="progress")
+
+
+class RiderBadge(Base):
+    __tablename__ = "rider_badges"
+    __table_args__ = (
+        UniqueConstraint("rider_id", "badge_key", name="uq_rider_badge"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    badge_key: Mapped[str] = mapped_column(String(80), index=True)
+    label: Mapped[str] = mapped_column(String(160))
+    category: Mapped[str] = mapped_column(String(60), default="trail")
+    earned_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    rider: Mapped[Rider] = relationship(back_populates="badges")
+
+
+class PartnerVisit(Base):
+    __tablename__ = "partner_visits"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    discount_code: Mapped[str] = mapped_column(String(80), default="")
+    source: Mapped[str] = mapped_column(String(60), default="manual")
+    checked_in_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    rider: Mapped[Rider] = relationship(back_populates="partner_visits")
+    business: Mapped[Business] = relationship()
+
+
+class BusinessReview(Base):
+    __tablename__ = "business_reviews"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    rider_id: Mapped[int | None] = mapped_column(ForeignKey("riders.id"), nullable=True, index=True)
+    rider_name: Mapped[str] = mapped_column(String(120))
+    rating: Mapped[int] = mapped_column(Integer)
+    comment: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), default=ReviewStatus.pending.value, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    business: Mapped[Business] = relationship(back_populates="reviews")
+    rider: Mapped[Rider | None] = relationship(back_populates="business_reviews")

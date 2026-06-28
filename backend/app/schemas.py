@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -12,6 +13,9 @@ SUBSCRIPTION_TIERS = {
 LISTING_STATUSES = {"pending", "approved", "needs_changes", "rejected", "unpublished"}
 LEAD_TYPES = {"launch_access", "business_availability"}
 LEAD_STATUSES = {"new", "contacted", "converted", "closed"}
+RIDER_ACTIVITIES = {"ohv", "hiking", "run", "walk"}
+RIDER_PROGRESS_STATUSES = {"saved", "completed"}
+VETERAN_VERIFICATION_STATUSES = {"unverified", "pending", "verified", "rejected"}
 TRAIL_TALK_CATEGORIES = {
     "group_ride",
     "trail_conditions",
@@ -287,6 +291,131 @@ class BusinessLoginRead(BaseModel):
     access_url: str = ""
     email_sent: bool = False
     message: str
+
+
+class RiderLoginRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=180)
+    display_name: str = ""
+    phone: str = ""
+
+
+class RiderLoginRead(BaseModel):
+    access_url: str = ""
+    access_token: str = ""
+    message: str
+
+
+class RiderBadgeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    badge_key: str
+    label: str
+    category: str
+    earned_at: datetime
+
+
+class RiderTrailProgressCreate(BaseModel):
+    area_slug: str = Field(min_length=2, max_length=120)
+    trail_name: str = Field(min_length=2, max_length=180)
+    activity: str = "ohv"
+    status: str = "completed"
+    source: str = "manual"
+    is_group_ride: bool = False
+    distance_miles: Optional[float] = None
+
+    @field_validator("activity")
+    @classmethod
+    def validate_rider_activity(cls, value: str) -> str:
+        if value not in RIDER_ACTIVITIES:
+            raise ValueError("Unknown rider activity")
+        return value
+
+    @field_validator("status")
+    @classmethod
+    def validate_rider_progress_status(cls, value: str) -> str:
+        if value not in RIDER_PROGRESS_STATUSES:
+            raise ValueError("Unknown rider progress status")
+        return value
+
+
+class RiderTrailProgressRead(RiderTrailProgressCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rider_id: int
+    completed_at: Optional[datetime] = None
+
+
+class PartnerVisitCreate(BaseModel):
+    business_id: int
+    discount_code: str = ""
+    source: str = "manual"
+
+
+class PartnerVisitRead(PartnerVisitCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rider_id: int
+    checked_in_at: datetime
+
+
+class VeteranVerificationRequest(BaseModel):
+    document_name: str = ""
+    notes: str = ""
+
+
+class RiderAlertPreferencesUpdate(BaseModel):
+    phone: Optional[str] = None
+    alert_phone_opt_in: Optional[bool] = None
+    alert_email_opt_in: Optional[bool] = None
+    storm_alerts_enabled: Optional[bool] = None
+    trail_alerts_enabled: Optional[bool] = None
+
+
+class RiderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    display_name: str
+    email: str
+    phone: str = ""
+    veteran_verification_status: str = "unverified"
+    veteran_verification_notes: str = ""
+    veteran_document_name: str = ""
+    alert_phone_opt_in: bool = False
+    alert_email_opt_in: bool = True
+    storm_alerts_enabled: bool = True
+    trail_alerts_enabled: bool = True
+    access_token: str = ""
+    badges: list[RiderBadgeRead] = []
+    progress: list[RiderTrailProgressRead] = []
+
+
+class RiderRideCardRead(BaseModel):
+    rider: RiderRead
+    completed_trails: int
+    completed_hikes: int
+    completed_runs: int
+    completed_walks: int
+    partner_visits: int
+    badges: list[RiderBadgeRead]
+
+
+class BusinessReviewCreate(BaseModel):
+    business_id: int
+    rider_name: str = Field(min_length=2, max_length=120)
+    rating: int
+    comment: str = Field(min_length=4)
+
+
+class BusinessReviewRead(BusinessReviewCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rider_id: Optional[int] = None
+    status: str = "pending"
 
 
 class CheckoutSessionRead(BaseModel):

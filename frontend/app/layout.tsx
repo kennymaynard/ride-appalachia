@@ -38,7 +38,7 @@ export default function RootLayout({
           <Link className="join-link" href="/business/join">
             Join
           </Link>
-          <Link className="join-link secondary-link" href="/business/login">
+          <Link className="join-link secondary-link" href="/rider/login">
             Login
           </Link>
         </header>
@@ -55,6 +55,7 @@ export default function RootLayout({
             <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/rider-tools">Rider Tools</Link>
             <Link href="/business">FAQ</Link>
+            <Link href="/business/login">Business Login</Link>
             <Link href="/business/join">Business Signup</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

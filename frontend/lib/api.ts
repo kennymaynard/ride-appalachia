@@ -16,6 +16,11 @@ import type {
   LodgingServiceRequestCreateInput,
   MarketingLead,
   MarketingLeadCreateInput,
+  BusinessReviewCreateInput,
+  Rider,
+  RiderRideCard,
+  RiderTrailProgress,
+  RiderTrailProgressCreateInput,
   TrailReview,
   TrailReviewCreateInput,
   TrailTalkPost,
@@ -150,6 +155,10 @@ function getBusinessHeaders(ownerAccessToken?: string): Record<string, string> {
   return ownerAccessToken ? { "x-business-token": ownerAccessToken } : {};
 }
 
+function getRiderHeaders(riderAccessToken?: string): Record<string, string> {
+  return riderAccessToken ? { "x-rider-token": riderAccessToken } : {};
+}
+
 export async function geocodeLocation(query: string): Promise<GeocodeResult> {
   const response = await fetch(
     `${getApiUrl()}/api/geocode?query=${encodeURIComponent(query)}`,
@@ -205,6 +214,146 @@ export async function loginBusiness(
   }
 
   return response.json();
+}
+
+export async function loginRider(payload: {
+  email: string;
+  display_name?: string;
+  phone?: string;
+}): Promise<{ access_url: string; access_token: string; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/riders/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to open rider profile");
+  }
+
+  return response.json();
+}
+
+export async function getRiderProfile(riderAccessToken: string): Promise<Rider | null> {
+  try {
+    const response = await apiFetch("/api/riders/me", {
+      cache: "no-store",
+      headers: getRiderHeaders(riderAccessToken),
+    });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function getRiderRideCard(riderAccessToken: string): Promise<RiderRideCard | null> {
+  try {
+    const response = await apiFetch("/api/riders/ride-card", {
+      cache: "no-store",
+      headers: getRiderHeaders(riderAccessToken),
+    });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRiderProgress(
+  payload: RiderTrailProgressCreateInput,
+  riderAccessToken: string,
+): Promise<RiderTrailProgress> {
+  const response = await fetch(`${getApiUrl()}/api/riders/progress`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to save trail progress");
+  }
+
+  return response.json();
+}
+
+export async function requestVeteranVerification(
+  payload: { document_name: string; notes: string },
+  riderAccessToken: string,
+): Promise<Rider> {
+  const response = await fetch(`${getApiUrl()}/api/riders/veteran-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to request verification");
+  }
+
+  return response.json();
+}
+
+export async function updateRiderAlerts(
+  payload: Partial<
+    Pick<
+      Rider,
+      | "phone"
+      | "alert_phone_opt_in"
+      | "alert_email_opt_in"
+      | "storm_alerts_enabled"
+      | "trail_alerts_enabled"
+    >
+  >,
+  riderAccessToken: string,
+): Promise<Rider> {
+  const response = await fetch(`${getApiUrl()}/api/riders/me/alerts`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to save alert preferences");
+  }
+
+  return response.json();
+}
+
+export async function createPartnerVisit(
+  payload: { business_id: number; discount_code?: string; source?: string },
+  riderAccessToken: string,
+): Promise<void> {
+  const response = await fetch(`${getApiUrl()}/api/riders/partner-visits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to save partner visit");
+  }
+}
+
+export async function createBusinessReview(
+  payload: BusinessReviewCreateInput,
+  riderAccessToken?: string,
+): Promise<void> {
+  const response = await fetch(`${getApiUrl()}/api/business-reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to submit business review");
+  }
 }
 
 export async function updateBusiness(

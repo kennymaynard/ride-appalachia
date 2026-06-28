@@ -3093,6 +3093,106 @@ button.tier-card.is-selected {
   margin: 1rem auto 0;
 }
 
+.rider-dashboard {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem auto 0;
+}
+
+.rider-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.rider-stat-grid article {
+  display: grid;
+  gap: 0.3rem;
+  border: 1px solid rgba(242, 106, 27, 0.24);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 1rem;
+}
+
+.rider-stat-grid strong {
+  color: var(--orange);
+  font-size: clamp(2rem, 5vw, 3.3rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.rider-stat-grid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.rider-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.rider-badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.rider-badge-grid span {
+  border: 1px solid rgba(242, 106, 27, 0.52);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.12);
+  color: var(--soft);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.checkbox-row {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 0.55rem !important;
+}
+
+.checkbox-row input {
+  width: 1.1rem;
+  min-height: 1.1rem;
+}
+
+.rider-progress-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.rider-progress-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.8rem;
+}
+
+.rider-progress-list strong {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.rider-progress-list span {
+  color: var(--orange-soft);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .business-switcher {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -5641,6 +5741,14 @@ button.tier-card.is-selected {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+
+  .rider-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rider-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -5721,8 +5829,13 @@ button.tier-card.is-selected {
   }
 
   .admin-stats,
+  .rider-stat-grid,
   .business-addon-row,
   .admin-business-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .rider-progress-list div {
     grid-template-columns: 1fr;
   }
 

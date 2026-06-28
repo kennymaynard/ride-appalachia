@@ -240,3 +240,65 @@ export type TrailTalkPost = {
 };
 
 export type TrailTalkPostCreateInput = Omit<TrailTalkPost, "id" | "status">;
+
+export type RiderActivity = "ohv" | "hiking" | "run" | "walk";
+
+export type RiderBadge = {
+  id: number;
+  badge_key: string;
+  label: string;
+  category: "trail" | "hiking" | "run" | "walk" | "community" | "partner" | string;
+  earned_at: string;
+};
+
+export type RiderTrailProgress = {
+  id: number;
+  rider_id: number;
+  area_slug: string;
+  trail_name: string;
+  activity: RiderActivity;
+  status: "saved" | "completed";
+  source: "manual" | "track_me" | string;
+  is_group_ride: boolean;
+  distance_miles?: number | null;
+  completed_at?: string | null;
+};
+
+export type RiderTrailProgressCreateInput = Omit<
+  RiderTrailProgress,
+  "id" | "rider_id" | "completed_at"
+>;
+
+export type Rider = {
+  id: number;
+  display_name: string;
+  email: string;
+  phone: string;
+  veteran_verification_status: "unverified" | "pending" | "verified" | "rejected";
+  veteran_verification_notes: string;
+  veteran_document_name: string;
+  alert_phone_opt_in: boolean;
+  alert_email_opt_in: boolean;
+  storm_alerts_enabled: boolean;
+  trail_alerts_enabled: boolean;
+  access_token: string;
+  badges: RiderBadge[];
+  progress: RiderTrailProgress[];
+};
+
+export type RiderRideCard = {
+  rider: Rider;
+  completed_trails: number;
+  completed_hikes: number;
+  completed_runs: number;
+  completed_walks: number;
+  partner_visits: number;
+  badges: RiderBadge[];
+};
+
+export type BusinessReviewCreateInput = {
+  business_id: number;
+  rider_name: string;
+  rating: number;
+  comment: string;
+};
