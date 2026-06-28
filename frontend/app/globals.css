@@ -3093,6 +3093,136 @@ button.tier-card.is-selected {
   margin: 1rem auto 0;
 }
 
+.booking-marketplace {
+  margin: 1rem 0;
+  border: 1px solid rgba(242, 106, 27, 0.22);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at top left, rgba(242, 106, 27, 0.12), transparent 26rem),
+    rgba(5, 5, 5, 0.82);
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+}
+
+.booking-wrap {
+  display: grid;
+  gap: 1rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.booking-marketplace h2 {
+  max-width: 54rem;
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  font-weight: 950;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.booking-intro {
+  max-width: 52rem;
+  margin: 0;
+  color: var(--soft);
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  font-weight: 720;
+  line-height: 1.5;
+}
+
+.booking-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.booking-feature-card,
+.booking-flow-box,
+.booking-cta-box {
+  border: 1px solid rgba(242, 106, 27, 0.24);
+  border-radius: 0.65rem;
+  background: linear-gradient(180deg, rgba(21, 21, 21, 0.96), rgba(10, 10, 10, 0.96));
+  padding: 1rem;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.3);
+}
+
+.booking-feature-card h3,
+.booking-flow-box h3,
+.booking-cta-box h3 {
+  margin: 0;
+  color: var(--orange-soft);
+  font-size: 1rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.booking-feature-card p,
+.booking-cta-box p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.booking-steps {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.booking-steps div {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.75rem;
+}
+
+.booking-steps span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  font-weight: 950;
+}
+
+.booking-steps p {
+  margin: 0;
+  color: var(--soft);
+  font-weight: 820;
+  line-height: 1.35;
+}
+
+.booking-cta-box {
+  text-align: center;
+}
+
+.booking-cta-box p {
+  max-width: 46rem;
+  margin: 0.75rem auto 0;
+}
+
+.booking-cta-button {
+  display: inline-flex;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  border: 1px solid rgba(242, 106, 27, 0.72);
+  border-radius: 0.45rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 1rem;
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .rider-dashboard {
   display: grid;
   gap: 1rem;
@@ -5749,6 +5879,10 @@ button.tier-card.is-selected {
   .rider-dashboard-grid {
     grid-template-columns: 1fr;
   }
+
+  .booking-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -5830,6 +5964,7 @@ button.tier-card.is-selected {
 
   .admin-stats,
   .rider-stat-grid,
+  .booking-feature-grid,
   .business-addon-row,
   .admin-business-card dl {
     grid-template-columns: 1fr;
