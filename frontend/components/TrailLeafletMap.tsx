@@ -77,13 +77,18 @@ function downloadTextFile(filename: string, contents: string, type: string) {
 }
 
 function buildGpx(point: MapPoint) {
-  if (!point.routeLine.length) return "";
+  if (!point.routeSegments.length) return "";
 
-  const trackPoints = point.routeLine
-    .map(
-      (coordinate) =>
-        `      <trkpt lat="${coordinate.latitude}" lon="${coordinate.longitude}"></trkpt>`,
-    )
+  const trackSegments = point.routeSegments
+    .map((segment) => {
+      const trackPoints = segment
+        .map(
+          (coordinate) =>
+            `      <trkpt lat="${coordinate.latitude}" lon="${coordinate.longitude}"></trkpt>`,
+        )
+        .join("\n");
+      return `    <trkseg>\n${trackPoints}\n    </trkseg>`;
+    })
     .join("\n");
   const waypoints = point.photoStops
     .map(
@@ -104,9 +109,7 @@ ${waypoints}
   <trk>
     <name>${escapeXml(point.label)}</name>
     <desc>${escapeXml(point.access)}</desc>
-    <trkseg>
-${trackPoints}
-    </trkseg>
+${trackSegments}
   </trk>
 </gpx>
 `;
@@ -129,11 +132,19 @@ function buildGeoJson(point: MapPoint) {
             officialMap: point.href,
           },
           geometry: {
-            type: "LineString",
-            coordinates: point.routeLine.map((coordinate) => [
-              coordinate.longitude,
-              coordinate.latitude,
-            ]),
+            type: point.routeSegments.length > 1 ? "MultiLineString" : "LineString",
+            coordinates:
+              point.routeSegments.length > 1
+                ? point.routeSegments.map((segment) =>
+                    segment.map((coordinate) => [
+                      coordinate.longitude,
+                      coordinate.latitude,
+                    ]),
+                  )
+                : point.routeSegments[0]?.map((coordinate) => [
+                    coordinate.longitude,
+                    coordinate.latitude,
+                  ]) ?? [],
           },
         },
         ...point.photoStops.map((stop) => ({
@@ -204,13 +215,15 @@ function TrailFocus({ point }: { point?: MapPoint }) {
 
   useEffect(() => {
     if (!point) return;
-    if (!point.routeLine.length) {
+    if (!point.routeSegments.length) {
       map.setView([point.latitude, point.longitude], 13);
       return;
     }
 
     const bounds = L.latLngBounds(
-      point.routeLine.map((coordinate) => [coordinate.latitude, coordinate.longitude]),
+      point.routeSegments
+        .flat()
+        .map((coordinate) => [coordinate.latitude, coordinate.longitude] as [number, number]),
     );
     map.fitBounds(bounds, { padding: [44, 44], maxZoom: 13 });
   }, [map, point]);
@@ -286,7 +299,7 @@ export function TrailLeafletMap({
   ];
   const selectedTrail = points.find((point) => point.id === selectedTrailId);
   const hasExactRoute = Boolean(
-    selectedTrail?.routeLine.length && selectedTrail.routeAccuracy === "exact",
+    selectedTrail?.routeSegments.length && selectedTrail.routeAccuracy === "exact",
   );
   const visiblePoints = useMemo(
     () =>
@@ -437,27 +450,30 @@ export function TrailLeafletMap({
         <TrailFocus point={selectedTrail} />
         {!selectedTrail
           ? visiblePoints
-              .filter((point) => point.routeLine.length)
-              .map((point) => (
-                <Polyline
-                  key={`route-${point.id}`}
-                  pathOptions={{
-                    color: getTrailColor(point),
-                    dashArray: getTrailDash(point),
-                    opacity: point.routeAccuracy === "exact" ? 0.76 : 0.48,
-                    weight: point.routeAccuracy === "exact" ? 4 : 3,
-                  }}
-                  positions={
-                    point.routeLine.map((coordinate) => [
-                      coordinate.latitude,
-                      coordinate.longitude,
-                    ]) as [number, number][]
-                  }
-                />
-              ))
+              .filter((point) => point.routeSegments.length)
+              .flatMap((point) =>
+                point.routeSegments.map((segment, segmentIndex) => (
+                  <Polyline
+                    key={`route-${point.id}-${segmentIndex}`}
+                    pathOptions={{
+                      color: getTrailColor(point),
+                      dashArray: getTrailDash(point),
+                      opacity: point.routeAccuracy === "exact" ? 0.76 : 0.48,
+                      weight: point.routeAccuracy === "exact" ? 4 : 3,
+                    }}
+                    positions={
+                      segment.map((coordinate) => [
+                        coordinate.latitude,
+                        coordinate.longitude,
+                      ]) as [number, number][]
+                    }
+                  />
+                )),
+              )
           : null}
-        {selectedTrail?.routeLine.length ? (
+        {selectedTrail?.routeSegments.flatMap((segment, segmentIndex) => (
           <Polyline
+            key={`selected-route-${selectedTrail.id}-${segmentIndex}`}
             pathOptions={{
               color: getTrailColor(selectedTrail),
               dashArray: getTrailDash(selectedTrail),
@@ -465,13 +481,13 @@ export function TrailLeafletMap({
               weight: 6,
             }}
             positions={
-              selectedTrail.routeLine.map((coordinate) => [
+              segment.map((coordinate) => [
                 coordinate.latitude,
                 coordinate.longitude,
               ]) as [number, number][]
             }
           />
-        ) : null}
+        ))}
         {selectedTrail?.photoStops.map((stop) => (
           <CircleMarker
             center={[stop.latitude, stop.longitude]}

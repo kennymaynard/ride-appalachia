@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getImportedTrailRouteSegments } from "../lib/imported-trail-routes";
 import type { Business, RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
 import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
 import { TrailMapShell } from "./TrailMapShell";
@@ -27,6 +28,7 @@ export type MapPoint = {
   lengthMiles?: number;
   photoStops: TrailPhotoStop[];
   routeLine: TrailCoordinate[];
+  routeSegments: TrailCoordinate[][];
   routeAccuracy: "exact" | "approximate";
   sourceStatus: ReturnType<typeof getTrailMapSource>["status"];
   sourceLabel: string;
@@ -110,7 +112,13 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
   const reviewSummary = getAreaReviewSummary(area.slug, reviews);
   const activity = trail.activity ?? (trail.type.toLowerCase().includes("hiking") ? "Hiking" : "OHV");
   const source = getTrailMapSource(area, trail);
+  const importedRouteSegments = getImportedTrailRouteSegments(area.slug, trail.name);
   const exactRouteLine = trail.routeLine ?? [];
+  const routeSegments = importedRouteSegments.length
+    ? importedRouteSegments
+    : exactRouteLine.length
+      ? [exactRouteLine]
+      : [buildApproximateRouteLine(area, trail, activity)];
 
   return {
     id: `${area.slug}-${slugify(trail.name)}`,
@@ -127,8 +135,9 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
     href: trail.url,
     lengthMiles: trail.lengthMiles,
     photoStops: trail.photoStops ?? [],
-    routeLine: exactRouteLine.length ? exactRouteLine : buildApproximateRouteLine(area, trail, activity),
-    routeAccuracy: exactRouteLine.length ? "exact" : "approximate",
+    routeLine: routeSegments.flat(),
+    routeSegments,
+    routeAccuracy: importedRouteSegments.length || exactRouteLine.length ? "exact" : "approximate",
     sourceStatus: source.status,
     sourceLabel: source.sourceLabel,
     reviewCount: reviewSummary.count,
