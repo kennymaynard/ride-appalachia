@@ -289,7 +289,7 @@ export function TrailLeafletMap({
     "rentals",
     "deals",
   ]);
-  const [mapStyle, setMapStyle] = useState<"standard" | "topo">("topo");
+  const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [controlsOpen, setControlsOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number]>();
@@ -409,10 +409,10 @@ export function TrailLeafletMap({
             className={mapStyle === "topo" ? "is-active" : ""}
             type="button"
             onClick={() =>
-              setMapStyle((current) => (current === "topo" ? "standard" : "topo"))
+              setMapStyle((current) => (current === "topo" ? "roads" : "topo"))
             }
           >
-            {mapStyle === "topo" ? "Topo on" : "Topo off"}
+            {mapStyle === "topo" ? "Topo map" : "Roads + towns"}
           </button>
           <span>Nearby</span>
           {businessLayerOptions.map((layer) => (
