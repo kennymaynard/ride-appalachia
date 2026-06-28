@@ -22,7 +22,7 @@ from app.schemas import (
     LodgingServiceRequestCreate,
     LodgingServiceRequestRead,
 )
-from app.services.email_service import send_business_login_email
+from app.services.email_service import send_business_approval_notification, send_business_login_email
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["business dashboard"])
@@ -39,6 +39,18 @@ def send_business_access_email(business: Business) -> None:
     settings = get_settings()
     access_url = f"{settings.frontend_url}/business/access/{business.owner_access_token}"
     send_business_login_email(business.owner_email, business.name, access_url)
+
+
+def send_business_pending_approval_email(business: Business) -> None:
+    settings = get_settings()
+    send_business_approval_notification(
+        business.name,
+        business.owner_email,
+        business.category,
+        business.subscription_tier,
+        business.location,
+        f"{settings.frontend_url}/admin",
+    )
 
 
 def require_business_access(
@@ -111,6 +123,7 @@ def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> B
     db.commit()
     db.refresh(business)
     send_business_access_email(business)
+    send_business_pending_approval_email(business)
     return business
 
 
@@ -209,6 +222,7 @@ def claim_business(
     db.commit()
     db.refresh(business)
     send_business_access_email(business)
+    send_business_pending_approval_email(business)
     return business
 
 

@@ -97,3 +97,61 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
         return EmailResult(sent=False, message=f"Unable to send lead notification: {exc}")
 
     return EmailResult(sent=False, message="Unable to send lead notification.")
+
+
+def send_business_approval_notification(
+    business_name: str,
+    owner_email: str,
+    category: str,
+    tier: str,
+    location: str,
+    admin_url: str,
+) -> EmailResult:
+    settings = get_settings()
+    if not settings.resend_api_key or not settings.lead_notify_email:
+        return EmailResult(sent=False, message="Business approval notification is not configured.")
+
+    subject = "New business pending approval"
+    payload = {
+        "from": settings.email_from,
+        "to": [settings.lead_notify_email],
+        "subject": f"Appalachia Offroad: {subject}",
+        "html": (
+            f"<h1>{subject}</h1>"
+            f"<p><strong>Business:</strong> {business_name}</p>"
+            f"<p><strong>Owner email:</strong> {owner_email or 'Not provided'}</p>"
+            f"<p><strong>Category:</strong> {category}</p>"
+            f"<p><strong>Tier:</strong> {tier}</p>"
+            f"<p><strong>Location:</strong> {location}</p>"
+            f'<p><a href="{admin_url}">Open Admin Approval Queue</a></p>'
+        ),
+        "text": "\n".join(
+            [
+                subject,
+                f"Business: {business_name}",
+                f"Owner email: {owner_email or 'Not provided'}",
+                f"Category: {category}",
+                f"Tier: {tier}",
+                f"Location: {location}",
+                f"Admin: {admin_url}",
+            ],
+        ),
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Business approval notification sent.")
+    except (HTTPError, URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send business approval notification: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send business approval notification.")
