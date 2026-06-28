@@ -2,6 +2,11 @@
 
 Checked WV, VA, TN, and NC public trail sources from the app source list.
 
+Government and public-agency trail maps can be imported when the source exposes
+public route geometry such as GPX, KML, KMZ, GeoJSON, shapefile, or public
+ArcGIS FeatureServer/MapServer layers. General web pages, PDFs, image maps, and
+third-party app links stay as source links until public route geometry is found.
+
 ## Imported
 
 - Tennessee - North Cumberland WMA / Royal Blue

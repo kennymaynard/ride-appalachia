@@ -4448,10 +4448,36 @@ button.tier-card.is-selected {
   position: absolute;
   top: 0.75rem;
   left: 3.6rem;
+  right: 0.75rem;
   z-index: 900;
+  display: grid;
+  gap: 0.45rem;
+  align-items: start;
+  pointer-events: none;
+}
+
+.trail-layer-primary,
+.trail-layer-drawer {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  pointer-events: auto;
+}
+
+.trail-layer-primary {
+  align-items: center;
+}
+
+.trail-layer-drawer {
+  align-items: center;
+}
+
+.trail-layer-drawer > span {
+  align-self: center;
+  color: var(--orange-soft);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .trail-layer-controls button {
@@ -5762,9 +5788,45 @@ button.tier-card.is-selected {
   }
 
   .trail-layer-controls {
-    left: 0.75rem;
-    right: 0.75rem;
-    top: 3.25rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    top: 0.6rem;
+    max-width: calc(100% - 1.2rem);
+  }
+
+  .trail-layer-primary {
+    max-width: calc(100% - 3.5rem);
+  }
+
+  .trail-layer-drawer {
+    display: none;
+    max-height: 10.5rem;
+    overflow: auto;
+    border: 1px solid rgba(242, 106, 27, 0.34);
+    border-radius: 0.55rem;
+    background: rgba(0, 0, 0, 0.86);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.34);
+    padding: 0.55rem;
+  }
+
+  .trail-layer-drawer.is-open {
+    display: flex;
+  }
+
+  .trail-layer-controls button {
+    min-height: 2rem;
+    padding: 0.42rem 0.58rem;
+    font-size: 0.66rem;
+  }
+
+  .trail-layer-drawer > span {
+    width: 100%;
+    margin-top: 0.1rem;
+  }
+
+  .trail-leaflet-map .leaflet-left .leaflet-control {
+    margin-top: 3.15rem;
+    margin-left: 0.6rem;
   }
 
   .review-topline {

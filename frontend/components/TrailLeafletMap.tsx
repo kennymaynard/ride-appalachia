@@ -291,6 +291,7 @@ export function TrailLeafletMap({
   ]);
   const [mapStyle, setMapStyle] = useState<"standard" | "topo">("topo");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
+  const [controlsOpen, setControlsOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number]>();
   const [trackingStatus, setTrackingStatus] = useState("Track me");
   const center: [number, number] = [
@@ -370,61 +371,76 @@ export function TrailLeafletMap({
   return (
     <div className="trail-leaflet-map">
       <div className="trail-layer-controls" aria-label="Trail map layers">
-        <button
-          className={showOhv ? "is-active" : ""}
-          type="button"
-          onClick={() => setShowOhv((current) => !current)}
-        >
-          OHV / ride
-        </button>
-        <button
-          className={showHiking ? "is-active is-hiking" : "is-hiking"}
-          type="button"
-          onClick={() => setShowHiking((current) => !current)}
-        >
-          Hiking
-        </button>
-        {selectedTrail ? (
-          <button type="button" onClick={() => setSelectedTrailId(undefined)}>
-            Show all
+        <div className="trail-layer-primary">
+          <button type="button" onClick={handleTrackMe}>
+            {trackingStatus}
           </button>
-        ) : null}
-        <button type="button" onClick={handleTrackMe}>
-          {trackingStatus}
-        </button>
-        <button
-          className={mapStyle === "topo" ? "is-active" : ""}
-          type="button"
-          onClick={() =>
-            setMapStyle((current) => (current === "topo" ? "standard" : "topo"))
-          }
-        >
-          {mapStyle === "topo" ? "Topo on" : "Topo off"}
-        </button>
-        {businessLayerOptions.map((layer) => (
           <button
-            className={
-              businessLayers.includes(layer.id)
-                ? "is-active is-business"
-                : "is-business"
-            }
-            key={layer.id}
+            aria-expanded={controlsOpen}
+            className={controlsOpen ? "is-active trail-layer-menu-toggle" : "trail-layer-menu-toggle"}
             type="button"
-            onClick={() => toggleBusinessLayer(layer.id)}
+            onClick={() => setControlsOpen((current) => !current)}
           >
-            {layer.label}
+            Map layers
           </button>
-        ))}
-        {selectedTrail && hasExactRoute ? (
-          <>
-            <button type="button" onClick={handleDownloadGpx}>
-              Download GPX
+          {selectedTrail ? (
+            <button type="button" onClick={() => setSelectedTrailId(undefined)}>
+              Show all
             </button>
-            <button type="button" onClick={handleDownloadGeoJson}>
-              GeoJSON
+          ) : null}
+        </div>
+        <div className={controlsOpen ? "trail-layer-drawer is-open" : "trail-layer-drawer"}>
+          <span>Trails</span>
+          <button
+            className={showOhv ? "is-active" : ""}
+            type="button"
+            onClick={() => setShowOhv((current) => !current)}
+          >
+            OHV / ride
+          </button>
+          <button
+            className={showHiking ? "is-active is-hiking" : "is-hiking"}
+            type="button"
+            onClick={() => setShowHiking((current) => !current)}
+          >
+            Hiking
+          </button>
+          <button
+            className={mapStyle === "topo" ? "is-active" : ""}
+            type="button"
+            onClick={() =>
+              setMapStyle((current) => (current === "topo" ? "standard" : "topo"))
+            }
+          >
+            {mapStyle === "topo" ? "Topo on" : "Topo off"}
+          </button>
+          <span>Nearby</span>
+          {businessLayerOptions.map((layer) => (
+            <button
+              className={
+                businessLayers.includes(layer.id)
+                  ? "is-active is-business"
+                  : "is-business"
+              }
+              key={layer.id}
+              type="button"
+              onClick={() => toggleBusinessLayer(layer.id)}
+            >
+              {layer.label}
             </button>
-          </>
-        ) : null}
+          ))}
+          {selectedTrail && hasExactRoute ? (
+            <>
+              <span>Save</span>
+              <button type="button" onClick={handleDownloadGpx}>
+                Download GPX
+              </button>
+              <button type="button" onClick={handleDownloadGeoJson}>
+                GeoJSON
+              </button>
+            </>
+          ) : null}
+        </div>
       </div>
       <MapContainer
         center={center}
