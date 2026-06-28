@@ -40,7 +40,7 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 ## Build Order
 
 1. Add bookable listings to the business dashboard. Done in `0007_booking_marketplace`.
-2. Add imported iCal URLs and availability checks. Calendar links, feed parsing, sync, and blocked date checks are in place.
+2. Add imported iCal URLs and availability checks. Calendar links, feed parsing, manual sync, Cron sync, and blocked date checks are in place.
 3. Add rider date search.
 4. Add request-to-book messages and status tracking. Request and approval status are in place.
 5. Add Stripe Connect onboarding for businesses. Onboarding link creation is in place.
@@ -50,3 +50,7 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 ## Current Limitation
 
 Single-business checkout can use a Stripe Connect destination charge. Multi-business bundles keep one rider checkout, and the webhook creates transfer records for each business share after payment succeeds.
+
+## Calendar Sync
+
+Business owners can click Sync in the dashboard. Render Cron can also run `backend/scripts/sync_calendars.py` hourly to update every active iCal feed.

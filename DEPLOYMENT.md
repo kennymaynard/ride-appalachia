@@ -33,6 +33,7 @@ record based on your DNS provider.
 
 ```env
 DATABASE_URL=
+BACKEND_URL=https://api.appalachiaoffroadapp.com
 FRONTEND_URL=https://appalachiaoffroadapp.com
 ADMIN_PASSWORD=
 RESEND_API_KEY=
@@ -43,6 +44,33 @@ STRIPE_PRICE_LOCAL_BUSINESS=
 STRIPE_PRICE_LODGING_PARTNER=
 STRIPE_PRICE_VETERAN_OWNED=
 STRIPE_WEBHOOK_SECRET=
+```
+
+## Calendar Sync Cron
+
+Create a Render Cron Job after the backend is live:
+
+```bash
+cd backend && python scripts/sync_calendars.py
+```
+
+Suggested schedule:
+
+```text
+0 * * * *
+```
+
+Add these environment variables to the Cron Job:
+
+```env
+BACKEND_URL=https://api.appalachiaoffroadapp.com
+ADMIN_PASSWORD=<same value as backend ADMIN_PASSWORD>
+```
+
+You can test it locally or from Render Shell with:
+
+```bash
+BACKEND_URL=https://api.appalachiaoffroadapp.com ADMIN_PASSWORD=... python backend/scripts/sync_calendars.py
 ```
 
 ## Required Frontend Env Vars

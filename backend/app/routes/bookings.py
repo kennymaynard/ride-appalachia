@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
@@ -27,7 +27,7 @@ from app.schemas import (
     StripeConnectOnboardingRead,
 )
 from app.services.stripe_service import create_booking_checkout_session, create_connect_onboarding_link
-from app.services.calendar_sync import fetch_ical_blocks
+from app.services.calendar_sync import sync_calendar_blocks
 
 router = APIRouter(tags=["booking marketplace"])
 
@@ -215,28 +215,7 @@ def sync_listing_calendar(
     if not calendar:
         raise HTTPException(status_code=404, detail="Calendar link not found")
 
-    try:
-        blocks = fetch_ical_blocks(calendar.ical_url)
-    except RuntimeError as exc:
-        calendar.last_sync_status = str(exc)[:120]
-        db.commit()
-        db.refresh(calendar)
-        return calendar
-
-    db.query(ListingCalendarBlock).filter(ListingCalendarBlock.calendar_id == calendar.id).delete()
-    for block in blocks:
-        db.add(
-            ListingCalendarBlock(
-                calendar_id=calendar.id,
-                listing_id=listing_id,
-                source_uid=block.source_uid,
-                start_date=block.start_date,
-                end_date=block.end_date,
-                summary=block.summary,
-            )
-        )
-    calendar.last_synced_at = datetime.utcnow()
-    calendar.last_sync_status = f"Synced {len(blocks)} blocked date range{'s' if len(blocks) != 1 else ''}"
+    sync_calendar_blocks(db, calendar)
     db.commit()
     db.refresh(calendar)
     return calendar

@@ -16,6 +16,7 @@ from app.schemas import (
     MarketingLeadStatusUpdate,
 )
 from app.services.email_service import send_business_approval_notification
+from app.services.calendar_sync import sync_active_calendars
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["admin"])
@@ -46,6 +47,14 @@ def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str]:
         "to": settings.lead_notify_email or "Not configured",
         "from": settings.email_from or "Not configured",
     }
+
+
+@router.post("/calendar-sync")
+def sync_all_booking_calendars(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    return sync_active_calendars(db)
 
 
 @router.get("/businesses", response_model=list[BusinessDashboardRead])
