@@ -2,6 +2,9 @@ import { sampleBusinesses } from "./sample-data";
 import type {
   AdminEmailTestResult,
   Business,
+  Booking,
+  BookableListing,
+  BookableListingCreateInput,
   Campaign,
   CampaignCreateInput,
   BusinessCreateInput,
@@ -474,6 +477,83 @@ export async function createLodgingServiceRequest(
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Unable to request lodging service help");
+  }
+
+  return response.json();
+}
+
+export async function createBookableListing(
+  businessId: number,
+  payload: BookableListingCreateInput,
+  ownerAccessToken?: string,
+): Promise<BookableListing> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/bookable-listings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to add bookable listing");
+  }
+
+  return response.json();
+}
+
+export async function addListingCalendar(
+  businessId: number,
+  listingId: number,
+  payload: { provider: string; ical_url: string; is_active: boolean },
+  ownerAccessToken?: string,
+): Promise<BookableListing["calendars"][number]> {
+  const response = await fetch(
+    `${getApiUrl()}/api/businesses/${businessId}/bookable-listings/${listingId}/calendars`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to add calendar link");
+  }
+
+  return response.json();
+}
+
+export async function approveBooking(
+  businessId: number,
+  bookingId: number,
+  ownerAccessToken?: string,
+): Promise<Booking> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/bookings/${bookingId}/approve`, {
+    method: "POST",
+    headers: getBusinessHeaders(ownerAccessToken),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to approve booking");
+  }
+
+  return response.json();
+}
+
+export async function createStripeConnectOnboarding(
+  businessId: number,
+  ownerAccessToken?: string,
+): Promise<{ onboarding_url: string; stripe_connect_account_id: string }> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/stripe-connect/onboarding`, {
+    method: "POST",
+    headers: getBusinessHeaders(ownerAccessToken),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to connect Stripe payouts");
   }
 
   return response.json();

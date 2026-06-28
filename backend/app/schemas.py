@@ -25,6 +25,8 @@ TRAIL_TALK_CATEGORIES = {
     "lodging_food",
     "heroes_rides",
 }
+BOOKABLE_LISTING_TYPES = {"lodging", "camping", "rental", "guide", "event", "service"}
+BOOKING_STATUSES = {"requested", "approved", "checkout_sent", "paid", "declined", "canceled"}
 
 
 class DealBase(BaseModel):
@@ -99,6 +101,108 @@ class LodgingServiceRequestRead(LodgingServiceRequestBase):
 
 class LodgingServiceRequestStatusUpdate(BaseModel):
     status: str
+
+
+class ListingCalendarBase(BaseModel):
+    provider: str = "iCal"
+    ical_url: str
+    is_active: bool = True
+
+
+class ListingCalendarCreate(ListingCalendarBase):
+    pass
+
+
+class ListingCalendarRead(ListingCalendarBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    listing_id: int
+    last_synced_at: Optional[datetime] = None
+    last_sync_status: str = "Not synced yet"
+
+
+class BookableListingBase(BaseModel):
+    title: str = Field(min_length=2, max_length=180)
+    listing_type: str = "lodging"
+    description: str = ""
+    location: str = ""
+    photo_url: str = ""
+    nightly_rate_cents: int = 0
+    cleaning_fee_cents: int = 0
+    max_guests: int = 1
+    is_active: bool = True
+
+    @field_validator("listing_type")
+    @classmethod
+    def validate_listing_type(cls, value: str) -> str:
+        if value not in BOOKABLE_LISTING_TYPES:
+            raise ValueError("Unknown bookable listing type")
+        return value
+
+
+class BookableListingCreate(BookableListingBase):
+    pass
+
+
+class BookableListingUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=2, max_length=180)
+    listing_type: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    photo_url: Optional[str] = None
+    nightly_rate_cents: Optional[int] = None
+    cleaning_fee_cents: Optional[int] = None
+    max_guests: Optional[int] = None
+    is_active: Optional[bool] = None
+
+    @field_validator("listing_type")
+    @classmethod
+    def validate_optional_listing_type(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in BOOKABLE_LISTING_TYPES:
+            raise ValueError("Unknown bookable listing type")
+        return value
+
+
+class BookableListingRead(BookableListingBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    business_id: int
+    calendars: list[ListingCalendarRead] = []
+
+
+class BookingRequestCreate(BaseModel):
+    listing_id: int
+    customer_name: str = Field(min_length=2, max_length=120)
+    customer_email: str = Field(min_length=5, max_length=180)
+    customer_phone: str = ""
+    start_date: str
+    end_date: str
+    guests: int = 1
+    message: str = ""
+
+
+class BookingRead(BookingRequestCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    business_id: int
+    rider_id: Optional[int] = None
+    status: str = "requested"
+    subtotal_cents: int = 0
+    platform_fee_cents: int = 0
+    total_cents: int = 0
+    stripe_checkout_session_id: str = ""
+
+
+class BookingCheckoutRequest(BaseModel):
+    booking_ids: list[int]
+
+
+class StripeConnectOnboardingRead(BaseModel):
+    onboarding_url: str
+    stripe_connect_account_id: str
 
 
 class TrailReviewBase(BaseModel):
@@ -233,6 +337,8 @@ class BusinessRead(BusinessBase):
     subscription_status: str = "incomplete"
     stripe_customer_id: str = ""
     stripe_subscription_id: str = ""
+    stripe_connect_account_id: str = ""
+    stripe_connect_onboarding_complete: bool = False
     view_clicks: int
     action_clicks: int
     deals: list[DealRead] = []
@@ -243,6 +349,8 @@ class BusinessDashboardRead(BusinessRead):
     owner_email: str = ""
     owner_access_token: str = ""
     service_requests: list[LodgingServiceRequestRead] = []
+    bookable_listings: list[BookableListingRead] = []
+    bookings: list[BookingRead] = []
 
 
 class BusinessModerationUpdate(BaseModel):

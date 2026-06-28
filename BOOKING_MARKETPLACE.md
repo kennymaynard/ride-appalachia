@@ -39,10 +39,14 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 
 ## Build Order
 
-1. Add bookable listings to the business dashboard.
-2. Add imported iCal URLs and availability checks.
+1. Add bookable listings to the business dashboard. Done in `0007_booking_marketplace`.
+2. Add imported iCal URLs and availability checks. Calendar links are stored; feed parsing is next.
 3. Add rider date search.
-4. Add request-to-book messages and status tracking.
-5. Add Stripe Connect onboarding for businesses.
-6. Add Checkout with a 3% application fee.
+4. Add request-to-book messages and status tracking. Request and approval status are in place.
+5. Add Stripe Connect onboarding for businesses. Onboarding link creation is in place.
+6. Add Checkout with a 3% application fee. Booking checkout foundation is in place.
 7. Add instant booking only after calendar sync is dependable.
+
+## Current Limitation
+
+Single-business checkout can use a Stripe Connect destination charge. Multi-business bundles keep one rider checkout, but the backend must transfer each business share after payment succeeds.

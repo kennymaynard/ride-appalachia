@@ -3,13 +3,17 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   addDeal,
+  addListingCalendar,
+  approveBooking,
+  createBookableListing,
   createLodgingServiceRequest,
+  createStripeConnectOnboarding,
   deleteDeal,
   geocodeLocation,
   updateBusiness,
   updateDeal,
 } from "../lib/api";
-import type { Business, BusinessUpdateInput, Category } from "../lib/types";
+import type { BookableListingCreateInput, Business, BusinessUpdateInput, Category } from "../lib/types";
 
 type Props = {
   initialBusinesses: Business[];
@@ -84,11 +88,41 @@ function emptyServiceForm(business?: Business) {
   };
 }
 
+function emptyBookableForm(business?: Business) {
+  return {
+    title: business?.name || "",
+    listing_type: business?.category === "rentals" ? "rental" : business?.category === "lodging" ? "lodging" : "service",
+    description: "",
+    location: business?.location || "",
+    photo_url: business?.photo_url || "",
+    nightly_rate: "",
+    cleaning_fee: "",
+    max_guests: "4",
+  };
+}
+
+function emptyCalendarForm() {
+  return {
+    listing_id: "",
+    provider: "Airbnb",
+    ical_url: "",
+  };
+}
+
 function parseCoordinate(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   const coordinate = Number(trimmed);
   return Number.isFinite(coordinate) ? coordinate : undefined;
+}
+
+function dollarsToCents(value: string) {
+  const amount = Number(value.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+}
+
+function centsToDollars(cents: number) {
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function BusinessDashboard({ initialBusinesses }: Props) {
@@ -100,12 +134,17 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   );
   const [dealForm, setDealForm] = useState(emptyDealForm);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm(selectedBusiness));
+  const [bookableForm, setBookableForm] = useState(emptyBookableForm(selectedBusiness));
+  const [calendarForm, setCalendarForm] = useState(emptyCalendarForm);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
   const [savingListing, setSavingListing] = useState(false);
   const [savingDeal, setSavingDeal] = useState(false);
   const [savingServiceRequest, setSavingServiceRequest] = useState(false);
+  const [savingBookable, setSavingBookable] = useState(false);
+  const [savingCalendar, setSavingCalendar] = useState(false);
+  const [connectingStripe, setConnectingStripe] = useState(false);
 
   const totals = useMemo(() => {
     const dealClicks =
@@ -124,6 +163,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setListingForm(nextBusiness ? toListingForm(nextBusiness) : null);
     setDealForm(emptyDealForm());
     setServiceForm(emptyServiceForm(nextBusiness));
+    setBookableForm(emptyBookableForm(nextBusiness));
+    setCalendarForm(emptyCalendarForm());
     setStatus("");
     setError("");
     setGeocodeStatus("");
@@ -324,6 +365,131 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       );
     } finally {
       setSavingServiceRequest(false);
+    }
+  }
+
+  async function connectStripePayouts() {
+    if (!selectedBusiness) return;
+    setConnectingStripe(true);
+    setError("");
+    setStatus("");
+    try {
+      const connectResult = await createStripeConnectOnboarding(
+        selectedBusiness.id,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        stripe_connect_account_id: connectResult.stripe_connect_account_id,
+        stripe_connect_onboarding_complete:
+          connectResult.onboarding_url.includes("connect=stub") ||
+          selectedBusiness.stripe_connect_onboarding_complete,
+      });
+      window.location.href = connectResult.onboarding_url;
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to connect Stripe payouts.",
+      );
+      setConnectingStripe(false);
+    }
+  }
+
+  async function publishBookableListing(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedBusiness) return;
+    setSavingBookable(true);
+    setError("");
+    setStatus("");
+
+    try {
+      const payload: BookableListingCreateInput = {
+        title: bookableForm.title,
+        listing_type: bookableForm.listing_type as BookableListingCreateInput["listing_type"],
+        description: bookableForm.description,
+        location: bookableForm.location,
+        photo_url: bookableForm.photo_url,
+        nightly_rate_cents: dollarsToCents(bookableForm.nightly_rate),
+        cleaning_fee_cents: dollarsToCents(bookableForm.cleaning_fee),
+        max_guests: Number(bookableForm.max_guests) || 1,
+        is_active: true,
+      };
+      const listing = await createBookableListing(
+        selectedBusiness.id,
+        payload,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        bookable_listings: [listing, ...(selectedBusiness.bookable_listings || [])],
+      });
+      setBookableForm(emptyBookableForm(selectedBusiness));
+      setCalendarForm({ ...emptyCalendarForm(), listing_id: String(listing.id) });
+      setStatus("Bookable listing added. Add an iCal calendar next.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : "Unable to add bookable listing.",
+      );
+    } finally {
+      setSavingBookable(false);
+    }
+  }
+
+  async function addCalendarLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedBusiness || !calendarForm.listing_id) return;
+    setSavingCalendar(true);
+    setError("");
+    setStatus("");
+
+    try {
+      const calendar = await addListingCalendar(
+        selectedBusiness.id,
+        Number(calendarForm.listing_id),
+        {
+          provider: calendarForm.provider,
+          ical_url: calendarForm.ical_url,
+          is_active: true,
+        },
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        bookable_listings: (selectedBusiness.bookable_listings || []).map((listing) =>
+          listing.id === calendar.listing_id
+            ? { ...listing, calendars: [calendar, ...listing.calendars] }
+            : listing,
+        ),
+      });
+      setCalendarForm(emptyCalendarForm());
+      setStatus("Calendar link added. Availability sync can use this iCal feed.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to add calendar.");
+    } finally {
+      setSavingCalendar(false);
+    }
+  }
+
+  async function approveBookingRequest(bookingId: number) {
+    if (!selectedBusiness) return;
+    setError("");
+    setStatus("");
+    try {
+      const booking = await approveBooking(
+        selectedBusiness.id,
+        bookingId,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        bookings: (selectedBusiness.bookings || []).map((item) =>
+          item.id === booking.id ? booking : item,
+        ),
+      });
+      setStatus("Booking approved. Next step is sending the rider bundled checkout.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to approve booking.");
     }
   }
 
@@ -600,6 +766,215 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             <span>Coupon claims</span>
           </div>
           <a href={`/business/${selectedBusiness.slug}`}>View public listing</a>
+        </section>
+
+        <section className="dashboard-card booking-dashboard-card">
+          <h2>Booking Setup</h2>
+          <p className="field-help">
+            Connect Stripe payouts before accepting paid bookings. Request-to-book
+            protects your calendar while iCal sync is being proven.
+          </p>
+          <div className="booking-status-row">
+            <span>
+              Stripe Connect:{" "}
+              {selectedBusiness.stripe_connect_onboarding_complete
+                ? "Connected"
+                : selectedBusiness.stripe_connect_account_id
+                  ? "Started"
+                  : "Not connected"}
+            </span>
+            <button type="button" onClick={connectStripePayouts} disabled={connectingStripe}>
+              {connectingStripe ? "Opening..." : "Connect Stripe Payouts"}
+            </button>
+          </div>
+        </section>
+
+        <form className="dashboard-card" onSubmit={publishBookableListing}>
+          <h2>Bookable Listing</h2>
+          <label>
+            Listing title
+            <input
+              required
+              value={bookableForm.title}
+              onChange={(event) => setBookableForm({ ...bookableForm, title: event.target.value })}
+            />
+          </label>
+          <label>
+            Booking type
+            <select
+              value={bookableForm.listing_type}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, listing_type: event.target.value })
+              }
+            >
+              <option value="lodging">Cabin / lodging</option>
+              <option value="camping">Campground / RV site</option>
+              <option value="rental">Rental</option>
+              <option value="guide">Guide</option>
+              <option value="event">Event</option>
+              <option value="service">Local service</option>
+            </select>
+          </label>
+          <label>
+            Location
+            <input
+              value={bookableForm.location}
+              onChange={(event) => setBookableForm({ ...bookableForm, location: event.target.value })}
+            />
+          </label>
+          <div className="coordinate-grid">
+            <label>
+              Nightly / base price
+              <input
+                inputMode="decimal"
+                placeholder="149"
+                value={bookableForm.nightly_rate}
+                onChange={(event) =>
+                  setBookableForm({ ...bookableForm, nightly_rate: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Cleaning / add-on fee
+              <input
+                inputMode="decimal"
+                placeholder="75"
+                value={bookableForm.cleaning_fee}
+                onChange={(event) =>
+                  setBookableForm({ ...bookableForm, cleaning_fee: event.target.value })
+                }
+              />
+            </label>
+          </div>
+          <label>
+            Max guests
+            <input
+              inputMode="numeric"
+              value={bookableForm.max_guests}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, max_guests: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Photo URL
+            <input
+              value={bookableForm.photo_url}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, photo_url: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Description
+            <textarea
+              value={bookableForm.description}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, description: event.target.value })
+              }
+            />
+          </label>
+          <button type="submit" disabled={savingBookable}>
+            {savingBookable ? "Adding..." : "Add Bookable Listing"}
+          </button>
+        </form>
+
+        <form className="dashboard-card" onSubmit={addCalendarLink}>
+          <h2>Calendar Sync</h2>
+          <p className="field-help">
+            Paste Airbnb, Vrbo, Booking.com, Google Calendar, or any iCal link.
+          </p>
+          <label>
+            Listing
+            <select
+              required
+              value={calendarForm.listing_id}
+              onChange={(event) =>
+                setCalendarForm({ ...calendarForm, listing_id: event.target.value })
+              }
+            >
+              <option value="">Choose listing</option>
+              {(selectedBusiness.bookable_listings || []).map((listing) => (
+                <option key={listing.id} value={listing.id}>
+                  {listing.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Calendar provider
+            <select
+              value={calendarForm.provider}
+              onChange={(event) =>
+                setCalendarForm({ ...calendarForm, provider: event.target.value })
+              }
+            >
+              <option>Airbnb</option>
+              <option>Vrbo</option>
+              <option>Booking.com</option>
+              <option>Google Calendar</option>
+              <option>Other iCal</option>
+            </select>
+          </label>
+          <label>
+            iCal URL
+            <input
+              required
+              value={calendarForm.ical_url}
+              onChange={(event) =>
+                setCalendarForm({ ...calendarForm, ical_url: event.target.value })
+              }
+              placeholder="https://.../calendar.ics"
+            />
+          </label>
+          <button type="submit" disabled={savingCalendar || !selectedBusiness.bookable_listings?.length}>
+            {savingCalendar ? "Saving..." : "Add Calendar Link"}
+          </button>
+
+          <div className="deal-list">
+            <h3>Bookable Inventory</h3>
+            {selectedBusiness.bookable_listings?.length ? (
+              selectedBusiness.bookable_listings.map((listing) => (
+                <article key={listing.id}>
+                  <strong>{listing.title}</strong>
+                  <span>{centsToDollars(listing.nightly_rate_cents)} base</span>
+                  <p>
+                    {listing.listing_type} • {listing.calendars.length} calendar link
+                    {listing.calendars.length === 1 ? "" : "s"}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p>No bookable listings yet.</p>
+            )}
+          </div>
+        </form>
+
+        <section className="dashboard-card">
+          <h2>Booking Requests</h2>
+          <div className="deal-list">
+            {selectedBusiness.bookings?.length ? (
+              selectedBusiness.bookings.map((booking) => (
+                <article key={booking.id}>
+                  <strong>{booking.customer_name}</strong>
+                  <span>{booking.status.replaceAll("_", " ")}</span>
+                  <p>
+                    {booking.start_date} to {booking.end_date} • {booking.guests} guest
+                    {booking.guests === 1 ? "" : "s"} • {centsToDollars(booking.total_cents)}
+                  </p>
+                  {booking.status === "requested" ? (
+                    <div className="mini-actions">
+                      <button type="button" onClick={() => approveBookingRequest(booking.id)}>
+                        Approve Request
+                      </button>
+                    </div>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <p>No booking requests yet.</p>
+            )}
+          </div>
         </section>
 
         {selectedBusiness.category === "lodging" ? (

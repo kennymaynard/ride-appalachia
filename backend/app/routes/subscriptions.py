@@ -4,7 +4,7 @@ import stripe
 from sqlalchemy.orm import Session
 
 from app.database import Settings, get_db, get_settings
-from app.models import Business, Campaign
+from app.models import Booking, BookingPayment, Business, Campaign
 from app.schemas import CheckoutSessionRead, StripeWebhookPayload, SubscriptionRequest
 from app.services.stripe_service import construct_webhook_event, create_checkout_session
 
@@ -172,6 +172,29 @@ async def stripe_webhook(
 
     if event_type == "checkout.session.completed":
         metadata = data_object.get("metadata", {})
+        booking_ids = [
+            int(value)
+            for value in (metadata.get("booking_ids") or "").split(",")
+            if value.strip().isdigit()
+        ]
+        if booking_ids:
+            bookings = db.query(Booking).filter(Booking.id.in_(booking_ids)).all()
+            for booking in bookings:
+                booking.status = "paid"
+                booking.stripe_checkout_session_id = data_object.get("id") or ""
+                payment = (
+                    db.query(BookingPayment)
+                    .filter(BookingPayment.booking_id == booking.id)
+                    .order_by(BookingPayment.created_at.desc())
+                    .first()
+                )
+                if payment:
+                    payment.status = "paid"
+                    payment.stripe_checkout_session_id = data_object.get("id") or ""
+                    payment.stripe_payment_intent_id = data_object.get("payment_intent") or ""
+            db.commit()
+            return {"received": True}
+
         business_id = resolve_business_id(
             metadata,
             stripe_customer_id=data_object.get("customer") or "",

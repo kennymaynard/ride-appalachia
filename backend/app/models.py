@@ -95,6 +95,8 @@ class Business(Base):
     subscription_status: Mapped[str] = mapped_column(String(40), default=SubscriptionStatus.incomplete.value)
     stripe_customer_id: Mapped[str] = mapped_column(String(180), default="")
     stripe_subscription_id: Mapped[str] = mapped_column(String(180), default="")
+    stripe_connect_account_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    stripe_connect_onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     view_clicks: Mapped[int] = mapped_column(Integer, default=0)
     action_clicks: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -103,6 +105,8 @@ class Business(Base):
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="business", cascade="all, delete-orphan")
     service_requests: Mapped[list["LodgingServiceRequest"]] = relationship(back_populates="business", cascade="all, delete-orphan")
     reviews: Mapped[list["BusinessReview"]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    bookable_listings: Mapped[list["BookableListing"]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    bookings: Mapped[list["Booking"]] = relationship(back_populates="business", cascade="all, delete-orphan")
 
 
 class Deal(Base):
@@ -297,3 +301,81 @@ class BusinessReview(Base):
 
     business: Mapped[Business] = relationship(back_populates="reviews")
     rider: Mapped[Rider | None] = relationship(back_populates="business_reviews")
+
+
+class BookableListing(Base):
+    __tablename__ = "bookable_listings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    title: Mapped[str] = mapped_column(String(180), index=True)
+    listing_type: Mapped[str] = mapped_column(String(60), default="lodging", index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    location: Mapped[str] = mapped_column(String(180), default="", index=True)
+    photo_url: Mapped[str] = mapped_column(Text, default="")
+    nightly_rate_cents: Mapped[int] = mapped_column(Integer, default=0)
+    cleaning_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
+    max_guests: Mapped[int] = mapped_column(Integer, default=1)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    business: Mapped[Business] = relationship(back_populates="bookable_listings")
+    calendars: Mapped[list["ListingCalendar"]] = relationship(back_populates="listing", cascade="all, delete-orphan")
+    bookings: Mapped[list["Booking"]] = relationship(back_populates="listing", cascade="all, delete-orphan")
+
+
+class ListingCalendar(Base):
+    __tablename__ = "listing_calendars"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    listing_id: Mapped[int] = mapped_column(ForeignKey("bookable_listings.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(80), default="iCal")
+    ical_url: Mapped[str] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_sync_status: Mapped[str] = mapped_column(String(120), default="Not synced yet")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    listing: Mapped[BookableListing] = relationship(back_populates="calendars")
+
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    listing_id: Mapped[int] = mapped_column(ForeignKey("bookable_listings.id"), index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    rider_id: Mapped[int | None] = mapped_column(ForeignKey("riders.id"), nullable=True, index=True)
+    customer_name: Mapped[str] = mapped_column(String(120))
+    customer_email: Mapped[str] = mapped_column(String(180), index=True)
+    customer_phone: Mapped[str] = mapped_column(String(40), default="")
+    start_date: Mapped[str] = mapped_column(String(40), index=True)
+    end_date: Mapped[str] = mapped_column(String(40), index=True)
+    guests: Mapped[int] = mapped_column(Integer, default=1)
+    message: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(40), default="requested", index=True)
+    subtotal_cents: Mapped[int] = mapped_column(Integer, default=0)
+    platform_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
+    total_cents: Mapped[int] = mapped_column(Integer, default=0)
+    stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    business: Mapped[Business] = relationship(back_populates="bookings")
+    listing: Mapped[BookableListing] = relationship(back_populates="bookings")
+    rider: Mapped[Rider | None] = relationship()
+    payment: Mapped["BookingPayment | None"] = relationship(back_populates="booking", cascade="all, delete-orphan", uselist=False)
+
+
+class BookingPayment(Base):
+    __tablename__ = "booking_payments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), index=True)
+    stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    stripe_payment_intent_id: Mapped[str] = mapped_column(String(180), default="")
+    amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    platform_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    booking: Mapped[Booking] = relationship(back_populates="payment")

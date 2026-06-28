@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Business, Campaign, Deal, LodgingServiceRequest
+from app.models import BookableListing, Business, Campaign, Deal, LodgingServiceRequest
 from app.schemas import (
     BusinessClaimRequest,
     BusinessLoginRead,
@@ -138,6 +138,8 @@ def get_business_by_access_token(
             selectinload(Business.deals),
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
+            selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
+            selectinload(Business.bookings),
         )
         .filter(Business.owner_access_token == owner_access_token)
         .first()
@@ -158,6 +160,8 @@ def get_business(
             selectinload(Business.deals),
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
+            selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
+            selectinload(Business.bookings),
         )
         .filter(Business.id == business.id)
         .first()
@@ -198,6 +202,8 @@ def claim_business(
             selectinload(Business.deals),
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
+            selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
+            selectinload(Business.bookings),
         )
         .filter(Business.id == business_id)
         .first()

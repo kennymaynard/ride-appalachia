@@ -36,6 +36,52 @@ export type LodgingServiceRequest = {
   status: "new" | "contacted" | "matched" | "closed";
 };
 
+export type ListingCalendar = {
+  id: number;
+  listing_id: number;
+  provider: string;
+  ical_url: string;
+  is_active: boolean;
+  last_synced_at?: string | null;
+  last_sync_status: string;
+};
+
+export type BookableListing = {
+  id: number;
+  business_id: number;
+  title: string;
+  listing_type: "lodging" | "camping" | "rental" | "guide" | "event" | "service";
+  description: string;
+  location: string;
+  photo_url: string;
+  nightly_rate_cents: number;
+  cleaning_fee_cents: number;
+  max_guests: number;
+  is_active: boolean;
+  calendars: ListingCalendar[];
+};
+
+export type BookableListingCreateInput = Omit<BookableListing, "id" | "business_id" | "calendars">;
+
+export type Booking = {
+  id: number;
+  listing_id: number;
+  business_id: number;
+  rider_id?: number | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  start_date: string;
+  end_date: string;
+  guests: number;
+  message: string;
+  status: "requested" | "approved" | "checkout_sent" | "paid" | "declined" | "canceled";
+  subtotal_cents: number;
+  platform_fee_cents: number;
+  total_cents: number;
+  stripe_checkout_session_id: string;
+};
+
 export type MarketingLead = {
   id: number;
   lead_type: "launch_access" | "business_availability";
@@ -79,6 +125,8 @@ export type Business = {
   subscription_status: "trialing" | "active" | "past_due" | "canceled" | "incomplete";
   stripe_customer_id: string;
   stripe_subscription_id: string;
+  stripe_connect_account_id: string;
+  stripe_connect_onboarding_complete: boolean;
   is_approved: boolean;
   is_featured: boolean;
   view_clicks: number;
@@ -86,6 +134,8 @@ export type Business = {
   deals: Deal[];
   campaigns: Campaign[];
   service_requests?: LodgingServiceRequest[];
+  bookable_listings?: BookableListing[];
+  bookings?: Booking[];
 };
 
 export type BusinessCreateInput = {

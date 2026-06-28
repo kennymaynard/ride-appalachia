@@ -3223,6 +3223,27 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
+.booking-dashboard-card {
+  align-content: start;
+}
+
+.booking-status-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid rgba(242, 106, 27, 0.24);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.8rem;
+}
+
+.booking-status-row span {
+  color: var(--soft);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
 .rider-dashboard {
   display: grid;
   gap: 1rem;
@@ -5971,6 +5992,10 @@ button.tier-card.is-selected {
   }
 
   .rider-progress-list div {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-status-row {
     grid-template-columns: 1fr;
   }
 
