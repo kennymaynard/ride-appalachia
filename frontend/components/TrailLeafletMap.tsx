@@ -272,11 +272,8 @@ function getTrailDash(point: MapPoint) {
 }
 
 export function TrailLeafletMap({
-  activeTitle,
   bounds,
   businesses = [],
-  hikingCount,
-  ohvCount,
   points,
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
@@ -604,51 +601,6 @@ export function TrailLeafletMap({
           </Marker>
         ))}
       </MapContainer>
-      <div className="trail-map-overlay">
-        {selectedTrail ? (
-          <>
-            <strong>{selectedTrail.label}</strong>
-            <span>
-              {selectedTrail.lengthMiles ? `${selectedTrail.lengthMiles} miles` : "Length pending"} • {selectedTrail.difficulty} •{" "}
-              {selectedTrail.activity}
-            </span>
-            <p>{selectedTrail.access}</p>
-            {hasExactRoute ? (
-              <p>
-                Exact route imported. Download GPX or GeoJSON before you lose
-                service and open it in an offline GPS map app.
-              </p>
-            ) : (
-              <p>
-                This in-app line is an approximate planning corridor based on
-                the verified trail source point. Exact GPX/KMZ route geometry
-                still needs to be imported.
-              </p>
-            )}
-            {selectedTrail.photoStops.length ? (
-              <div className="trail-focus-stops">
-                {selectedTrail.photoStops.map((stop) => (
-                  <span key={stop.name}>{stop.name}</span>
-                ))}
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <strong>{activeTitle}</strong>
-            <span>
-              {ohvCount} OHV / ride pins, {hikingCount} hiking pins, and{" "}
-              {visibleBusinesses.length} partner pins for the planning area.
-            </span>
-            <div className="trail-map-legend" aria-label="Map legend">
-              <span><i /> OHV / ride</span>
-              <span><i /> Hiking</span>
-              <span><i /> Dashed = approximate</span>
-              <span><i /> Partner</span>
-            </div>
-          </>
-        )}
-      </div>
     </div>
   );
 }
