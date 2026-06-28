@@ -12,6 +12,14 @@ class EmailResult:
     message: str
 
 
+def get_http_error_message(exc: HTTPError) -> str:
+    try:
+        body = exc.read().decode("utf-8")
+    except Exception:
+        body = ""
+    return f"{exc.code} {exc.reason}{f': {body}' if body else ''}"
+
+
 def send_business_login_email(to_email: str, business_name: str, access_url: str) -> EmailResult:
     settings = get_settings()
     if not settings.resend_api_key:
@@ -51,7 +59,9 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
         with urlopen(request, timeout=10) as response:
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Login link sent to your email.")
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=f"Unable to send login email: {get_http_error_message(exc)}")
+    except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send login email: {exc}")
 
     return EmailResult(sent=False, message="Unable to send login email.")
@@ -93,7 +103,9 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
         with urlopen(request, timeout=10) as response:
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Lead notification sent.")
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=f"Unable to send lead notification: {get_http_error_message(exc)}")
+    except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send lead notification: {exc}")
 
     return EmailResult(sent=False, message="Unable to send lead notification.")
@@ -151,7 +163,12 @@ def send_business_approval_notification(
         with urlopen(request, timeout=10) as response:
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Business approval notification sent.")
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        return EmailResult(
+            sent=False,
+            message=f"Unable to send business approval notification: {get_http_error_message(exc)}",
+        )
+    except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send business approval notification: {exc}")
 
     return EmailResult(sent=False, message="Unable to send business approval notification.")

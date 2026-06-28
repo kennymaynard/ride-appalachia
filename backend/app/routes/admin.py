@@ -15,6 +15,7 @@ from app.schemas import (
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
 )
+from app.services.email_service import send_business_approval_notification
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["admin"])
@@ -25,6 +26,26 @@ def require_admin(x_admin_password: str = Header(default="")) -> None:
     submitted_password = x_admin_password.strip()
     if not expected_password or not secrets.compare_digest(submitted_password, expected_password):
         raise HTTPException(status_code=401, detail="Admin password required")
+
+
+@router.post("/test-email")
+def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str]:
+    settings = get_settings()
+    result = send_business_approval_notification(
+        "Test Business Approval Email",
+        settings.lead_notify_email,
+        "test",
+        "test",
+        "Admin email verification",
+        f"{settings.frontend_url}/admin",
+    )
+
+    return {
+        "sent": result.sent,
+        "message": result.message,
+        "to": settings.lead_notify_email or "Not configured",
+        "from": settings.email_from or "Not configured",
+    }
 
 
 @router.get("/businesses", response_model=list[BusinessDashboardRead])

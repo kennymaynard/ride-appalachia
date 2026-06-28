@@ -52,6 +52,13 @@ export type MarketingLead = {
 
 export type MarketingLeadCreateInput = Omit<MarketingLead, "id" | "status">;
 
+export type AdminEmailTestResult = {
+  sent: boolean;
+  message: string;
+  to: string;
+  from: string;
+};
+
 export type Business = {
   id: number;
   name: string;

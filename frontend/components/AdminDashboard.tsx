@@ -12,6 +12,7 @@ import {
   moderateBusiness,
   moderateTrailTalkPost,
   moderateTrailReview,
+  sendAdminTestEmail,
   setBusinessFeatured,
   updateAdminBusiness,
   updateMarketingLeadStatus,
@@ -52,6 +53,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [editForm, setEditForm] = useState<BusinessUpdateInput>({});
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
+  const [emailStatus, setEmailStatus] = useState("");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -130,6 +133,29 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setWorkingId(null);
+    }
+  }
+
+  async function sendTestApprovalEmail() {
+    setError("");
+    setEmailStatus("");
+    setSendingTestEmail(true);
+
+    try {
+      const result = await sendAdminTestEmail(adminPassword);
+      setEmailStatus(
+        result.sent
+          ? `Test email sent to ${result.to} from ${result.from}.`
+          : `Test email failed: ${result.message}. To: ${result.to}. From: ${result.from}.`,
+      );
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to send test email.",
+      );
+    } finally {
+      setSendingTestEmail(false);
     }
   }
 
@@ -302,7 +328,15 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         </article>
       </div>
 
+      <div className="admin-email-tools">
+        <button type="button" disabled={sendingTestEmail} onClick={sendTestApprovalEmail}>
+          {sendingTestEmail ? "Sending..." : "Send Test Approval Email"}
+        </button>
+        <span>Uses the same Resend settings as new business approval emails.</span>
+      </div>
+
       {error ? <p className="form-error">{error}</p> : null}
+      {emailStatus ? <p className="form-success">{emailStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
       <div className="admin-review-queue">

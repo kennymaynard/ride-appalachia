@@ -5370,6 +5370,35 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
+.admin-email-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 0.55rem;
+  background: rgba(0, 0, 0, 0.24);
+  padding: 0.85rem;
+}
+
+.admin-email-tools button {
+  min-height: 2.5rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 1rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.admin-email-tools span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
 .admin-list {
   display: grid;
   gap: 1rem;

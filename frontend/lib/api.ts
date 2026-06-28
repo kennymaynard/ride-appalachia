@@ -1,5 +1,6 @@
 import { sampleBusinesses } from "./sample-data";
 import type {
+  AdminEmailTestResult,
   Business,
   Campaign,
   CampaignCreateInput,
@@ -471,6 +472,22 @@ export async function getAdminBusinesses(adminPassword?: string): Promise<Busine
       throw new Error("Admin API is blocked. Use appalachiaoffroadapp.com without www, or redeploy the backend.");
     }
     throw new Error(`Unable to load admin businesses. API returned ${response.status}.`);
+  }
+
+  return response.json();
+}
+
+export async function sendAdminTestEmail(
+  adminPassword?: string,
+): Promise<AdminEmailTestResult> {
+  const response = await fetch(`${getApiUrl()}/api/admin/test-email`, {
+    method: "POST",
+    headers: getAdminHeaders(adminPassword),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to send test email");
   }
 
   return response.json();
