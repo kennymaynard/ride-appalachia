@@ -172,3 +172,114 @@ def send_business_approval_notification(
         return EmailResult(sent=False, message=f"Unable to send business approval notification: {exc}")
 
     return EmailResult(sent=False, message="Unable to send business approval notification.")
+
+
+def send_booking_cancellation_request_notification(
+    to_email: str,
+    business_name: str,
+    customer_name: str,
+    booking_id: int,
+    reason: str,
+    dashboard_url: str,
+) -> EmailResult:
+    settings = get_settings()
+    if not settings.resend_api_key or not to_email:
+        return EmailResult(sent=False, message="Booking cancellation notification is not configured.")
+
+    subject = f"Cancellation request for booking #{booking_id}"
+    payload = {
+        "from": settings.email_from,
+        "to": [to_email],
+        "subject": f"Appalachia Offroad: {subject}",
+        "html": (
+            f"<h1>{subject}</h1>"
+            f"<p><strong>Business:</strong> {business_name}</p>"
+            f"<p><strong>Customer:</strong> {customer_name}</p>"
+            f"<p><strong>Reason:</strong> {reason or 'No reason provided.'}</p>"
+            f'<p><a href="{dashboard_url}">Open Business Dashboard</a></p>'
+        ),
+        "text": "\n".join(
+            [
+                subject,
+                f"Business: {business_name}",
+                f"Customer: {customer_name}",
+                f"Reason: {reason or 'No reason provided.'}",
+                f"Dashboard: {dashboard_url}",
+            ],
+        ),
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Cancellation request notification sent.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {get_http_error_message(exc)}")
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send cancellation request notification.")
+
+
+def send_booking_cancellation_decision_email(
+    to_email: str,
+    customer_name: str,
+    booking_id: int,
+    approved: bool,
+    note: str,
+    booking_url: str,
+) -> EmailResult:
+    settings = get_settings()
+    if not settings.resend_api_key or not to_email:
+        return EmailResult(sent=False, message="Booking cancellation decision email is not configured.")
+
+    decision = "approved" if approved else "declined"
+    subject = f"Your booking cancellation was {decision}"
+    payload = {
+        "from": settings.email_from,
+        "to": [to_email],
+        "subject": f"Appalachia Offroad: {subject}",
+        "html": (
+            f"<h1>{subject}</h1>"
+            f"<p>{customer_name}, your cancellation request for booking #{booking_id} was {decision}.</p>"
+            f"<p><strong>Business note:</strong> {note or 'No note provided.'}</p>"
+            f'<p><a href="{booking_url}">View Booking</a></p>'
+        ),
+        "text": "\n".join(
+            [
+                subject,
+                f"{customer_name}, your cancellation request for booking #{booking_id} was {decision}.",
+                f"Business note: {note or 'No note provided.'}",
+                f"Booking: {booking_url}",
+            ],
+        ),
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Cancellation decision email sent.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=f"Unable to send cancellation decision email: {get_http_error_message(exc)}")
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send cancellation decision email: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send cancellation decision email.")

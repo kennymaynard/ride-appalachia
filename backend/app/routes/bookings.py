@@ -22,6 +22,8 @@ from app.schemas import (
     BookingCheckoutRequest,
     BookingCancellationDecision,
     BookingCancellationRequest,
+    BookingDetailRead,
+    BookingLookupRequest,
     BookingRead,
     BookingRequestCreate,
     CheckoutSessionRead,
@@ -31,6 +33,10 @@ from app.schemas import (
 )
 from app.services.stripe_service import create_booking_checkout_session, create_connect_onboarding_link
 from app.services.calendar_sync import sync_calendar_blocks
+from app.services.email_service import (
+    send_booking_cancellation_decision_email,
+    send_booking_cancellation_request_notification,
+)
 
 router = APIRouter(tags=["booking marketplace"])
 
@@ -92,6 +98,41 @@ def calculate_booking_totals(listing: BookableListing, start_date: str, end_date
     subtotal = (listing.nightly_rate_cents * nights) + listing.cleaning_fee_cents
     platform_fee = round(subtotal * PLATFORM_FEE_BASIS_POINTS / 10000)
     return subtotal, platform_fee, subtotal + platform_fee
+
+
+def to_booking_detail(booking: Booking) -> BookingDetailRead:
+    listing = booking.listing
+    business = booking.business
+    return BookingDetailRead(
+        listing_id=booking.listing_id,
+        customer_name=booking.customer_name,
+        customer_email=booking.customer_email,
+        customer_phone=booking.customer_phone,
+        start_date=booking.start_date,
+        end_date=booking.end_date,
+        guests=booking.guests,
+        message=booking.message,
+        id=booking.id,
+        business_id=booking.business_id,
+        rider_id=booking.rider_id,
+        status=booking.status,
+        subtotal_cents=booking.subtotal_cents,
+        platform_fee_cents=booking.platform_fee_cents,
+        total_cents=booking.total_cents,
+        stripe_checkout_session_id=booking.stripe_checkout_session_id,
+        cancellation_requested_at=booking.cancellation_requested_at,
+        cancellation_reason=booking.cancellation_reason,
+        cancellation_decision_at=booking.cancellation_decision_at,
+        cancellation_decision_note=booking.cancellation_decision_note,
+        refund_status=booking.refund_status,
+        payout_release_date=booking.payout_release_date,
+        business_name=business.name if business else "",
+        listing_title=listing.title if listing else "",
+        cancellation_window_hours=listing.cancellation_window_hours if listing else 72,
+        cancellation_policy=listing.cancellation_policy if listing else "",
+        refund_policy=listing.refund_policy if listing else "",
+        payment_timing=listing.payment_timing if listing else "at_booking",
+    )
 
 
 def require_listing_owner(
@@ -267,6 +308,22 @@ def list_business_bookings(
     )
 
 
+@router.post("/bookings/lookup", response_model=BookingDetailRead)
+def lookup_booking(
+    payload: BookingLookupRequest,
+    db: Session = Depends(get_db),
+) -> BookingDetailRead:
+    booking = (
+        db.query(Booking)
+        .options(selectinload(Booking.business), selectinload(Booking.listing))
+        .filter(Booking.id == payload.booking_id)
+        .first()
+    )
+    if not booking or booking.customer_email.strip().lower() != payload.customer_email.strip().lower():
+        raise HTTPException(status_code=404, detail="Booking not found for that email")
+    return to_booking_detail(booking)
+
+
 @router.post("/businesses/{business_id}/bookings/{booking_id}/approve", response_model=BookingRead)
 def approve_booking_request(
     booking_id: int,
@@ -315,6 +372,21 @@ def request_booking_cancellation(
     booking.refund_status = "requested"
     db.commit()
     db.refresh(booking)
+    business = db.get(Business, booking.business_id)
+    if business and business.owner_email:
+        dashboard_url = (
+            f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
+            if business.owner_access_token
+            else f"{get_settings().frontend_url}/business"
+        )
+        send_booking_cancellation_request_notification(
+            business.owner_email,
+            business.name,
+            booking.customer_name,
+            booking.id,
+            payload.reason,
+            dashboard_url,
+        )
     return booking
 
 
@@ -350,6 +422,14 @@ def decide_booking_cancellation(
         booking.refund_status = "declined"
     db.commit()
     db.refresh(booking)
+    send_booking_cancellation_decision_email(
+        booking.customer_email,
+        booking.customer_name,
+        booking.id,
+        payload.approved,
+        payload.note,
+        f"{get_settings().frontend_url}/bookings?booking_id={booking.id}",
+    )
     return booking
 
 

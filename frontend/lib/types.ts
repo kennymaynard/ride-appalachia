@@ -93,6 +93,25 @@ export type Booking = {
   payout_release_date: string;
 };
 
+export type BookingDetail = Booking & {
+  business_name: string;
+  listing_title: string;
+  cancellation_window_hours: number;
+  cancellation_policy: string;
+  refund_policy: string;
+  payment_timing: "at_booking" | "after_cancellation_period";
+};
+
+export type BookingTransfer = {
+  id: number;
+  booking_id: number;
+  business_id: number;
+  stripe_transfer_id: string;
+  amount_cents: number;
+  status: "pending" | "scheduled_after_checkin" | "paid" | "failed" | "missing_connect_account" | "canceled";
+  release_date: string;
+};
+
 export type MarketingLead = {
   id: number;
   lead_type: "launch_access" | "business_availability";

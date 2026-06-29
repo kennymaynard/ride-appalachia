@@ -6,12 +6,14 @@ import {
   geocodeLocation,
   getAdminBusinesses,
   getAdminMarketingLeads,
+  getAdminBookingTransfers,
   getAdminServiceRequests,
   getAdminTrailTalkPosts,
   getAdminTrailReviews,
   moderateBusiness,
   moderateTrailTalkPost,
   moderateTrailReview,
+  processAdminBookingTransfers,
   sendAdminTestEmail,
   setBusinessFeatured,
   updateAdminBusiness,
@@ -21,6 +23,7 @@ import {
 import type {
   Business,
   BusinessUpdateInput,
+  BookingTransfer,
   LodgingServiceRequest,
   MarketingLead,
   TrailReview,
@@ -45,6 +48,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [pendingTrailTalkPosts, setPendingTrailTalkPosts] = useState<TrailTalkPost[]>([]);
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
   const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
+  const [bookingTransfers, setBookingTransfers] = useState<BookingTransfer[]>([]);
   const [adminPassword, setAdminPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(initialBusinesses.length > 0);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,11 +87,13 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       const loadedTrailTalkPosts = await getAdminTrailTalkPosts(adminPassword);
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
       const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
+      const loadedBookingTransfers = await getAdminBookingTransfers(adminPassword);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
       setPendingTrailTalkPosts(loadedTrailTalkPosts);
       setServiceRequests(loadedServiceRequests);
       setMarketingLeads(loadedMarketingLeads);
+      setBookingTransfers(loadedBookingTransfers);
       setIsUnlocked(true);
     } catch (caughtError) {
       setError(
@@ -322,7 +328,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
             {pendingReviews.length +
               pendingTrailTalkPosts.length +
               serviceRequests.length +
-              marketingLeads.length}
+              marketingLeads.length +
+              bookingTransfers.length}
           </strong>
           <span>Queues</span>
         </article>
@@ -338,6 +345,69 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       {error ? <p className="form-error">{error}</p> : null}
       {emailStatus ? <p className="form-success">{emailStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Booking payouts</p>
+          <h2>Scheduled and payout issues</h2>
+        </div>
+        <div className="admin-email-tools">
+          <button
+            type="button"
+            onClick={async () => {
+              setError("");
+              setEmailStatus("");
+              try {
+                const result = await processAdminBookingTransfers(adminPassword);
+                setEmailStatus(
+                  `Payout job ran. Due: ${result.due}. Processed: ${result.processed}. Missing Connect: ${result.missing_connect_account}. Failed: ${result.failed}.`,
+                );
+                setBookingTransfers(await getAdminBookingTransfers(adminPassword));
+              } catch (caughtError) {
+                setError(
+                  caughtError instanceof Error
+                    ? caughtError.message
+                    : "Unable to process booking payouts.",
+                );
+              }
+            }}
+          >
+            Process Due Payouts
+          </button>
+          <span>Runs the same payout processor as the Render scheduled job.</span>
+        </div>
+        {bookingTransfers.length ? (
+          <div className="admin-list">
+            {bookingTransfers.map((transfer) => (
+              <article className="admin-business-card" key={transfer.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{transfer.status.replaceAll("_", " ")}</span>
+                    <span>release {transfer.release_date || "not set"}</span>
+                  </div>
+                  <h2>Booking #{transfer.booking_id}</h2>
+                  <p>
+                    Business #{transfer.business_id} payout{" "}
+                    {`$${(transfer.amount_cents / 100).toFixed(2)}`}
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Transfer</dt>
+                      <dd>{transfer.stripe_transfer_id || "Not sent yet"}</dd>
+                    </div>
+                    <div>
+                      <dt>Status</dt>
+                      <dd>{transfer.status.replaceAll("_", " ")}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No payout items need attention.</p>
+        )}
+      </div>
 
       <div className="admin-review-queue">
         <div className="section-heading">

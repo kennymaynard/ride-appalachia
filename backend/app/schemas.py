@@ -246,6 +246,20 @@ class BookingRead(BookingRequestCreate):
     payout_release_date: str = ""
 
 
+class BookingDetailRead(BookingRead):
+    business_name: str = ""
+    listing_title: str = ""
+    cancellation_window_hours: int = 72
+    cancellation_policy: str = ""
+    refund_policy: str = ""
+    payment_timing: str = "at_booking"
+
+
+class BookingLookupRequest(BaseModel):
+    booking_id: int
+    customer_email: str = Field(min_length=5, max_length=180)
+
+
 class BookingCancellationRequest(BaseModel):
     customer_email: str = Field(min_length=5, max_length=180)
     reason: str = ""
@@ -263,6 +277,18 @@ class BookingCheckoutRequest(BaseModel):
 class StripeConnectOnboardingRead(BaseModel):
     onboarding_url: str
     stripe_connect_account_id: str
+
+
+class BookingTransferRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    booking_id: int
+    business_id: int
+    stripe_transfer_id: str = ""
+    amount_cents: int = 0
+    status: str = "pending"
+    release_date: str = ""
 
 
 class TrailReviewBase(BaseModel):

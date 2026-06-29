@@ -27,6 +27,7 @@ export default function RootLayout({
           <nav>
             <Link href="/ride-areas">Find Nearby</Link>
             <Link href="/planner">Planner</Link>
+            <Link href="/bookings">Bookings</Link>
             <Link href="/rider-tools">Tools</Link>
             <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/lodging">Lodging</Link>

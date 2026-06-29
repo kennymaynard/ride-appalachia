@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Business, Campaign, LodgingServiceRequest, MarketingLead
+from app.models import BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead
 from app.schemas import (
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
     BusinessUpdate,
+    BookingTransferRead,
     LodgingServiceRequestRead,
     LodgingServiceRequestStatusUpdate,
     MarketingLeadRead,
@@ -64,6 +65,20 @@ def process_booking_transfers(
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     return process_due_booking_transfers(db, get_settings())
+
+
+@router.get("/booking-transfers", response_model=list[BookingTransferRead])
+def list_booking_transfers(
+    _: None = Depends(require_admin),
+    status: str = "needs_attention",
+    db: Session = Depends(get_db),
+) -> list[BookingTransfer]:
+    query = db.query(BookingTransfer)
+    if status == "needs_attention":
+        query = query.filter(BookingTransfer.status.in_(["failed", "missing_connect_account", "scheduled_after_checkin"]))
+    elif status != "all":
+        query = query.filter(BookingTransfer.status == status)
+    return query.order_by(BookingTransfer.created_at.desc()).limit(100).all()
 
 
 @router.get("/businesses", response_model=list[BusinessDashboardRead])

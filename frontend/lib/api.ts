@@ -3,6 +3,8 @@ import type {
   AdminEmailTestResult,
   Business,
   Booking,
+  BookingDetail,
+  BookingTransfer,
   BookableListing,
   BookableListingCreateInput,
   Campaign,
@@ -606,6 +608,23 @@ export async function requestBookingCancellation(
   return response.json();
 }
 
+export async function lookupBooking(
+  payload: { booking_id: number; customer_email: string },
+): Promise<BookingDetail> {
+  const response = await fetch(`${getApiUrl()}/api/bookings/lookup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to find that booking");
+  }
+
+  return response.json();
+}
+
 export async function createStripeConnectOnboarding(
   businessId: number,
   ownerAccessToken?: string,
@@ -837,6 +856,33 @@ export async function getAdminMarketingLeads(
   } catch {
     return [];
   }
+}
+
+export async function getAdminBookingTransfers(
+  adminPassword?: string,
+): Promise<BookingTransfer[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/booking-transfers?status=needs_attention`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
+}
+
+export async function processAdminBookingTransfers(
+  adminPassword?: string,
+): Promise<{ due: number; processed: number; missing_connect_account: number; failed: number }> {
+  const response = await fetch(`${getApiUrl()}/api/admin/booking-transfers/process`, {
+    method: "POST",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to process booking payouts");
+  }
+  return response.json();
 }
 
 export async function updateMarketingLeadStatus(
