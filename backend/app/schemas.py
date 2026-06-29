@@ -29,6 +29,7 @@ BOOKABLE_LISTING_TYPES = {"lodging", "camping", "rental", "guide", "event", "ser
 BOOKING_STATUSES = {"requested", "approved", "checkout_sent", "paid", "declined", "canceled"}
 PAYOUT_TIMINGS = {"after_check_in", "on_payment"}
 PAYMENT_TIMINGS = {"at_booking", "after_cancellation_period"}
+REFUND_MODES = {"full", "minus_cleaning_fee", "half", "none", "custom"}
 
 
 class DealBase(BaseModel):
@@ -271,6 +272,15 @@ class BookingCancellationRequest(BaseModel):
 class BookingCancellationDecision(BaseModel):
     approved: bool
     note: str = ""
+    refund_mode: str = "full"
+    custom_refund_cents: int = 0
+
+    @field_validator("refund_mode")
+    @classmethod
+    def validate_refund_mode(cls, value: str) -> str:
+        if value not in REFUND_MODES:
+            raise ValueError("Unknown refund mode")
+        return value
 
 
 class BookingCheckoutRequest(BaseModel):

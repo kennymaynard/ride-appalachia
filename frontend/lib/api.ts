@@ -569,7 +569,12 @@ export async function approveBooking(
 export async function decideBookingCancellation(
   businessId: number,
   bookingId: number,
-  payload: { approved: boolean; note: string },
+  payload: {
+    approved: boolean;
+    note: string;
+    refund_mode?: "full" | "minus_cleaning_fee" | "half" | "none" | "custom";
+    custom_refund_cents?: number;
+  },
   ownerAccessToken?: string,
 ): Promise<Booking> {
   const response = await fetch(

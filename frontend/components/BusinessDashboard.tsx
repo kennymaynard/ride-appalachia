@@ -134,6 +134,8 @@ function centsToDollars(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+type RefundMode = "full" | "minus_cleaning_fee" | "half" | "none" | "custom";
+
 export function BusinessDashboard({ initialBusinesses }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [selectedId, setSelectedId] = useState(initialBusinesses[0]?.id ?? 0);
@@ -155,6 +157,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [savingCalendar, setSavingCalendar] = useState(false);
   const [syncingCalendarId, setSyncingCalendarId] = useState(0);
   const [connectingStripe, setConnectingStripe] = useState(false);
+  const [refundChoices, setRefundChoices] = useState<Record<number, { mode: RefundMode; customAmount: string }>>({});
 
   const totals = useMemo(() => {
     const dealClicks =
@@ -545,6 +548,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
 
   async function updateCancellationRequest(bookingId: number, approved: boolean) {
     if (!selectedBusiness) return;
+    const refundChoice = refundChoices[bookingId] || { mode: "full" as RefundMode, customAmount: "" };
     setError("");
     setStatus("");
     try {
@@ -556,6 +560,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           note: approved
             ? "Cancellation approved by the business."
             : "Cancellation declined by the business.",
+          refund_mode: approved ? refundChoice.mode : "none",
+          custom_refund_cents: approved ? dollarsToCents(refundChoice.customAmount) : 0,
         },
         selectedBusiness.owner_access_token,
       );
@@ -566,6 +572,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         ),
       });
       setStatus(approved ? "Cancellation approved." : "Cancellation declined.");
+      setRefundChoices((current) => {
+        const next = { ...current };
+        delete next[bookingId];
+        return next;
+      });
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -1130,6 +1141,46 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     <div className="alert-inline">
                       <strong>Cancellation requested</strong>
                       <p>{booking.cancellation_reason || "No reason provided."}</p>
+                      <label>
+                        Refund decision
+                        <select
+                          value={refundChoices[booking.id]?.mode || "full"}
+                          onChange={(event) =>
+                            setRefundChoices({
+                              ...refundChoices,
+                              [booking.id]: {
+                                mode: event.target.value as RefundMode,
+                                customAmount: refundChoices[booking.id]?.customAmount || "",
+                              },
+                            })
+                          }
+                        >
+                          <option value="full">Full refund</option>
+                          <option value="minus_cleaning_fee">Refund minus cleaning fee</option>
+                          <option value="half">50% refund</option>
+                          <option value="none">No refund, cancel only</option>
+                          <option value="custom">Custom amount</option>
+                        </select>
+                      </label>
+                      {(refundChoices[booking.id]?.mode || "full") === "custom" ? (
+                        <label>
+                          Custom refund amount
+                          <input
+                            inputMode="decimal"
+                            placeholder="125.00"
+                            value={refundChoices[booking.id]?.customAmount || ""}
+                            onChange={(event) =>
+                              setRefundChoices({
+                                ...refundChoices,
+                                [booking.id]: {
+                                  mode: "custom",
+                                  customAmount: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </label>
+                      ) : null}
                       <div className="mini-actions">
                         <button
                           type="button"

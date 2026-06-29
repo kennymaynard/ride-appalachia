@@ -104,6 +104,20 @@ def calculate_booking_totals(listing: BookableListing, start_date: str, end_date
     return subtotal, platform_fee, subtotal + platform_fee
 
 
+def calculate_cancellation_refund_cents(booking: Booking, mode: str, custom_refund_cents: int) -> int:
+    listing = booking.listing
+    if mode == "none":
+        return 0
+    if mode == "half":
+        return round(booking.total_cents * 0.5)
+    if mode == "minus_cleaning_fee":
+        cleaning_fee = listing.cleaning_fee_cents if listing else 0
+        return max(booking.total_cents - cleaning_fee, 0)
+    if mode == "custom":
+        return min(max(custom_refund_cents, 0), booking.total_cents)
+    return booking.total_cents
+
+
 def to_booking_detail(booking: Booking) -> BookingDetailRead:
     listing = booking.listing
     business = booking.business
@@ -337,7 +351,12 @@ def approve_booking_request(
     business: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> Booking:
-    booking = db.query(Booking).filter(Booking.id == booking_id, Booking.business_id == business.id).first()
+    booking = (
+        db.query(Booking)
+        .options(selectinload(Booking.listing))
+        .filter(Booking.id == booking_id, Booking.business_id == business.id)
+        .first()
+    )
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     if not listing_is_available(db, booking.listing_id, booking.start_date, booking.end_date):
@@ -414,6 +433,7 @@ def decide_booking_cancellation(
     booking.cancellation_decision_at = datetime.utcnow()
     booking.cancellation_decision_note = payload.note
     if payload.approved:
+        was_paid = booking.status == "paid"
         booking.status = "canceled"
         booking.refund_status = "approved"
         booking.refund_failure_reason = ""
@@ -427,7 +447,15 @@ def decide_booking_cancellation(
         )
         if transfer:
             transfer.status = "canceled"
-        if booking.total_cents > 0 and booking.refunded_cents <= 0:
+        refund_cents = calculate_cancellation_refund_cents(
+            booking,
+            payload.refund_mode,
+            payload.custom_refund_cents,
+        )
+        if refund_cents <= 0:
+            booking.refund_status = "approved"
+            booking.refunded_cents = 0
+        elif booking.refunded_cents <= 0:
             payment = (
                 db.query(BookingPayment)
                 .filter(BookingPayment.booking_id == booking.id)
@@ -439,16 +467,16 @@ def decide_booking_cancellation(
                     booking.stripe_refund_id = create_booking_refund(
                         settings,
                         payment.stripe_payment_intent_id,
-                        booking.total_cents,
+                        refund_cents,
                         booking.id,
                     )
-                    booking.refunded_cents = booking.total_cents
+                    booking.refunded_cents = refund_cents
                     booking.refund_status = "processed"
-                    payment.status = "refunded"
+                    payment.status = "refunded" if refund_cents >= booking.total_cents else "partially_refunded"
                 except RuntimeError as exc:
                     booking.refund_status = "refund_failed"
                     booking.refund_failure_reason = str(exc)
-            elif booking.status == "paid":
+            elif was_paid:
                 booking.refund_status = "refund_failed"
                 booking.refund_failure_reason = "Paid booking is missing a Stripe payment intent."
     else:
