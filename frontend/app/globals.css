@@ -3457,6 +3457,19 @@ button.tier-card.is-selected {
   font-size: 0.78rem;
 }
 
+.alert-inline {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 107, 26, 0.45);
+  border-radius: 0.42rem;
+  background: rgba(255, 107, 26, 0.08);
+  padding: 0.75rem;
+}
+
+.alert-inline p {
+  margin: 0;
+}
+
 .deal-list strong {
   color: var(--orange-soft);
   font-size: 1rem;

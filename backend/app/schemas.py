@@ -27,6 +27,8 @@ TRAIL_TALK_CATEGORIES = {
 }
 BOOKABLE_LISTING_TYPES = {"lodging", "camping", "rental", "guide", "event", "service"}
 BOOKING_STATUSES = {"requested", "approved", "checkout_sent", "paid", "declined", "canceled"}
+PAYOUT_TIMINGS = {"after_check_in", "on_payment"}
+PAYMENT_TIMINGS = {"at_booking", "after_cancellation_period"}
 
 
 class DealBase(BaseModel):
@@ -131,6 +133,15 @@ class BookableListingBase(BaseModel):
     nightly_rate_cents: int = 0
     cleaning_fee_cents: int = 0
     max_guests: int = 1
+    cancellation_window_hours: int = 72
+    cancellation_policy: str = (
+        "Guests may request cancellation before check-in. The business reviews each request under its posted policy."
+    )
+    refund_policy: str = (
+        "Approved cancellations may receive a full or partial refund based on timing, property rules, and any non-refundable fees."
+    )
+    payout_timing: str = "after_check_in"
+    payment_timing: str = "at_booking"
     is_active: bool = True
 
     @field_validator("listing_type")
@@ -138,6 +149,20 @@ class BookableListingBase(BaseModel):
     def validate_listing_type(cls, value: str) -> str:
         if value not in BOOKABLE_LISTING_TYPES:
             raise ValueError("Unknown bookable listing type")
+        return value
+
+    @field_validator("payout_timing")
+    @classmethod
+    def validate_payout_timing(cls, value: str) -> str:
+        if value not in PAYOUT_TIMINGS:
+            raise ValueError("Unknown payout timing")
+        return value
+
+    @field_validator("payment_timing")
+    @classmethod
+    def validate_payment_timing(cls, value: str) -> str:
+        if value not in PAYMENT_TIMINGS:
+            raise ValueError("Unknown payment timing")
         return value
 
 
@@ -154,6 +179,11 @@ class BookableListingUpdate(BaseModel):
     nightly_rate_cents: Optional[int] = None
     cleaning_fee_cents: Optional[int] = None
     max_guests: Optional[int] = None
+    cancellation_window_hours: Optional[int] = None
+    cancellation_policy: Optional[str] = None
+    refund_policy: Optional[str] = None
+    payout_timing: Optional[str] = None
+    payment_timing: Optional[str] = None
     is_active: Optional[bool] = None
 
     @field_validator("listing_type")
@@ -161,6 +191,20 @@ class BookableListingUpdate(BaseModel):
     def validate_optional_listing_type(cls, value: Optional[str]) -> Optional[str]:
         if value is not None and value not in BOOKABLE_LISTING_TYPES:
             raise ValueError("Unknown bookable listing type")
+        return value
+
+    @field_validator("payout_timing")
+    @classmethod
+    def validate_optional_payout_timing(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in PAYOUT_TIMINGS:
+            raise ValueError("Unknown payout timing")
+        return value
+
+    @field_validator("payment_timing")
+    @classmethod
+    def validate_optional_payment_timing(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in PAYMENT_TIMINGS:
+            raise ValueError("Unknown payment timing")
         return value
 
 
@@ -194,6 +238,22 @@ class BookingRead(BookingRequestCreate):
     platform_fee_cents: int = 0
     total_cents: int = 0
     stripe_checkout_session_id: str = ""
+    cancellation_requested_at: Optional[datetime] = None
+    cancellation_reason: str = ""
+    cancellation_decision_at: Optional[datetime] = None
+    cancellation_decision_note: str = ""
+    refund_status: str = "not_requested"
+    payout_release_date: str = ""
+
+
+class BookingCancellationRequest(BaseModel):
+    customer_email: str = Field(min_length=5, max_length=180)
+    reason: str = ""
+
+
+class BookingCancellationDecision(BaseModel):
+    approved: bool
+    note: str = ""
 
 
 class BookingCheckoutRequest(BaseModel):

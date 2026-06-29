@@ -57,6 +57,11 @@ export type BookableListing = {
   nightly_rate_cents: number;
   cleaning_fee_cents: number;
   max_guests: number;
+  cancellation_window_hours: number;
+  cancellation_policy: string;
+  refund_policy: string;
+  payout_timing: "after_check_in" | "on_payment";
+  payment_timing: "at_booking" | "after_cancellation_period";
   is_active: boolean;
   calendars: ListingCalendar[];
 };
@@ -80,6 +85,12 @@ export type Booking = {
   platform_fee_cents: number;
   total_cents: number;
   stripe_checkout_session_id: string;
+  cancellation_requested_at?: string | null;
+  cancellation_reason: string;
+  cancellation_decision_at?: string | null;
+  cancellation_decision_note: string;
+  refund_status: "not_requested" | "requested" | "approved" | "declined" | "processed";
+  payout_release_date: string;
 };
 
 export type MarketingLead = {

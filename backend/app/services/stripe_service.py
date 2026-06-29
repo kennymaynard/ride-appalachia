@@ -116,7 +116,6 @@ def create_booking_checkout_session(
     customer_email: str,
     total_cents: int,
     platform_fee_cents: int,
-    connected_account_id: str = "",
 ) -> str:
     joined_booking_ids = ",".join(str(booking_id) for booking_id in booking_ids)
     success_url = f"{settings.frontend_url}/business/success?booking=success&booking_ids={joined_booking_ids}"
@@ -134,9 +133,6 @@ def create_booking_checkout_session(
             "platform_fee_cents": str(platform_fee_cents),
         },
     }
-    if connected_account_id:
-        payment_intent_data["application_fee_amount"] = platform_fee_cents
-        payment_intent_data["transfer_data"] = {"destination": connected_account_id}
 
     session_params = {
         "mode": "payment",
@@ -157,7 +153,6 @@ def create_booking_checkout_session(
         "metadata": {
             "booking_ids": joined_booking_ids,
             "platform_fee_cents": str(platform_fee_cents),
-            "connected_account_id": connected_account_id,
         },
         "payment_intent_data": payment_intent_data,
     }

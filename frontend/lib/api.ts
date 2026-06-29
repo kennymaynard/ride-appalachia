@@ -564,6 +564,48 @@ export async function approveBooking(
   return response.json();
 }
 
+export async function decideBookingCancellation(
+  businessId: number,
+  bookingId: number,
+  payload: { approved: boolean; note: string },
+  ownerAccessToken?: string,
+): Promise<Booking> {
+  const response = await fetch(
+    `${getApiUrl()}/api/businesses/${businessId}/bookings/${bookingId}/cancel-decision`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getBusinessHeaders(ownerAccessToken) },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to update cancellation request");
+  }
+
+  return response.json();
+}
+
+export async function requestBookingCancellation(
+  bookingId: number,
+  payload: { customer_email: string; reason: string },
+  riderAccessToken?: string,
+): Promise<Booking> {
+  const response = await fetch(`${getApiUrl()}/api/bookings/${bookingId}/cancel-request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getRiderHeaders(riderAccessToken) },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to request cancellation");
+  }
+
+  return response.json();
+}
+
 export async function createStripeConnectOnboarding(
   businessId: number,
   ownerAccessToken?: string,

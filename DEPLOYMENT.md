@@ -46,13 +46,16 @@ STRIPE_PRICE_VETERAN_OWNED=
 STRIPE_WEBHOOK_SECRET=
 ```
 
-## Calendar Sync Cron
+## Calendar Sync And Booking Payout Cron
 
 Create a Render Cron Job after the backend is live:
 
 ```bash
 cd backend && python scripts/sync_calendars.py
 ```
+
+This job syncs partner iCal calendars and processes booking payouts that are
+ready to release after check-in.
 
 Suggested schedule:
 

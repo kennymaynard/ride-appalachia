@@ -16,6 +16,7 @@ from app.schemas import (
     MarketingLeadStatusUpdate,
 )
 from app.services.email_service import send_business_approval_notification
+from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.photos import normalize_photo_url
 
@@ -55,6 +56,14 @@ def sync_all_booking_calendars(
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     return sync_active_calendars(db)
+
+
+@router.post("/booking-transfers/process")
+def process_booking_transfers(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    return process_due_booking_transfers(db, get_settings())
 
 
 @router.get("/businesses", response_model=list[BusinessDashboardRead])

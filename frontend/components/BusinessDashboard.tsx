@@ -8,6 +8,7 @@ import {
   createBookableListing,
   createLodgingServiceRequest,
   createStripeConnectOnboarding,
+  decideBookingCancellation,
   deleteDeal,
   geocodeLocation,
   syncListingCalendar,
@@ -99,6 +100,13 @@ function emptyBookableForm(business?: Business) {
     nightly_rate: "",
     cleaning_fee: "",
     max_guests: "4",
+    cancellation_window_hours: "72",
+    cancellation_policy:
+      "Guests may request cancellation before check-in. We review each request based on timing, property rules, and whether dates can be rebooked.",
+    refund_policy:
+      "Approved cancellations may receive a full or partial refund. Non-refundable fees and late cancellations may not qualify.",
+    payout_timing: "after_check_in",
+    payment_timing: "at_booking",
   };
 }
 
@@ -416,6 +424,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         nightly_rate_cents: dollarsToCents(bookableForm.nightly_rate),
         cleaning_fee_cents: dollarsToCents(bookableForm.cleaning_fee),
         max_guests: Number(bookableForm.max_guests) || 1,
+        cancellation_window_hours: Number(bookableForm.cancellation_window_hours) || 72,
+        cancellation_policy: bookableForm.cancellation_policy,
+        refund_policy: bookableForm.refund_policy,
+        payout_timing: bookableForm.payout_timing as BookableListingCreateInput["payout_timing"],
+        payment_timing: bookableForm.payment_timing as BookableListingCreateInput["payment_timing"],
         is_active: true,
       };
       const listing = await createBookableListing(
@@ -527,6 +540,38 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       setStatus("Booking approved. Next step is sending the rider bundled checkout.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to approve booking.");
+    }
+  }
+
+  async function updateCancellationRequest(bookingId: number, approved: boolean) {
+    if (!selectedBusiness) return;
+    setError("");
+    setStatus("");
+    try {
+      const booking = await decideBookingCancellation(
+        selectedBusiness.id,
+        bookingId,
+        {
+          approved,
+          note: approved
+            ? "Cancellation approved by the business."
+            : "Cancellation declined by the business.",
+        },
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        bookings: (selectedBusiness.bookings || []).map((item) =>
+          item.id === booking.id ? booking : item,
+        ),
+      });
+      setStatus(approved ? "Cancellation approved." : "Cancellation declined.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to update cancellation request.",
+      );
     }
   }
 
@@ -903,6 +948,37 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             />
           </label>
           <label>
+            Cancellation window
+            <select
+              value={bookableForm.cancellation_window_hours}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, cancellation_window_hours: event.target.value })
+              }
+            >
+              <option value="24">24 hours before check-in</option>
+              <option value="48">48 hours before check-in</option>
+              <option value="72">72 hours before check-in</option>
+              <option value="168">7 days before check-in</option>
+              <option value="336">14 days before check-in</option>
+            </select>
+          </label>
+          <label>
+            When customers pay
+            <select
+              value={bookableForm.payment_timing}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, payment_timing: event.target.value })
+              }
+            >
+              <option value="at_booking">Charge when booking is confirmed</option>
+              <option value="after_cancellation_period">Charge after cancellation period</option>
+            </select>
+          </label>
+          <small className="field-help">
+            Business payout is scheduled for the day after check-in once payment
+            is complete.
+          </small>
+          <label>
             Photo URL
             <input
               value={bookableForm.photo_url}
@@ -917,6 +993,24 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
               value={bookableForm.description}
               onChange={(event) =>
                 setBookableForm({ ...bookableForm, description: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Cancellation policy
+            <textarea
+              value={bookableForm.cancellation_policy}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, cancellation_policy: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Refund policy
+            <textarea
+              value={bookableForm.refund_policy}
+              onChange={(event) =>
+                setBookableForm({ ...bookableForm, refund_policy: event.target.value })
               }
             />
           </label>
@@ -988,6 +1082,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     {listing.listing_type} • {listing.calendars.length} calendar link
                     {listing.calendars.length === 1 ? "" : "s"}
                   </p>
+                  <p>
+                    {listing.cancellation_window_hours} hour cancellation window • payout day after check-in
+                  </p>
                   {listing.calendars.length ? (
                     <div className="calendar-sync-list">
                       {listing.calendars.map((calendar) => (
@@ -1026,6 +1123,31 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     {booking.start_date} to {booking.end_date} • {booking.guests} guest
                     {booking.guests === 1 ? "" : "s"} • {centsToDollars(booking.total_cents)}
                   </p>
+                  {booking.payout_release_date ? (
+                    <p>Payout release date: {booking.payout_release_date}</p>
+                  ) : null}
+                  {booking.refund_status === "requested" ? (
+                    <div className="alert-inline">
+                      <strong>Cancellation requested</strong>
+                      <p>{booking.cancellation_reason || "No reason provided."}</p>
+                      <div className="mini-actions">
+                        <button
+                          type="button"
+                          onClick={() => updateCancellationRequest(booking.id, true)}
+                        >
+                          Approve Cancellation
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateCancellationRequest(booking.id, false)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  ) : booking.refund_status !== "not_requested" ? (
+                    <p>Cancellation review: {booking.refund_status.replaceAll("_", " ")}</p>
+                  ) : null}
                   {booking.status === "requested" ? (
                     <div className="mini-actions">
                       <button type="button" onClick={() => approveBookingRequest(booking.id)}>

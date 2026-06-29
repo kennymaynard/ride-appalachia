@@ -316,6 +316,17 @@ class BookableListing(Base):
     nightly_rate_cents: Mapped[int] = mapped_column(Integer, default=0)
     cleaning_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     max_guests: Mapped[int] = mapped_column(Integer, default=1)
+    cancellation_window_hours: Mapped[int] = mapped_column(Integer, default=72)
+    cancellation_policy: Mapped[str] = mapped_column(
+        Text,
+        default="Guests may request cancellation before check-in. The business reviews each request under its posted policy.",
+    )
+    refund_policy: Mapped[str] = mapped_column(
+        Text,
+        default="Approved cancellations may receive a full or partial refund based on timing, property rules, and any non-refundable fees.",
+    )
+    payout_timing: Mapped[str] = mapped_column(String(60), default="after_check_in")
+    payment_timing: Mapped[str] = mapped_column(String(60), default="at_booking")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -375,6 +386,12 @@ class Booking(Base):
     platform_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer, default=0)
     stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    cancellation_requested_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancellation_reason: Mapped[str] = mapped_column(Text, default="")
+    cancellation_decision_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancellation_decision_note: Mapped[str] = mapped_column(Text, default="")
+    refund_status: Mapped[str] = mapped_column(String(60), default="not_requested", index=True)
+    payout_release_date: Mapped[str] = mapped_column(String(40), default="", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     business: Mapped[Business] = relationship(back_populates="bookings")
@@ -407,6 +424,7 @@ class BookingTransfer(Base):
     stripe_transfer_id: Mapped[str] = mapped_column(String(180), default="", index=True)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    release_date: Mapped[str] = mapped_column(String(40), default="", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     booking: Mapped[Booking] = relationship()

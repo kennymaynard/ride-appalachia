@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
@@ -11,6 +11,7 @@ from app.models import (
     Business,
     ListingCalendar,
     ListingCalendarBlock,
+    BookingTransfer,
     Rider,
 )
 from app.routes.business import require_business_access
@@ -19,6 +20,8 @@ from app.schemas import (
     BookableListingRead,
     BookableListingUpdate,
     BookingCheckoutRequest,
+    BookingCancellationDecision,
+    BookingCancellationRequest,
     BookingRead,
     BookingRequestCreate,
     CheckoutSessionRead,
@@ -281,6 +284,75 @@ def approve_booking_request(
     return booking
 
 
+@router.post("/bookings/{booking_id}/cancel-request", response_model=BookingRead)
+def request_booking_cancellation(
+    booking_id: int,
+    payload: BookingCancellationRequest,
+    x_rider_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+) -> Booking:
+    booking = db.get(Booking, booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    email_matches = payload.customer_email.strip().lower() == booking.customer_email.strip().lower()
+    rider_matches = False
+    if x_rider_token and booking.rider_id:
+        rider_matches = (
+            db.query(Rider)
+            .filter(Rider.id == booking.rider_id, Rider.access_token == x_rider_token)
+            .first()
+            is not None
+        )
+    if not email_matches and not rider_matches:
+        raise HTTPException(status_code=403, detail="Booking email or rider login is required")
+
+    if booking.status in {"canceled", "declined"}:
+        raise HTTPException(status_code=400, detail="This booking is already closed")
+
+    booking.cancellation_requested_at = datetime.utcnow()
+    booking.cancellation_reason = payload.reason
+    booking.refund_status = "requested"
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
+@router.post("/businesses/{business_id}/bookings/{booking_id}/cancel-decision", response_model=BookingRead)
+def decide_booking_cancellation(
+    booking_id: int,
+    payload: BookingCancellationDecision,
+    business: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> Booking:
+    booking = db.query(Booking).filter(Booking.id == booking_id, Booking.business_id == business.id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.refund_status != "requested":
+        raise HTTPException(status_code=400, detail="No cancellation request is waiting for review")
+
+    booking.cancellation_decision_at = datetime.utcnow()
+    booking.cancellation_decision_note = payload.note
+    if payload.approved:
+        booking.status = "canceled"
+        booking.refund_status = "approved"
+        transfer = (
+            db.query(BookingTransfer)
+            .filter(
+                BookingTransfer.booking_id == booking.id,
+                BookingTransfer.status == "scheduled_after_checkin",
+            )
+            .first()
+        )
+        if transfer:
+            transfer.status = "canceled"
+    else:
+        booking.refund_status = "declined"
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
 @router.post("/businesses/{business_id}/stripe-connect/onboarding", response_model=StripeConnectOnboardingRead)
 def create_stripe_connect_onboarding(
     business: Business = Depends(require_business_access),
@@ -327,12 +399,19 @@ def create_booking_checkout(
     for booking in bookings:
         if booking.status not in {"approved", "checkout_sent"}:
             raise HTTPException(status_code=400, detail="All bookings must be approved before checkout")
-
-    business_ids = {booking.business_id for booking in bookings}
-    connected_account_id = ""
-    if len(business_ids) == 1:
-        business = db.get(Business, next(iter(business_ids)))
-        connected_account_id = business.stripe_connect_account_id if business else ""
+        listing = db.get(BookableListing, booking.listing_id)
+        if listing and listing.payment_timing == "after_cancellation_period":
+            try:
+                charge_after = datetime.fromisoformat(booking.start_date) - timedelta(
+                    hours=listing.cancellation_window_hours,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="Booking start date is invalid") from exc
+            if datetime.utcnow() < charge_after:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Checkout opens after this listing's cancellation period.",
+                )
 
     total_cents = sum(booking.total_cents for booking in bookings)
     platform_fee_cents = sum(booking.platform_fee_cents for booking in bookings)
@@ -343,7 +422,6 @@ def create_booking_checkout(
             next(iter(customer_emails)),
             total_cents,
             platform_fee_cents,
-            connected_account_id,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
