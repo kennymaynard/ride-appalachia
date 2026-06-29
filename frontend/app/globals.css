@@ -3036,6 +3036,95 @@ button.tier-card.is-selected {
   color: #fff;
 }
 
+.setup-checklist-card {
+  gap: 1rem;
+}
+
+.setup-checklist-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.setup-checklist-head h2 {
+  margin: 0.2rem 0 0;
+}
+
+.setup-checklist-head strong {
+  color: var(--orange-soft);
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.setup-progress-track {
+  overflow: hidden;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.setup-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+}
+
+.setup-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.setup-checklist-grid article {
+  display: grid;
+  gap: 0.4rem;
+  min-height: 10rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.8rem;
+}
+
+.setup-checklist-grid article.is-complete {
+  border-color: rgba(61, 203, 127, 0.45);
+  background: rgba(61, 203, 127, 0.08);
+}
+
+.setup-checklist-grid span {
+  width: fit-content;
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.14);
+  color: var(--orange-soft);
+  padding: 0.25rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.setup-checklist-grid article.is-complete span {
+  background: rgba(61, 203, 127, 0.15);
+  color: #9cf1bf;
+}
+
+.setup-checklist-grid h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.setup-checklist-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 740;
+  line-height: 1.35;
+}
+
 .stats-card div {
   display: grid;
   border: 1px solid var(--line);
@@ -6091,8 +6180,13 @@ button.tier-card.is-selected {
   .booking-feature-grid,
   .business-addon-row,
   .booking-detail-card dl,
+  .setup-checklist-grid,
   .admin-business-card dl {
     grid-template-columns: 1fr;
+  }
+
+  .setup-checklist-head {
+    display: grid;
   }
 
   .rider-progress-list div {

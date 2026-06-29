@@ -171,6 +171,63 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     };
   }, [selectedBusiness]);
 
+  const setupItems = useMemo(() => {
+    if (!selectedBusiness) return [];
+    const listings = selectedBusiness.bookable_listings || [];
+    const hasCalendar = listings.some((listing) => listing.calendars.length > 0);
+    const hasPolicy = listings.some(
+      (listing) => listing.cancellation_policy.trim() && listing.refund_policy.trim(),
+    );
+    const profileComplete = Boolean(
+      selectedBusiness.name &&
+        selectedBusiness.description &&
+        selectedBusiness.phone &&
+        selectedBusiness.location &&
+        selectedBusiness.photo_url,
+    );
+
+    return [
+      {
+        done: profileComplete,
+        label: "Profile complete",
+        detail: "Business name, phone, location, photo, and description are ready.",
+      },
+      {
+        done: selectedBusiness.stripe_connect_onboarding_complete,
+        label: "Stripe payouts connected",
+        detail: "Connect payouts before taking paid bookings.",
+      },
+      {
+        done: listings.length > 0,
+        label: "Property or bookable item added",
+        detail: "Add each cabin, RV site, rental, guide service, event, or local service.",
+      },
+      {
+        done: hasCalendar,
+        label: "Calendar linked",
+        detail: "Sync Airbnb, Vrbo, Booking.com, Google Calendar, or any iCal feed.",
+      },
+      {
+        done: hasPolicy,
+        label: "Refund policy set",
+        detail: "Cancellation and refund rules help riders know what to expect.",
+      },
+      {
+        done: selectedBusiness.deals.some((deal) => deal.is_active),
+        label: "Deal or coupon added",
+        detail: "Optional, but a launch special gives riders a reason to act.",
+      },
+      {
+        done: selectedBusiness.listing_status === "approved",
+        label: "Approved for marketplace",
+        detail: "Admin approval makes the listing public.",
+      },
+    ];
+  }, [selectedBusiness]);
+
+  const setupCompleteCount = setupItems.filter((item) => item.done).length;
+  const setupPercent = setupItems.length ? Math.round((setupCompleteCount / setupItems.length) * 100) : 0;
+
   function chooseBusiness(nextId: number) {
     const nextBusiness = businesses.find((business) => business.id === nextId);
     setSelectedId(nextId);
@@ -623,6 +680,28 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       {selectedBusiness.admin_notes ? (
         <p className="form-error">{selectedBusiness.admin_notes}</p>
       ) : null}
+
+      <section className="dashboard-card setup-checklist-card">
+        <div className="setup-checklist-head">
+          <div>
+            <p className="eyebrow">Setup guide</p>
+            <h2>Get this business booking-ready</h2>
+          </div>
+          <strong>{setupPercent}%</strong>
+        </div>
+        <div className="setup-progress-track" aria-hidden="true">
+          <span style={{ width: `${setupPercent}%` }} />
+        </div>
+        <div className="setup-checklist-grid">
+          {setupItems.map((item) => (
+            <article className={item.done ? "is-complete" : ""} key={item.label}>
+              <span>{item.done ? "Done" : "Next"}</span>
+              <h3>{item.label}</h3>
+              <p>{item.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="dashboard-grid business-dashboard-grid">
         <form className="dashboard-card" onSubmit={saveListing}>

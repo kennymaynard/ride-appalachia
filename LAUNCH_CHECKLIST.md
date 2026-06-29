@@ -46,7 +46,7 @@ Use this as the working checklist before real bookings and wider rider launch.
 - [ ] Add booking calendar view
 - [ ] Add payout status explanations
 - [ ] Add refund policy helper text
-- [ ] Add business dashboard quick setup checklist
+- [x] Add business dashboard quick setup checklist
 - [ ] Add reminders for missing Stripe Connect setup
 
 ## Trust And Safety
