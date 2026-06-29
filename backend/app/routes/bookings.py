@@ -31,7 +31,11 @@ from app.schemas import (
     ListingCalendarRead,
     StripeConnectOnboardingRead,
 )
-from app.services.stripe_service import create_booking_checkout_session, create_connect_onboarding_link
+from app.services.stripe_service import (
+    create_booking_checkout_session,
+    create_booking_refund,
+    create_connect_onboarding_link,
+)
 from app.services.calendar_sync import sync_calendar_blocks
 from app.services.email_service import (
     send_booking_cancellation_decision_email,
@@ -125,6 +129,9 @@ def to_booking_detail(booking: Booking) -> BookingDetailRead:
         cancellation_decision_at=booking.cancellation_decision_at,
         cancellation_decision_note=booking.cancellation_decision_note,
         refund_status=booking.refund_status,
+        refunded_cents=booking.refunded_cents,
+        stripe_refund_id=booking.stripe_refund_id,
+        refund_failure_reason=booking.refund_failure_reason,
         payout_release_date=booking.payout_release_date,
         business_name=business.name if business else "",
         listing_title=listing.title if listing else "",
@@ -395,6 +402,7 @@ def decide_booking_cancellation(
     booking_id: int,
     payload: BookingCancellationDecision,
     business: Business = Depends(require_business_access),
+    settings: Settings = Depends(get_settings),
     db: Session = Depends(get_db),
 ) -> Booking:
     booking = db.query(Booking).filter(Booking.id == booking_id, Booking.business_id == business.id).first()
@@ -408,6 +416,7 @@ def decide_booking_cancellation(
     if payload.approved:
         booking.status = "canceled"
         booking.refund_status = "approved"
+        booking.refund_failure_reason = ""
         transfer = (
             db.query(BookingTransfer)
             .filter(
@@ -418,6 +427,30 @@ def decide_booking_cancellation(
         )
         if transfer:
             transfer.status = "canceled"
+        if booking.total_cents > 0 and booking.refunded_cents <= 0:
+            payment = (
+                db.query(BookingPayment)
+                .filter(BookingPayment.booking_id == booking.id)
+                .order_by(BookingPayment.created_at.desc())
+                .first()
+            )
+            if payment and payment.stripe_payment_intent_id:
+                try:
+                    booking.stripe_refund_id = create_booking_refund(
+                        settings,
+                        payment.stripe_payment_intent_id,
+                        booking.total_cents,
+                        booking.id,
+                    )
+                    booking.refunded_cents = booking.total_cents
+                    booking.refund_status = "processed"
+                    payment.status = "refunded"
+                except RuntimeError as exc:
+                    booking.refund_status = "refund_failed"
+                    booking.refund_failure_reason = str(exc)
+            elif booking.status == "paid":
+                booking.refund_status = "refund_failed"
+                booking.refund_failure_reason = "Paid booking is missing a Stripe payment intent."
     else:
         booking.refund_status = "declined"
     db.commit()

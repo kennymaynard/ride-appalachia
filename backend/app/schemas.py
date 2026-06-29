@@ -243,6 +243,9 @@ class BookingRead(BookingRequestCreate):
     cancellation_decision_at: Optional[datetime] = None
     cancellation_decision_note: str = ""
     refund_status: str = "not_requested"
+    refunded_cents: int = 0
+    stripe_refund_id: str = ""
+    refund_failure_reason: str = ""
     payout_release_date: str = ""
 
 

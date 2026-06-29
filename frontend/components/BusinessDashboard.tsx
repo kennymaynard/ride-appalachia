@@ -1146,7 +1146,15 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                       </div>
                     </div>
                   ) : booking.refund_status !== "not_requested" ? (
-                    <p>Cancellation review: {booking.refund_status.replaceAll("_", " ")}</p>
+                    <p>
+                      Cancellation review: {booking.refund_status.replaceAll("_", " ")}
+                      {booking.refunded_cents
+                        ? ` • refunded ${centsToDollars(booking.refunded_cents)}`
+                        : ""}
+                      {booking.refund_failure_reason
+                        ? ` • ${booking.refund_failure_reason}`
+                        : ""}
+                    </p>
                   ) : null}
                   {booking.status === "requested" ? (
                     <div className="mini-actions">

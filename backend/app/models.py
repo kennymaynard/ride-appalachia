@@ -391,6 +391,9 @@ class Booking(Base):
     cancellation_decision_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     cancellation_decision_note: Mapped[str] = mapped_column(Text, default="")
     refund_status: Mapped[str] = mapped_column(String(60), default="not_requested", index=True)
+    refunded_cents: Mapped[int] = mapped_column(Integer, default=0)
+    stripe_refund_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    refund_failure_reason: Mapped[str] = mapped_column(Text, default="")
     payout_release_date: Mapped[str] = mapped_column(String(40), default="", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

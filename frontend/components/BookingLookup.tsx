@@ -161,6 +161,23 @@ export function BookingLookup({ initialBookingId = "" }: Props) {
             </div>
           ) : null}
 
+          {booking.refund_status === "processed" ? (
+            <div className="alert-inline">
+              <strong>Refund processed</strong>
+              <p>
+                {centsToDollars(booking.refunded_cents)} was sent back through Stripe.
+                {booking.stripe_refund_id ? ` Refund ID: ${booking.stripe_refund_id}.` : ""}
+              </p>
+            </div>
+          ) : null}
+
+          {booking.refund_status === "refund_failed" ? (
+            <div className="alert-inline">
+              <strong>Refund needs support</strong>
+              <p>{booking.refund_failure_reason || "The refund could not be completed automatically."}</p>
+            </div>
+          ) : null}
+
           {booking.refund_status === "declined" ? (
             <div className="alert-inline">
               <strong>Cancellation declined</strong>

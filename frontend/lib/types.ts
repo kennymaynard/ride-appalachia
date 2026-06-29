@@ -89,7 +89,10 @@ export type Booking = {
   cancellation_reason: string;
   cancellation_decision_at?: string | null;
   cancellation_decision_note: string;
-  refund_status: "not_requested" | "requested" | "approved" | "declined" | "processed";
+  refund_status: "not_requested" | "requested" | "approved" | "declined" | "processed" | "refund_failed";
+  refunded_cents: number;
+  stripe_refund_id: string;
+  refund_failure_reason: string;
   payout_release_date: string;
 };
 

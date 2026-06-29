@@ -183,6 +183,33 @@ def create_connected_account_transfer(
     return transfer.id
 
 
+def create_booking_refund(
+    settings: Settings,
+    payment_intent_id: str,
+    amount_cents: int,
+    booking_id: int,
+) -> str:
+    if amount_cents <= 0:
+        raise RuntimeError("Refund amount must be greater than zero")
+    if not payment_intent_id:
+        raise RuntimeError("Booking payment intent is missing")
+    if not settings.stripe_secret_key:
+        if settings.frontend_url.startswith("http://localhost"):
+            return f"re_stub_{booking_id}"
+        raise RuntimeError("Stripe is not configured for booking refunds")
+
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        refund = stripe.Refund.create(
+            payment_intent=payment_intent_id,
+            amount=amount_cents,
+            metadata={"booking_id": str(booking_id)},
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Stripe refund failed: {exc}") from exc
+    return refund.id
+
+
 def construct_webhook_event(settings: Settings, payload: bytes, signature: str) -> stripe.Event:
     if not settings.stripe_webhook_secret:
         raise ValueError("Stripe webhook secret is not configured")
