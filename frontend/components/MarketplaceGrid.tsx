@@ -15,9 +15,10 @@ export function MarketplaceGrid({ listings, emptyText = "No listings yet." }: Pr
         <h3>{emptyText}</h3>
         <p>
           We are keeping this marketplace clean: only approved, real local
-          businesses will appear here. Be first in your category or trail town.
+          businesses will appear here. Try a nearby ride town or a different
+          category.
         </p>
-        <Link href="/business/join">List Your Business</Link>
+        <Link href="/ride-areas">Search Another Area</Link>
       </article>
     );
   }

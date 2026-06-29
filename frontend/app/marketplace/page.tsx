@@ -48,8 +48,8 @@ export default async function MarketplacePage({ searchParams }: Props) {
           {radius ? ` Showing the trip context for a ${radius} mile search.` : ""}
         </p>
         <div className="home-hero-actions" aria-label="Marketplace actions">
-          <Link href="/business/join">List Your Business</Link>
           <Link href="/ride-areas">Find Nearby</Link>
+          <Link href="/planner">Plan Trip</Link>
         </div>
       </section>
       <section className="page-section">

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { BrandLogo } from "../components/BrandLogo";
-import { LaunchAccessPopup } from "../components/LaunchAccessPopup";
 import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
+import { SiteChrome } from "../components/SiteChrome";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -21,48 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ServiceWorkerRegister />
-        <LaunchAccessPopup />
-        <header className="topbar">
-          <BrandLogo />
-          <nav>
-            <Link href="/ride-areas">Find Nearby</Link>
-            <Link href="/planner">Planner</Link>
-            <Link href="/bookings">Bookings</Link>
-            <Link href="/rider-tools">Tools</Link>
-            <Link href="/trail-talk">Trail Talk</Link>
-            <Link href="/lodging">Lodging</Link>
-            <Link href="/deals">Deals</Link>
-            <Link href="/heroes">Heroes</Link>
-            <Link href="/business">Business</Link>
-            <Link href="/partner">Partner</Link>
-          </nav>
-          <Link className="join-link" href="/business/join">
-            Join
-          </Link>
-          <Link className="join-link secondary-link" href="/rider/login">
-            Login
-          </Link>
-        </header>
-        {children}
-        <footer className="site-footer">
-          <div>
-            <strong>Appalachia Offroad</strong>
-            <span>Ride more. Plan less.</span>
-          </div>
-          <nav>
-            <Link href="https://www.facebook.com/share/1TduokbB5m/?mibextid=wwXIfr" target="_blank">Facebook</Link>
-            <Link href="https://www.instagram.com/" target="_blank">Instagram</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/trail-talk">Trail Talk</Link>
-            <Link href="/rider-tools">Rider Tools</Link>
-            <Link href="/business">FAQ</Link>
-            <Link href="/business/login">Business Login</Link>
-            <Link href="/business/join">Business Signup</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/refunds">Refunds</Link>
-          </nav>
-        </footer>
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

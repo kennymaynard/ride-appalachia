@@ -43,13 +43,11 @@ export function ListingCard({ business }: Props) {
         ) : null}
         <div className="listing-actions">
           <Link href={`/business/${business.slug}`}>View Listing</Link>
-          <TrackedAction
-            businessId={business.id}
-            href={`/business/claim?slug=${business.slug}`}
-            kind="link"
-          >
-            Claim
-          </TrackedAction>
+          {business.website_url ? (
+            <TrackedAction businessId={business.id} href={business.website_url}>
+              Website
+            </TrackedAction>
+          ) : null}
         </div>
       </div>
     </article>

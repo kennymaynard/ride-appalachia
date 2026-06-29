@@ -64,13 +64,16 @@ const trustCards = [
   },
 ];
 
-const businessTypes = [
-  "Lodging",
-  "Restaurants",
-  "Repair shops",
-  "Recovery services",
-  "Campgrounds",
-  "Outfitters",
+const riderPath = [
+  "Find trails and ride areas",
+  "See lodging, food, fuel, rentals, and repair nearby",
+  "Build and save a trip plan before you lose service",
+];
+
+const businessPath = [
+  "Create or claim your business listing",
+  "Show up for riders planning trips",
+  "Update deals, photos, and business details anytime",
 ];
 
 export default function Home() {
@@ -85,7 +88,9 @@ export default function Home() {
             deals across Appalachia.
           </p>
           <div className="home-hero-actions" aria-label="Primary actions">
-            <Link href="/business/join">List Your Business</Link>
+            <Link href="/ride-areas">Find Trails & Stops</Link>
+            <Link href="/planner">Plan a Trip</Link>
+            <Link href="/business">Business Side</Link>
           </div>
         </div>
         <div className="home-hero-panel" aria-label="Rider and business paths">
@@ -100,9 +105,38 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="home-section" aria-labelledby="choose-side-title">
+        <div className="home-section-heading">
+          <p className="eyebrow">Choose your side</p>
+          <h2 id="choose-side-title">One App. Two Clear Paths.</h2>
+        </div>
+        <div className="landing-path-grid">
+          <article>
+            <p className="eyebrow">Rider side</p>
+            <h2>Plan the ride.</h2>
+            <ul>
+              {riderPath.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <Link href="/ride-areas">Enter Rider Side</Link>
+          </article>
+          <article>
+            <p className="eyebrow">Business side</p>
+            <h2>Reach riders.</h2>
+            <ul>
+              {businessPath.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <Link href="/business">Enter Business Side</Link>
+          </article>
+        </div>
+      </section>
+
       <section className="home-section" aria-labelledby="how-it-works-title">
         <div className="home-section-heading">
-          <p className="eyebrow">How it works</p>
+          <p className="eyebrow">Rider side</p>
           <h2 id="how-it-works-title">Everything Riders Need in One App</h2>
         </div>
         <div className="home-card-grid">
@@ -113,33 +147,6 @@ export default function Home() {
             </article>
           ))}
         </div>
-      </section>
-
-      <section className="business-owner-section" aria-labelledby="business-owner-title">
-        <div>
-          <p className="home-badge">Founding Business Partner spots available.</p>
-          <h2 id="business-owner-title">Turn Riders Into Customers</h2>
-          <p>
-            Reach ATV, UTV, Jeep, and SxS riders actively planning trips through
-            Appalachia. List your lodging, restaurant, repair shop, recovery
-            service, campground, outfitter, or local business with plans
-            starting at $29/month.
-          </p>
-          <div className="business-type-row" aria-label="Business categories">
-            {businessTypes.map((type) => (
-              <span key={type}>{type}</span>
-            ))}
-          </div>
-        </div>
-        <aside className="business-price-card" aria-label="Business listing price">
-          <span>$29</span>
-          <strong>per month</strong>
-          <p>
-            Get found by riders searching for ATV lodging, offroad restaurants,
-            SxS repair and recovery, trail services, and local deals.
-          </p>
-          <Link href="/business/join">See Pricing Tiers</Link>
-        </aside>
       </section>
 
       <section className="home-section app-screenshot-section" aria-labelledby="app-title">
@@ -196,7 +203,8 @@ export default function Home() {
       <section className="final-home-cta" aria-labelledby="final-cta-title">
         <h2 id="final-cta-title">Ready to Ride Smarter?</h2>
         <div className="home-hero-actions" aria-label="Final actions">
-          <Link href="/business/join">List Your Business</Link>
+          <Link href="/ride-areas">Find Trails & Stops</Link>
+          <Link href="/business">Business Side</Link>
         </div>
       </section>
     </main>

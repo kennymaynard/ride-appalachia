@@ -1,0 +1,105 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { BrandLogo } from "./BrandLogo";
+import { LaunchAccessPopup } from "./LaunchAccessPopup";
+
+const businessPrefixes = [
+  "/business",
+  "/partner",
+  "/rush-business-partners",
+  "/admin",
+];
+
+function isBusinessPath(pathname: string) {
+  return businessPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export function SiteChrome({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const businessSide = isBusinessPath(pathname);
+
+  return (
+    <>
+      {!businessSide ? <LaunchAccessPopup /> : null}
+      <header className="topbar">
+        <BrandLogo />
+        {businessSide ? (
+          <nav aria-label="Business navigation">
+            <Link href="/business">Business Home</Link>
+            <Link href="/partner">Pricing</Link>
+            <Link href="/business/join">Create Listing</Link>
+            <Link href="/business/login">Business Login</Link>
+            <Link href="/contact">Contact</Link>
+          </nav>
+        ) : (
+          <nav aria-label="Rider navigation">
+            <Link href="/ride-areas">Find Trails & Stops</Link>
+            <Link href="/planner">Plan Trip</Link>
+            <Link href="/lodging">Lodging</Link>
+            <Link href="/deals">Deals</Link>
+            <Link href="/rider-tools">Rider Tools</Link>
+            <Link href="/trail-talk">Trail Talk</Link>
+          </nav>
+        )}
+        {businessSide ? (
+          <>
+            <Link className="join-link" href="/business/join">
+              Create Listing
+            </Link>
+            <Link className="join-link secondary-link" href="/">
+              Rider Side
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link className="join-link" href="/ride-areas">
+              Start Riding
+            </Link>
+            <Link className="join-link secondary-link" href="/business">
+              Business Side
+            </Link>
+          </>
+        )}
+      </header>
+      {children}
+      <footer className="site-footer">
+        <div>
+          <strong>Appalachia Offroad</strong>
+          <span>{businessSide ? "Reach riders planning trips." : "Ride more. Plan less."}</span>
+        </div>
+        {businessSide ? (
+          <nav aria-label="Business footer">
+            <Link href="/business">Business Home</Link>
+            <Link href="/partner">Pricing</Link>
+            <Link href="/business/join">Create Listing</Link>
+            <Link href="/business/login">Business Login</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/refunds">Refunds</Link>
+          </nav>
+        ) : (
+          <nav aria-label="Rider footer">
+            <Link href="https://www.facebook.com/share/1TduokbB5m/?mibextid=wwXIfr" target="_blank">
+              Facebook
+            </Link>
+            <Link href="https://www.instagram.com/" target="_blank">
+              Instagram
+            </Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/ride-areas">Find Trails & Stops</Link>
+            <Link href="/planner">Plan Trip</Link>
+            <Link href="/rider-tools">Rider Tools</Link>
+            <Link href="/trail-talk">Trail Talk</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+          </nav>
+        )}
+      </footer>
+    </>
+  );
+}

@@ -18,7 +18,7 @@ export default async function LodgingPage({ searchParams }: Props) {
         <p className="eyebrow">Rider-friendly stays</p>
         <h1>{area ? `Lodging near ${area}.` : "Lodging near the trails."}</h1>
         <p>Cabins, campgrounds, hotels, and group stays with trailer-aware amenities.</p>
-        <Link href="/business/join">Add lodging</Link>
+        <Link href="/ride-areas">Find Trails & Stops</Link>
       </section>
       <section className="page-section">
         <MarketplaceGrid listings={listings} emptyText="No approved lodging partners yet." />
