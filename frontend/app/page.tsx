@@ -22,29 +22,6 @@ const howItWorks = [
   },
 ];
 
-const phoneScreens = [
-  {
-    title: "Trail Map",
-    rows: ["Rush Off-Road", "Hatfield-McCoy", "Royal Blue"],
-    note: "Ride-area planning",
-  },
-  {
-    title: "Local Listings",
-    rows: ["Cabins", "Food", "Repair"],
-    note: "Approved partners only",
-  },
-  {
-    title: "Deals",
-    rows: ["Rider discounts", "Trail-town offers", "Weekend specials"],
-    note: "Business-submitted",
-  },
-  {
-    title: "Events",
-    rows: ["Rides", "Town weekends", "Meetups"],
-    note: "Built for trip planning",
-  },
-];
-
 const trustCards = [
   {
     title: "Real local partners",
@@ -103,28 +80,6 @@ export default function Home() {
             <article key={item.title} className="home-info-card">
               <span>{item.title}</span>
               <p>{item.copy}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-section app-screenshot-section" aria-labelledby="app-title">
-        <div className="home-section-heading">
-          <p className="eyebrow">In the app</p>
-          <h2 id="app-title">Built for the Ride</h2>
-        </div>
-        <div className="phone-mockup-grid">
-          {phoneScreens.map((screen) => (
-            <article key={screen.title} className="phone-mockup">
-              <div className="phone-mockup-screen">
-                <span>{screen.title}</span>
-                <div>
-                  {screen.rows.map((row) => (
-                    <b key={row}>{row}</b>
-                  ))}
-                </div>
-                <small>{screen.note}</small>
-              </div>
             </article>
           ))}
         </div>
