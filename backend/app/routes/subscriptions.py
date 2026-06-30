@@ -248,4 +248,23 @@ async def stripe_webhook(
                 tier=metadata.get("tier") or "",
             )
 
+    if event_type == "account.updated":
+        account_id = data_object.get("id") or ""
+        if account_id:
+            business = (
+                db.query(Business)
+                .filter(Business.stripe_connect_account_id == account_id)
+                .first()
+            )
+            if business:
+                capabilities = data_object.get("capabilities", {})
+                business.stripe_connect_onboarding_complete = bool(
+                    data_object.get("details_submitted")
+                    and data_object.get("charges_enabled")
+                    and data_object.get("payouts_enabled")
+                    and capabilities.get("card_payments") == "active"
+                    and capabilities.get("transfers") == "active"
+                )
+                db.commit()
+
     return {"received": True}
