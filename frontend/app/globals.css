@@ -5001,9 +5001,8 @@ button.tier-card.is-selected {
   pointer-events: none;
 }
 
-.trail-layer-primary,
-.trail-layer-drawer {
-  display: none;
+.trail-layer-primary {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
   pointer-events: auto;
@@ -5014,7 +5013,11 @@ button.tier-card.is-selected {
 }
 
 .trail-layer-drawer {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   align-items: center;
+  pointer-events: auto;
 }
 
 .trail-layer-drawer.is-open {
