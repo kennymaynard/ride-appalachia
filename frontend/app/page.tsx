@@ -64,18 +64,6 @@ const trustCards = [
   },
 ];
 
-const riderPath = [
-  "Find trails and ride areas",
-  "See lodging, food, fuel, rentals, and repair nearby",
-  "Build and save a trip plan before you lose service",
-];
-
-const businessPath = [
-  "Create or claim your business listing",
-  "Show up for riders planning trips",
-  "Update deals, photos, and business details anytime",
-];
-
 export default function Home() {
   return (
     <main className="home-base">
@@ -105,38 +93,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section" aria-labelledby="choose-side-title">
-        <div className="home-section-heading">
-          <p className="eyebrow">Choose your path</p>
-          <h2 id="choose-side-title">One App. Two Clear Paths.</h2>
-        </div>
-        <div className="landing-path-grid">
-          <article>
-            <p className="eyebrow">Trail planner</p>
-            <h2>Plan the ride.</h2>
-            <ul>
-              {riderPath.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <Link href="/ride-areas">Start Planning</Link>
-          </article>
-          <article>
-            <p className="eyebrow">For local businesses</p>
-            <h2>Reach riders.</h2>
-            <ul>
-              {businessPath.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <Link href="/business">Business Info</Link>
-          </article>
-        </div>
-      </section>
-
       <section className="home-section" aria-labelledby="how-it-works-title">
         <div className="home-section-heading">
-          <p className="eyebrow">Rider side</p>
+          <p className="eyebrow">Trail planner</p>
           <h2 id="how-it-works-title">Everything Riders Need in One App</h2>
         </div>
         <div className="home-card-grid">
