@@ -43,6 +43,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link href="/deals">Deals</Link>
             <Link href="/rider-tools">Rider Tools</Link>
             <Link href="/trail-talk">Trail Talk</Link>
+            <Link href="/rider/login">Rider Login</Link>
           </nav>
         )}
         {businessSide ? (
@@ -51,7 +52,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               Create Listing
             </Link>
             <Link className="join-link secondary-link" href="/">
-              Rider Side
+              Trail Planner
             </Link>
           </>
         ) : (
@@ -60,7 +61,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               Start Riding
             </Link>
             <Link className="join-link secondary-link" href="/business">
-              Business Side
+              For Businesses
             </Link>
           </>
         )}
@@ -95,6 +96,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link href="/planner">Plan Trip</Link>
             <Link href="/rider-tools">Rider Tools</Link>
             <Link href="/trail-talk">Trail Talk</Link>
+            <Link href="/rider/login">Rider Login</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
           </nav>

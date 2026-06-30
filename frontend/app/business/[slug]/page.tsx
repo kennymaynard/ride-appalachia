@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BusinessReviewForm } from "../../../components/BusinessReviewForm";
 import { BusinessPhoto } from "../../../components/BusinessPhoto";
 import { TrackedAction } from "../../../components/TrackedAction";
 import { getListing } from "../../../lib/api";
@@ -72,16 +73,11 @@ export default async function BusinessListingPage({ params }: Props) {
                 Claim Deal
               </TrackedAction>
             ) : null}
-            <TrackedAction
-              businessId={business.id}
-              href={`/business/claim?slug=${business.slug}`}
-              kind="link"
-            >
-              Claim This Business
-            </TrackedAction>
+            <Link href="#business-reviews">Leave Review</Link>
           </div>
         </div>
       </section>
+      <BusinessReviewForm businessId={business.id} businessName={business.name} />
       <Link className="back-link" href="/">
         ← Back to marketplace
       </Link>

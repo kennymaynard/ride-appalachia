@@ -4948,7 +4948,7 @@ button.tier-card.is-selected {
 
 .trail-layer-controls {
   position: absolute;
-  top: 0.75rem;
+  bottom: 0.75rem;
   left: 3.6rem;
   right: 0.75rem;
   z-index: 900;
@@ -4960,7 +4960,7 @@ button.tier-card.is-selected {
 
 .trail-layer-primary,
 .trail-layer-drawer {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 0.45rem;
   pointer-events: auto;
@@ -4972,6 +4972,34 @@ button.tier-card.is-selected {
 
 .trail-layer-drawer {
   align-items: center;
+}
+
+.trail-layer-drawer.is-open {
+  display: flex;
+}
+
+.trail-leaflet-map.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  height: 100dvh;
+  background: #07100a;
+}
+
+.trail-leaflet-map.is-expanded,
+.trail-leaflet-map.is-expanded .leaflet-container {
+  border-radius: 0;
+}
+
+.trail-leaflet-map.is-expanded,
+.trail-leaflet-map.is-expanded .leaflet-container,
+.trail-leaflet-map.is-expanded .trail-map-loading {
+  height: 100dvh;
+}
+
+.trail-leaflet-map.is-expanded .trail-layer-controls {
+  left: 0.75rem;
+  right: 0.75rem;
 }
 
 .trail-layer-drawer > span {
@@ -5612,6 +5640,15 @@ button.tier-card.is-selected {
   padding: clamp(1rem, 3vw, 1.5rem);
 }
 
+.business-review-section {
+  width: min(54rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(10, 10, 10, 0.9);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
 .trail-review-layout {
   display: grid;
   grid-template-columns: minmax(16rem, 0.55fr) minmax(0, 1fr) minmax(18rem, 0.75fr);
@@ -6227,12 +6264,12 @@ button.tier-card.is-selected {
   .trail-layer-controls {
     left: 0.6rem;
     right: 0.6rem;
-    top: 0.6rem;
+    bottom: 0.6rem;
     max-width: calc(100% - 1.2rem);
   }
 
   .trail-layer-primary {
-    max-width: calc(100% - 3.5rem);
+    max-width: 100%;
   }
 
   .trail-layer-drawer {
@@ -6262,7 +6299,7 @@ button.tier-card.is-selected {
   }
 
   .trail-leaflet-map .leaflet-left .leaflet-control {
-    margin-top: 3.15rem;
+    margin-top: 0.6rem;
     margin-left: 0.6rem;
   }
 

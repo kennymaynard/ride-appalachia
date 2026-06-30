@@ -280,6 +280,7 @@ export function RideAreaMap({
                 </div>
                 <div className="ride-area-actions">
                   <Link href={`/ride-areas/${area.slug}`}>Details</Link>
+                  <Link href={`/ride-areas/${area.slug}#trail-reviews`}>Review</Link>
                   <Link href={`/planner?area=${encodeURIComponent(area.locationQuery)}`}>
                     Plan
                   </Link>

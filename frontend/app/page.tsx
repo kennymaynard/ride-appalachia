@@ -90,7 +90,7 @@ export default function Home() {
           <div className="home-hero-actions" aria-label="Primary actions">
             <Link href="/ride-areas">Find Trails & Stops</Link>
             <Link href="/planner">Plan a Trip</Link>
-            <Link href="/business">Business Side</Link>
+            <Link href="/business">For Businesses</Link>
           </div>
         </div>
         <div className="home-hero-panel" aria-label="Rider and business paths">
@@ -107,29 +107,29 @@ export default function Home() {
 
       <section className="home-section" aria-labelledby="choose-side-title">
         <div className="home-section-heading">
-          <p className="eyebrow">Choose your side</p>
+          <p className="eyebrow">Choose your path</p>
           <h2 id="choose-side-title">One App. Two Clear Paths.</h2>
         </div>
         <div className="landing-path-grid">
           <article>
-            <p className="eyebrow">Rider side</p>
+            <p className="eyebrow">Trail planner</p>
             <h2>Plan the ride.</h2>
             <ul>
               {riderPath.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <Link href="/ride-areas">Enter Rider Side</Link>
+            <Link href="/ride-areas">Start Planning</Link>
           </article>
           <article>
-            <p className="eyebrow">Business side</p>
+            <p className="eyebrow">For local businesses</p>
             <h2>Reach riders.</h2>
             <ul>
               {businessPath.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <Link href="/business">Enter Business Side</Link>
+            <Link href="/business">Business Info</Link>
           </article>
         </div>
       </section>
@@ -204,7 +204,7 @@ export default function Home() {
         <h2 id="final-cta-title">Ready to Ride Smarter?</h2>
         <div className="home-hero-actions" aria-label="Final actions">
           <Link href="/ride-areas">Find Trails & Stops</Link>
-          <Link href="/business">Business Side</Link>
+          <Link href="/business">For Businesses</Link>
         </div>
       </section>
     </main>

@@ -289,6 +289,7 @@ export function TrailLeafletMap({
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number]>();
   const [trackingStatus, setTrackingStatus] = useState("Track me");
   const center: [number, number] = [
@@ -366,9 +367,16 @@ export function TrailLeafletMap({
   };
 
   return (
-    <div className="trail-leaflet-map">
+    <div className={isExpanded ? "trail-leaflet-map is-expanded" : "trail-leaflet-map"}>
       <div className="trail-layer-controls" aria-label="Trail map layers">
         <div className="trail-layer-primary">
+          <button
+            aria-pressed={isExpanded}
+            type="button"
+            onClick={() => setIsExpanded((current) => !current)}
+          >
+            {isExpanded ? "Close map" : "Expand map"}
+          </button>
           <button type="button" onClick={handleTrackMe}>
             {trackingStatus}
           </button>
@@ -569,6 +577,9 @@ export function TrailLeafletMap({
                 <p>{point.reviewText}</p>
                 <a href={point.href} rel="noreferrer" target="_blank">
                   Open official map
+                </a>
+                <a href={`/ride-areas/${point.areaSlug}#trail-reviews`}>
+                  Leave trail review
                 </a>
               </div>
             </Popup>

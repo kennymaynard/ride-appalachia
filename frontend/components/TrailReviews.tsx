@@ -61,7 +61,7 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
   }
 
   return (
-    <section className="trail-reviews">
+    <section className="trail-reviews" id="trail-reviews">
       <div className="section-heading">
         <p>Rider reviews</p>
         <h2>What riders say about {areaName}</h2>
