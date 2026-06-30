@@ -51,18 +51,28 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link className="join-link" href="/business/join">
               Create Listing
             </Link>
-            <Link className="join-link secondary-link" href="/">
-              Trail Planner
-            </Link>
+            <div className="audience-switch" aria-label="Switch app mode">
+              <Link href="/" className="audience-switch-link">
+                Rider
+              </Link>
+              <Link href="/business" className="audience-switch-link is-active">
+                Business
+              </Link>
+            </div>
           </>
         ) : (
           <>
             <Link className="join-link" href="/ride-areas">
               Start Riding
             </Link>
-            <Link className="join-link secondary-link" href="/business">
-              For Businesses
-            </Link>
+            <div className="audience-switch" aria-label="Switch app mode">
+              <Link href="/" className="audience-switch-link is-active">
+                Rider
+              </Link>
+              <Link href="/business" className="audience-switch-link">
+                Business
+              </Link>
+            </div>
           </>
         )}
       </header>

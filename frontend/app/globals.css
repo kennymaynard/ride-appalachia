@@ -126,6 +126,38 @@ button {
   color: var(--orange-soft);
 }
 
+.audience-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 11.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.audience-switch-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.76);
+  padding: 0 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.audience-switch-link + .audience-switch-link {
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.audience-switch-link.is-active {
+  background: var(--orange);
+  color: #160801;
+}
+
 .join-link,
 .hero-actions a,
 .page-hero a,
@@ -6145,6 +6177,11 @@ button.tier-card.is-selected {
     justify-content: start;
     overflow-x: auto;
     padding-bottom: 0.2rem;
+  }
+
+  .audience-switch {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .category-nav {
