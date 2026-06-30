@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { RideAreaFinder } from "../components/RideAreaFinder";
+import { getListings } from "../lib/api";
+import { rideAreas } from "../lib/sample-data";
 
 export const metadata: Metadata = {
   title: "Appalachia Offroad App | Trails, Lodging, Food, Deals & Events",
@@ -7,118 +10,54 @@ export const metadata: Metadata = {
     "Discover offroad trails, lodging, food, recovery services, events, and exclusive rider deals across Appalachia. Built for ATV, UTV, Jeep, and SxS riders.",
 };
 
-const howItWorks = [
-  {
-    title: "Find Trails",
-    copy: "Browse Appalachian offroad trails, UTV trails, trail systems, map sources, and ride-area notes before you head out.",
-  },
-  {
-    title: "Discover Local Spots",
-    copy: "Find ATV lodging, offroad restaurants, fuel, campgrounds, outfitters, and Hatfield McCoy area businesses near the ride.",
-  },
-  {
-    title: "Unlock Rider Deals",
-    copy: "See trail town deals from local businesses that want ATV, UTV, Jeep, and SxS riders walking through the door.",
-  },
-];
+export const dynamic = "force-dynamic";
 
-const trustCards = [
-  {
-    title: "Real local partners",
-    copy: "The public marketplace only shows approved businesses.",
-  },
-  {
-    title: "Rider-focused deals",
-    copy: "Offers are organized around trail trips, not generic coupons.",
-  },
-  {
-    title: "Trail-town discovery",
-    copy: "Built around where riders actually stage, eat, stay, and recover.",
-  },
-  {
-    title: "Appalachia-first platform",
-    copy: "Focused on Kentucky, West Virginia, Virginia, Tennessee, Ohio, and nearby riding towns.",
-  },
-];
+const quickRideTowns = ["Rush KY", "Harlan KY", "Matewan WV", "Pikeville KY"];
 
-export default function Home() {
+export default async function Home() {
+  const listings = await getListings("all");
+
   return (
     <main className="home-base">
       <section className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero-copy">
-          <p className="eyebrow">The offroad home base for Appalachia</p>
-          <h1 id="home-hero-title">Ride Appalachia Smarter</h1>
+          <p className="eyebrow">Start your ride plan</p>
+          <h1 id="home-hero-title">Where are you riding?</h1>
           <p>
-            Find trails, food, lodging, recovery, events, and exclusive rider
-            deals across Appalachia.
+            Search a trail town, see nearby trails, then add lodging, food,
+            fuel, repair, and deals to one saved trip.
           </p>
           <div className="home-hero-actions" aria-label="Primary actions">
-            <Link href="/ride-areas">Find Trails & Stops</Link>
+            <Link href="#ride-search">Search Ride Areas</Link>
             <Link href="/planner">Plan a Trip</Link>
-            <Link href="/business">For Businesses</Link>
           </div>
         </div>
-        <div className="home-hero-panel" aria-label="Rider and business paths">
-          <article>
-            <span>Riders</span>
-            <strong>Trails, places, events, and deals in one trip hub.</strong>
-          </article>
-          <article>
-            <span>Businesses</span>
-            <strong>Reach offroad riders with plans starting at $29/month.</strong>
-          </article>
-        </div>
-      </section>
-
-      <section className="home-section" aria-labelledby="how-it-works-title">
-        <div className="home-section-heading">
-          <p className="eyebrow">Trail planner</p>
-          <h2 id="how-it-works-title">Everything Riders Need in One App</h2>
-        </div>
-        <div className="home-card-grid">
-          {howItWorks.map((item) => (
-            <article key={item.title} className="home-info-card">
-              <span>{item.title}</span>
-              <p>{item.copy}</p>
-            </article>
+        <div className="home-hero-panel" aria-label="Popular ride towns">
+          {quickRideTowns.map((town) => (
+            <Link
+              href={`/ride-areas?area=${encodeURIComponent(town)}`}
+              key={town}
+            >
+              <span>Popular search</span>
+              <strong>{town}</strong>
+            </Link>
           ))}
         </div>
       </section>
 
-      <section className="home-section trust-section" aria-labelledby="trust-title">
+      <section className="home-section rider-search-section" id="ride-search" aria-labelledby="ride-search-title">
         <div className="home-section-heading">
-          <p className="eyebrow">Trust the route</p>
-          <h2 id="trust-title">Built for Appalachia. Built for Riders.</h2>
+          <p className="eyebrow">Map, trails, and stops</p>
+          <h2 id="ride-search-title">Search once. Build the ride.</h2>
         </div>
-        <div className="trust-card-grid">
-          {trustCards.map((card) => (
-            <article key={card.title}>
-              <strong>{card.title}</strong>
-              <p>{card.copy}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="coverage-section" aria-labelledby="coverage-title">
-        <div>
-          <p className="eyebrow">Coverage</p>
-          <h2 id="coverage-title">Serving the Appalachian Offroad Community</h2>
-        </div>
-        <p>
-          Built around Kentucky, West Virginia, Virginia, Tennessee, Ohio, and
-          surrounding trail towns. Appalachia Offroad helps riders find
-          Appalachian offroad trails, UTV trails, ATV lodging, Hatfield McCoy
-          area businesses, offroad restaurants, SxS repair and recovery, events,
-          and trail town deals.
-        </p>
+        <RideAreaFinder areas={rideAreas} listings={listings} />
       </section>
 
       <section className="final-home-cta" aria-labelledby="final-cta-title">
-        <h2 id="final-cta-title">Ready to Ride Smarter?</h2>
+        <h2 id="final-cta-title">Save the trip before you lose service.</h2>
         <div className="home-hero-actions" aria-label="Final actions">
-          <Link href="/ride-areas">Find Trails & Stops</Link>
-          <Link href="/business">For Businesses</Link>
+          <Link href="/planner">Open Trip Planner</Link>
+          <Link href="/rider/login">Rider Login</Link>
         </div>
       </section>
     </main>

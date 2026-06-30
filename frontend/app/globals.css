@@ -746,7 +746,7 @@ p {
   gap: 0.75rem;
 }
 
-.home-hero-panel article,
+.home-hero-panel a,
 .home-info-card,
 .trust-card-grid article,
 .testimonial-grid figure {
@@ -757,7 +757,7 @@ p {
   box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.24);
 }
 
-.home-hero-panel article {
+.home-hero-panel a {
   backdrop-filter: blur(10px);
 }
 
@@ -779,6 +779,17 @@ p {
   font-size: clamp(1.15rem, 2vw, 1.6rem);
   line-height: 1.05;
   text-transform: uppercase;
+}
+
+.home-section.rider-search-section {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.rider-search-section .ride-finder {
+  width: 100%;
+  margin: 0;
 }
 
 .home-section {
