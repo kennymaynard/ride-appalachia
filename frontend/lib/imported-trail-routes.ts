@@ -1,4 +1,5 @@
 import type { TrailCoordinate } from "./types";
+import { rushTrailRouteSegments } from "./rush-trail-routes";
 
 type ImportedTrailRoute = {
   areaSlug: string;
@@ -7,6 +8,11 @@ type ImportedTrailRoute = {
 };
 
 const importedTrailRoutes: ImportedTrailRoute[] = [
+  {
+    areaSlug: "rush-ky",
+    trailName: "Rush Off-Road",
+    segments: rushTrailRouteSegments,
+  },
   {
     areaSlug: "first-frontier-ky",
     trailName: "Van Lear / Wolf Creek KMZ download",

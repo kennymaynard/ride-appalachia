@@ -3121,7 +3121,7 @@ button.tier-card.is-selected {
   gap: 0.65rem;
 }
 
-.setup-checklist-grid article {
+.setup-checklist-grid button {
   display: grid;
   gap: 0.4rem;
   min-height: 10rem;
@@ -3129,9 +3129,18 @@ button.tier-card.is-selected {
   border-radius: 0.45rem;
   background: rgba(255, 255, 255, 0.04);
   padding: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease;
 }
 
-.setup-checklist-grid article.is-complete {
+.setup-checklist-grid button:hover,
+.setup-checklist-grid button.is-active {
+  border-color: rgba(242, 106, 27, 0.6);
+  background: rgba(242, 106, 27, 0.12);
+}
+
+.setup-checklist-grid button.is-complete {
   border-color: rgba(61, 203, 127, 0.45);
   background: rgba(61, 203, 127, 0.08);
 }
@@ -3147,7 +3156,7 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
-.setup-checklist-grid article.is-complete span {
+.setup-checklist-grid button.is-complete span {
   background: rgba(61, 203, 127, 0.15);
   color: #9cf1bf;
 }
@@ -3441,21 +3450,127 @@ button.tier-card.is-selected {
   gap: 1rem;
 }
 
+.rider-achievement-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: end;
+  border: 1px solid rgba(242, 106, 27, 0.28);
+  border-radius: 0.5rem;
+  background: rgba(242, 106, 27, 0.08);
+  padding: 0.85rem;
+}
+
+.rider-achievement-summary strong {
+  color: var(--orange);
+  font-size: 2.8rem;
+  font-weight: 950;
+  line-height: 0.85;
+}
+
+.rider-achievement-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .rider-badge-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
-.rider-badge-grid span {
-  border: 1px solid rgba(242, 106, 27, 0.52);
+.rider-next-badge-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.rider-badge-card {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.85rem;
+}
+
+.rider-badge-card.is-earned {
+  border-color: rgba(61, 203, 127, 0.45);
+  background:
+    linear-gradient(135deg, rgba(61, 203, 127, 0.11), rgba(242, 106, 27, 0.07)),
+    rgba(255, 255, 255, 0.045);
+}
+
+.rider-badge-card.is-locked {
+  border-color: rgba(242, 106, 27, 0.28);
+}
+
+.rider-badge-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.rider-badge-card > div:first-child strong {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
   border-radius: 999px;
-  background: rgba(242, 106, 27, 0.12);
-  color: var(--soft);
-  padding: 0.55rem 0.7rem;
-  font-size: 0.76rem;
+  background: var(--orange);
+  color: #160801;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.rider-badge-card.is-earned > div:first-child strong {
+  background: #78d89c;
+}
+
+.rider-badge-card > div:first-child span {
+  color: var(--orange-soft);
+  font-size: 0.68rem;
   font-weight: 950;
   text-transform: uppercase;
+}
+
+.rider-badge-card.is-earned > div:first-child span {
+  color: #9cf1bf;
+}
+
+.rider-badge-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.12;
+  text-transform: uppercase;
+}
+
+.rider-badge-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.rider-badge-progress {
+  overflow: hidden;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.rider-badge-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+}
+
+.rider-badge-card.is-earned .rider-badge-progress span {
+  background: linear-gradient(90deg, #78d89c, var(--gold));
 }
 
 .checkbox-row {
@@ -3550,7 +3665,86 @@ button.tier-card.is-selected {
 }
 
 .business-dashboard-grid {
+  grid-template-columns: 1fr;
   width: 100%;
+}
+
+.business-alert-card,
+.business-workspace-card {
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  align-items: center;
+}
+
+.business-alert-card h2,
+.business-workspace-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.2rem 0 0;
+}
+
+.notification-dot {
+  display: inline-grid;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.business-alert-list,
+.business-panel-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.business-alert-list p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.business-alert-list button,
+.business-panel-buttons button {
+  display: inline-flex;
+  min-height: 2.6rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(242, 106, 27, 0.35);
+  border-radius: 0.42rem;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--soft);
+  padding: 0 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.business-alert-list button:hover,
+.business-panel-buttons button:hover,
+.business-panel-buttons button.is-active {
+  border-color: var(--orange);
+  background: rgba(242, 106, 27, 0.16);
+  color: #fff;
+}
+
+.business-alert-list strong,
+.business-panel-buttons strong {
+  display: inline-grid;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
 }
 
 .deal-list {
@@ -6265,9 +6459,12 @@ button.tier-card.is-selected {
 
   .admin-stats,
   .rider-stat-grid,
+  .rider-badge-grid,
   .booking-feature-grid,
   .business-addon-row,
   .booking-detail-card dl,
+  .business-alert-card,
+  .business-workspace-card,
   .setup-checklist-grid,
   .admin-business-card dl {
     grid-template-columns: 1fr;
@@ -6287,6 +6484,17 @@ button.tier-card.is-selected {
 
   .calendar-sync-list div {
     grid-template-columns: 1fr;
+  }
+
+  .business-alert-list,
+  .business-panel-buttons {
+    justify-content: stretch;
+  }
+
+  .business-alert-list button,
+  .business-panel-buttons button {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .detail-image {

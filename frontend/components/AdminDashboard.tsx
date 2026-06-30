@@ -112,6 +112,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       name: business.name,
       description: business.description,
       phone: business.phone,
+      owner_email: business.owner_email || "",
       location: business.location,
       latitude: business.latitude,
       longitude: business.longitude,
@@ -673,6 +674,14 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                   />
                 </label>
                 <label>
+                  Owner login email
+                  <input
+                    type="email"
+                    value={editForm.owner_email || ""}
+                    onChange={(event) => setEditForm({ ...editForm, owner_email: event.target.value })}
+                  />
+                </label>
+                <label>
                   Location
                   <input
                     required
@@ -757,6 +766,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                 <div>
                   <dt>Phone</dt>
                   <dd>{business.phone}</dd>
+                </div>
+                <div>
+                  <dt>Owner email</dt>
+                  <dd>{business.owner_email || "Not set"}</dd>
                 </div>
                 <div>
                   <dt>Location</dt>

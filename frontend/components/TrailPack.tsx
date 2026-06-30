@@ -59,6 +59,15 @@ function downloadJson(filename: string, value: unknown) {
   URL.revokeObjectURL(url);
 }
 
+function writeStoredValue(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function TrailPack({ area, listings }: Props) {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("");
@@ -115,8 +124,11 @@ export function TrailPack({ area, listings }: Props) {
   }
 
   function saveOffline() {
-    window.localStorage.setItem(offlinePackKey, JSON.stringify(buildPack()));
-    setStatus(`${area.name} Trail Pack saved offline on this device.`);
+    if (writeStoredValue(offlinePackKey, JSON.stringify(buildPack()))) {
+      setStatus(`${area.name} Trail Pack saved offline on this device.`);
+    } else {
+      setStatus("Offline save was blocked. Download the trail pack instead.");
+    }
   }
 
   function downloadPack() {

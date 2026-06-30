@@ -78,7 +78,7 @@ export default async function BusinessListingPage({ params }: Props) {
         </div>
       </section>
       <BusinessReviewForm businessId={business.id} businessName={business.name} />
-      <Link className="back-link" href="/">
+      <Link className="back-link" href="/marketplace">
         ← Back to marketplace
       </Link>
     </main>

@@ -20,7 +20,7 @@ export default async function ClaimBusinessPage({ searchParams }: Props) {
             Open a public listing, then use the claim button to connect it to a
             founding partner tier.
           </p>
-          <Link href="/">Back to marketplace</Link>
+          <Link href="/marketplace">Back to marketplace</Link>
         </section>
       </main>
     );

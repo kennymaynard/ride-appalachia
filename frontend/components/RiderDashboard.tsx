@@ -13,12 +13,89 @@ type Props = {
   accessToken: string;
 };
 
+type Achievement = {
+  badgeKey: string;
+  label: string;
+  category: string;
+  current: number;
+  target: number;
+};
+
+const trailBadgeMilestones = [1, 5, 10, 25, 50, 100];
+const activityBadgeMilestones = [1, 5, 10, 25];
+const partnerBadgeMilestones = [1, 5, 10, 25];
+
 const activityOptions: { label: string; value: RiderActivity }[] = [
   { label: "OHV / Ride", value: "ohv" },
   { label: "Hiking", value: "hiking" },
   { label: "Run", value: "run" },
   { label: "Walk", value: "walk" },
 ];
+
+function buildAchievements(rideCard: RiderRideCard, groupRides: number): Achievement[] {
+  const activityCounts = {
+    hiking: rideCard.completed_hikes,
+    run: rideCard.completed_runs,
+    walk: rideCard.completed_walks,
+  };
+  const activityLabels = {
+    hiking: "Hike",
+    run: "Run",
+    walk: "Walk",
+  };
+
+  return [
+    ...trailBadgeMilestones.map((target) => ({
+      badgeKey: `trail_${target}`,
+      label: `${target} Trail Finisher`,
+      category: "trail",
+      current: rideCard.completed_trails,
+      target,
+    })),
+    ...(["hiking", "run", "walk"] as const).flatMap((activity) =>
+      activityBadgeMilestones.map((target) => ({
+        badgeKey: `${activity}_${target}`,
+        label: `${target} ${activityLabels[activity]} Badge`,
+        category: activity,
+        current: activityCounts[activity],
+        target,
+      })),
+    ),
+    {
+      badgeKey: "group_ride_1",
+      label: "Group Ride Starter",
+      category: "community",
+      current: groupRides,
+      target: 1,
+    },
+    {
+      badgeKey: "group_ride_5",
+      label: "Group Ride Regular",
+      category: "community",
+      current: groupRides,
+      target: 5,
+    },
+    ...partnerBadgeMilestones.map((target) => ({
+      badgeKey: `partner_visit_${target}`,
+      label: `${target} Partner Visit Badge`,
+      category: "partner",
+      current: rideCard.partner_visits,
+      target,
+    })),
+  ];
+}
+
+function getCategoryLabel(category: string) {
+  const labels: Record<string, string> = {
+    trail: "Trail",
+    hiking: "Hike",
+    run: "Run",
+    walk: "Walk",
+    community: "Group",
+    partner: "Partner",
+  };
+  return labels[category] || category;
+}
 
 export function RiderDashboard({ accessToken }: Props) {
   const [rideCard, setRideCard] = useState<RiderRideCard | null>(null);
@@ -41,6 +118,26 @@ export function RiderDashboard({ accessToken }: Props) {
     () => rider?.progress.filter((item) => item.status === "completed") || [],
     [rider],
   );
+  const groupRideCount = useMemo(
+    () => completedProgress.filter((item) => item.is_group_ride).length,
+    [completedProgress],
+  );
+  const achievements = useMemo(
+    () => (rideCard ? buildAchievements(rideCard, groupRideCount) : []),
+    [rideCard, groupRideCount],
+  );
+  const earnedBadgeKeys = useMemo(
+    () => new Set(rideCard?.badges.map((badge) => badge.badge_key) || []),
+    [rideCard],
+  );
+  const lockedAchievements = achievements.filter(
+    (achievement) => !earnedBadgeKeys.has(achievement.badgeKey),
+  );
+  const nextAchievements = lockedAchievements
+    .filter((achievement) => achievement.current < achievement.target)
+    .sort((a, b) => a.target - a.current - (b.target - b.current))
+    .slice(0, 4);
+  const earnedBadgeLookup = new Map(rideCard?.badges.map((badge) => [badge.badge_key, badge]));
 
   async function refreshRideCard() {
     const nextRideCard = await getRiderRideCard(accessToken);
@@ -157,13 +254,41 @@ export function RiderDashboard({ accessToken }: Props) {
           <p>
             Veteran verification: <strong>{rider.veteran_verification_status}</strong>
           </p>
+          <div className="rider-achievement-summary">
+            <strong>{rideCard.badges.length}</strong>
+            <span>badges earned</span>
+          </div>
           <div className="rider-badge-grid">
-            {rideCard.badges.length ? (
-              rideCard.badges.map((badge) => (
-                <span key={badge.id}>{badge.label}</span>
+            {achievements
+              .filter((achievement) => earnedBadgeKeys.has(achievement.badgeKey))
+              .map((achievement) => (
+                <BadgeCard
+                  achievement={achievement}
+                  earnedAt={earnedBadgeLookup.get(achievement.badgeKey)?.earned_at}
+                  isEarned
+                  key={achievement.badgeKey}
+                />
+              ))}
+            {!rideCard.badges.length ? (
+              <p className="field-help">Finish your first trail to unlock the first badge.</p>
+            ) : null}
+          </div>
+        </article>
+
+        <article className="dashboard-card">
+          <p className="eyebrow">Next badges</p>
+          <h2>Keep riding</h2>
+          <div className="rider-next-badge-list">
+            {nextAchievements.length ? (
+              nextAchievements.map((achievement) => (
+                <BadgeCard
+                  achievement={achievement}
+                  isEarned={false}
+                  key={achievement.badgeKey}
+                />
               ))
             ) : (
-              <span>Finish your first trail to earn a badge.</span>
+              <p>All current badges are unlocked.</p>
             )}
           </div>
         </article>
@@ -302,6 +427,39 @@ function StatCard({ label, value }: { label: string; value: number }) {
     <article>
       <strong>{value}</strong>
       <span>{label}</span>
+    </article>
+  );
+}
+
+function BadgeCard({
+  achievement,
+  earnedAt,
+  isEarned,
+}: {
+  achievement: Achievement;
+  earnedAt?: string;
+  isEarned: boolean;
+}) {
+  const progress = Math.min(100, Math.round((achievement.current / achievement.target) * 100));
+  const remaining = Math.max(achievement.target - achievement.current, 0);
+
+  return (
+    <article className={`rider-badge-card ${isEarned ? "is-earned" : "is-locked"}`}>
+      <div>
+        <strong>{getCategoryLabel(achievement.category).slice(0, 2).toUpperCase()}</strong>
+        <span>{isEarned ? "Unlocked" : `${remaining} to go`}</span>
+      </div>
+      <h3>{achievement.label}</h3>
+      <div className="rider-badge-progress" aria-hidden="true">
+        <span style={{ width: `${progress}%` }} />
+      </div>
+      <p>
+        {isEarned
+          ? earnedAt
+            ? `Earned ${new Date(earnedAt).toLocaleDateString()}`
+            : "Earned"
+          : `${achievement.current} of ${achievement.target} complete`}
+      </p>
     </article>
   );
 }

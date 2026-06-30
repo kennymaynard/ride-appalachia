@@ -5,19 +5,34 @@ import { createMarketingLead } from "../lib/api";
 
 const STORAGE_KEY = "appalachia-launch-access";
 
+function readStoredValue(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredValue(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+  }
+}
+
 export function LaunchAccessPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (window.localStorage.getItem(STORAGE_KEY)) return;
+    if (readStoredValue(STORAGE_KEY)) return;
     const timer = window.setTimeout(() => setIsOpen(true), 3500);
     return () => window.clearTimeout(timer);
   }, []);
 
   function close() {
-    window.localStorage.setItem(STORAGE_KEY, "dismissed");
+    writeStoredValue(STORAGE_KEY, "dismissed");
     setIsOpen(false);
   }
 
@@ -37,7 +52,7 @@ export function LaunchAccessPopup() {
         source: "launch_popup",
         notes: "Homepage launch access signup",
       });
-      window.localStorage.setItem(STORAGE_KEY, "joined");
+      writeStoredValue(STORAGE_KEY, "joined");
       setSubmitted(true);
     } catch {
       setError("Could not save your email. Try again in a minute.");

@@ -1,21 +1,29 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   addDeal,
   addListingCalendar,
   approveBooking,
+  createCampaign,
   createBookableListing,
   createLodgingServiceRequest,
   createStripeConnectOnboarding,
   decideBookingCancellation,
   deleteDeal,
   geocodeLocation,
+  getListings,
   syncListingCalendar,
   updateBusiness,
   updateDeal,
 } from "../lib/api";
-import type { BookableListingCreateInput, Business, BusinessUpdateInput, Category } from "../lib/types";
+import type {
+  BookableListingCreateInput,
+  Business,
+  BusinessUpdateInput,
+  CampaignCreateInput,
+  Category,
+} from "../lib/types";
 
 type Props = {
   initialBusinesses: Business[];
@@ -135,6 +143,25 @@ function centsToDollars(cents: number) {
 }
 
 type RefundMode = "full" | "minus_cleaning_fee" | "half" | "none" | "custom";
+type DashboardPanel =
+  | "listing"
+  | "deals"
+  | "stats"
+  | "bookingSetup"
+  | "bookable"
+  | "calendar"
+  | "bookings"
+  | "service"
+  | "partners";
+
+function emptyPartnerDealForm() {
+  return {
+    title: "",
+    partner_business: "",
+    offer: "",
+    target_area: "",
+  };
+}
 
 export function BusinessDashboard({ initialBusinesses }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
@@ -147,6 +174,10 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [serviceForm, setServiceForm] = useState(emptyServiceForm(selectedBusiness));
   const [bookableForm, setBookableForm] = useState(emptyBookableForm(selectedBusiness));
   const [calendarForm, setCalendarForm] = useState(emptyCalendarForm);
+  const [partnerDealForm, setPartnerDealForm] = useState(emptyPartnerDealForm);
+  const [preferredServiceBusinessId, setPreferredServiceBusinessId] = useState("");
+  const [serviceDirectory, setServiceDirectory] = useState<Business[]>([]);
+  const [activePanel, setActivePanel] = useState<DashboardPanel>("listing");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
@@ -155,9 +186,25 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [savingServiceRequest, setSavingServiceRequest] = useState(false);
   const [savingBookable, setSavingBookable] = useState(false);
   const [savingCalendar, setSavingCalendar] = useState(false);
+  const [savingPartnerDeal, setSavingPartnerDeal] = useState(false);
   const [syncingCalendarId, setSyncingCalendarId] = useState(0);
   const [connectingStripe, setConnectingStripe] = useState(false);
   const [refundChoices, setRefundChoices] = useState<Record<number, { mode: RefundMode; customAmount: string }>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    getListings("all")
+      .then((listings) => {
+        if (isMounted) setServiceDirectory(listings);
+      })
+      .catch(() => {
+        if (isMounted) setServiceDirectory([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const totals = useMemo(() => {
     const dealClicks =
@@ -191,42 +238,82 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         done: profileComplete,
         label: "Profile complete",
         detail: "Business name, phone, location, photo, and description are ready.",
+        panel: "listing" as DashboardPanel,
       },
       {
         done: selectedBusiness.stripe_connect_onboarding_complete,
         label: "Stripe payouts connected",
         detail: "Connect payouts before taking paid bookings.",
+        panel: "bookingSetup" as DashboardPanel,
       },
       {
         done: listings.length > 0,
         label: "Property or bookable item added",
         detail: "Add each cabin, RV site, rental, guide service, event, or local service.",
+        panel: "bookable" as DashboardPanel,
       },
       {
         done: hasCalendar,
         label: "Calendar linked",
         detail: "Sync Airbnb, Vrbo, Booking.com, Google Calendar, or any iCal feed.",
+        panel: "calendar" as DashboardPanel,
       },
       {
         done: hasPolicy,
         label: "Refund policy set",
         detail: "Cancellation and refund rules help riders know what to expect.",
+        panel: "bookable" as DashboardPanel,
       },
       {
         done: selectedBusiness.deals.some((deal) => deal.is_active),
         label: "Deal or coupon added",
         detail: "Optional, but a launch special gives riders a reason to act.",
+        panel: "deals" as DashboardPanel,
       },
       {
         done: selectedBusiness.listing_status === "approved",
         label: "Approved for marketplace",
         detail: "Admin approval makes the listing public.",
+        panel: "listing" as DashboardPanel,
       },
     ];
   }, [selectedBusiness]);
 
   const setupCompleteCount = setupItems.filter((item) => item.done).length;
   const setupPercent = setupItems.length ? Math.round((setupCompleteCount / setupItems.length) * 100) : 0;
+  const pendingBookings = selectedBusiness?.bookings?.filter((booking) => booking.status === "requested").length ?? 0;
+  const pendingCancellations =
+    selectedBusiness?.bookings?.filter((booking) => booking.refund_status === "requested").length ?? 0;
+  const activeServiceRequests =
+    selectedBusiness?.service_requests?.filter((request) => request.status !== "closed").length ?? 0;
+  const pendingPartnerDeals =
+    selectedBusiness?.campaigns?.filter((campaign) => campaign.campaign_type === "joint_discount" && campaign.status === "pending").length ?? 0;
+  const attentionItems = [
+    pendingBookings
+      ? { label: "Booking requests", count: pendingBookings, panel: "bookings" as DashboardPanel }
+      : null,
+    pendingCancellations
+      ? { label: "Cancellation reviews", count: pendingCancellations, panel: "bookings" as DashboardPanel }
+      : null,
+    activeServiceRequests
+      ? { label: "Service requests", count: activeServiceRequests, panel: "service" as DashboardPanel }
+      : null,
+    !selectedBusiness?.stripe_connect_onboarding_complete
+      ? { label: "Payout setup", count: 1, panel: "bookingSetup" as DashboardPanel }
+      : null,
+  ].filter(Boolean) as { label: string; count: number; panel: DashboardPanel }[];
+  const notificationCount = attentionItems.reduce((sum, item) => sum + item.count, 0);
+  const panelButtons = [
+    { id: "listing" as DashboardPanel, label: "Profile & Contact", count: 0 },
+    { id: "deals" as DashboardPanel, label: "Specials", count: selectedBusiness?.deals.filter((deal) => deal.is_active).length ?? 0 },
+    { id: "stats" as DashboardPanel, label: "Clicks", count: 0 },
+    { id: "bookingSetup" as DashboardPanel, label: "Payouts", count: selectedBusiness?.stripe_connect_onboarding_complete ? 0 : 1 },
+    { id: "bookable" as DashboardPanel, label: "Bookable Items", count: selectedBusiness?.bookable_listings?.length ?? 0 },
+    { id: "calendar" as DashboardPanel, label: "Calendars", count: 0 },
+    { id: "bookings" as DashboardPanel, label: "Booking Requests", count: pendingBookings + pendingCancellations },
+    { id: "service" as DashboardPanel, label: "Service Requests", count: activeServiceRequests },
+    { id: "partners" as DashboardPanel, label: "Partner Deals", count: pendingPartnerDeals },
+  ];
 
   function chooseBusiness(nextId: number) {
     const nextBusiness = businesses.find((business) => business.id === nextId);
@@ -236,6 +323,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setServiceForm(emptyServiceForm(nextBusiness));
     setBookableForm(emptyBookableForm(nextBusiness));
     setCalendarForm(emptyCalendarForm());
+    setPartnerDealForm(emptyPartnerDealForm());
+    setPreferredServiceBusinessId("");
+    setActivePanel("listing");
     setStatus("");
     setError("");
     setGeocodeStatus("");
@@ -413,12 +503,23 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     setSavingServiceRequest(true);
     setError("");
     setStatus("");
+    const preferredProvider = serviceDirectory.find(
+      (business) => business.id.toString() === preferredServiceBusinessId,
+    );
 
     try {
       const serviceRequest = await createLodgingServiceRequest(
         {
           business_id: selectedBusiness.id,
           ...serviceForm,
+          notes: [
+            preferredProvider
+              ? `Preferred provider: ${preferredProvider.name} (${preferredProvider.phone}, ${preferredProvider.owner_email || "no owner email"})`
+              : "",
+            serviceForm.notes,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         },
         selectedBusiness.owner_access_token,
       );
@@ -427,7 +528,12 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         service_requests: [serviceRequest, ...(selectedBusiness.service_requests || [])],
       });
       setServiceForm(emptyServiceForm(selectedBusiness));
-      setStatus("Lodging service request sent. We will connect you with cleaner options.");
+      setPreferredServiceBusinessId("");
+      setStatus(
+        preferredProvider
+          ? `Service request sent with ${preferredProvider.name} marked as preferred.`
+          : "Service request sent. We will connect you with local options.",
+      );
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -436,6 +542,44 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       );
     } finally {
       setSavingServiceRequest(false);
+    }
+  }
+
+  async function publishPartnerDeal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedBusiness) return;
+
+    setSavingPartnerDeal(true);
+    setError("");
+    setStatus("");
+
+    try {
+      const payload: CampaignCreateInput = {
+        business_id: selectedBusiness.id,
+        campaign_type: "joint_discount",
+        title: partnerDealForm.title,
+        description: [
+          `Partner business: ${partnerDealForm.partner_business}`,
+          `Shared rider offer: ${partnerDealForm.offer}`,
+        ].join("\n"),
+        target_area: partnerDealForm.target_area,
+        monthly_budget: 0,
+      };
+      const campaign = await createCampaign(payload, selectedBusiness.owner_access_token);
+      replaceBusiness({
+        ...selectedBusiness,
+        campaigns: [campaign, ...(selectedBusiness.campaigns || [])],
+      });
+      setPartnerDealForm(emptyPartnerDealForm());
+      setStatus("Partner deal request saved for admin review.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to save partner deal request.",
+      );
+    } finally {
+      setSavingPartnerDeal(false);
     }
   }
 
@@ -694,18 +838,70 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         </div>
         <div className="setup-checklist-grid">
           {setupItems.map((item) => (
-            <article className={item.done ? "is-complete" : ""} key={item.label}>
+            <button
+              className={`${item.done ? "is-complete" : ""} ${activePanel === item.panel ? "is-active" : ""}`}
+              key={item.label}
+              onClick={() => setActivePanel(item.panel)}
+              type="button"
+            >
               <span>{item.done ? "Done" : "Next"}</span>
               <h3>{item.label}</h3>
               <p>{item.detail}</p>
-            </article>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="dashboard-card business-alert-card">
+        <div>
+          <p className="eyebrow">Needs attention</p>
+          <h2>
+            Notifications
+            {notificationCount ? <span className="notification-dot">{notificationCount}</span> : null}
+          </h2>
+        </div>
+        <div className="business-alert-list">
+          {attentionItems.length ? (
+            attentionItems.map((item) => (
+              <button key={item.label} type="button" onClick={() => setActivePanel(item.panel)}>
+                <strong>{item.count}</strong>
+                <span>{item.label}</span>
+              </button>
+            ))
+          ) : (
+            <p>No active booking, service, or payout alerts.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="dashboard-card business-workspace-card">
+        <div>
+          <p className="eyebrow">Workspace</p>
+          <h2>Open one tool at a time</h2>
+        </div>
+        <div className="business-panel-buttons">
+          {panelButtons.map((button) => (
+            <button
+              className={activePanel === button.id ? "is-active" : ""}
+              key={button.id}
+              onClick={() => setActivePanel(button.id)}
+              type="button"
+            >
+              <span>{button.label}</span>
+              {button.count ? <strong>{button.count}</strong> : null}
+            </button>
           ))}
         </div>
       </section>
 
       <div className="dashboard-grid business-dashboard-grid">
+        {activePanel === "listing" ? (
         <form className="dashboard-card" onSubmit={saveListing}>
-          <h2>Edit Listing</h2>
+          <h2>Profile & Contact</h2>
+          <p className="field-help">
+            This email is the business login email. This phone is the public contact
+            number and the number to use for booking or service text alerts once SMS is connected.
+          </p>
           <label>
             Business name
             <input
@@ -860,7 +1056,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             {savingListing ? "Saving" : "Save Listing"}
           </button>
         </form>
+        ) : null}
 
+        {activePanel === "deals" ? (
         <form className="dashboard-card" onSubmit={publishDeal}>
           <h2>Specials / Coupons</h2>
           <label>
@@ -922,7 +1120,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             )}
           </div>
         </form>
+        ) : null}
 
+        {activePanel === "stats" ? (
         <section className="dashboard-card stats-card">
           <h2>Basic Clicks</h2>
           <div>
@@ -943,7 +1143,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           </div>
           <a href={`/business/${selectedBusiness.slug}`}>View public listing</a>
         </section>
+        ) : null}
 
+        {activePanel === "bookingSetup" ? (
         <section className="dashboard-card booking-dashboard-card">
           <h2>Property Booking Setup</h2>
           <p className="field-help">
@@ -965,7 +1167,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             </button>
           </div>
         </section>
+        ) : null}
 
+        {activePanel === "bookable" ? (
         <form className="dashboard-card" onSubmit={publishBookableListing}>
           <h2>Add Property / Booking Item</h2>
           <p className="field-help">
@@ -1108,7 +1312,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             {savingBookable ? "Adding..." : "Add Property"}
           </button>
         </form>
+        ) : null}
 
+        {activePanel === "calendar" ? (
         <form className="dashboard-card" onSubmit={addCalendarLink}>
           <h2>Calendar Sync</h2>
           <p className="field-help">
@@ -1200,7 +1406,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             )}
           </div>
         </form>
+        ) : null}
 
+        {activePanel === "bookings" ? (
         <section className="dashboard-card">
           <h2>Booking Requests</h2>
           <div className="deal-list">
@@ -1300,14 +1508,31 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             )}
           </div>
         </section>
+        ) : null}
 
-        {selectedBusiness.category === "lodging" ? (
+        {activePanel === "service" && selectedBusiness.category === "lodging" ? (
           <form className="dashboard-card" onSubmit={requestLodgingService}>
             <h2>Lodging Help</h2>
             <p className="field-help">
               Request cleaner, turnover, laundry, hot tub, trash, lawn, or
               maintenance help from local service providers.
             </p>
+            <label>
+              Preferred provider
+              <select
+                value={preferredServiceBusinessId}
+                onChange={(event) => setPreferredServiceBusinessId(event.target.value)}
+              >
+                <option value="">No preference / find best match</option>
+                {serviceDirectory
+                  .filter((business) => business.id !== selectedBusiness.id)
+                  .map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name} - {business.category} - {business.location}
+                    </option>
+                  ))}
+              </select>
+            </label>
             <label>
               Service needed
               <select
@@ -1410,6 +1635,86 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                 ))
               ) : (
                 <p>No lodging help requests yet.</p>
+              )}
+            </div>
+          </form>
+        ) : null}
+
+        {activePanel === "partners" ? (
+          <form className="dashboard-card" onSubmit={publishPartnerDeal}>
+            <h2>Partner Deals</h2>
+            <p className="field-help">
+              Create a shared rider discount with another local business. Admin can
+              review and help connect both sides before it goes live.
+            </p>
+            <label>
+              Deal title
+              <input
+                required
+                placeholder="Cabin + dinner weekend bundle"
+                value={partnerDealForm.title}
+                onChange={(event) =>
+                  setPartnerDealForm({ ...partnerDealForm, title: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Partner business
+              <input
+                required
+                list="business-partner-options"
+                placeholder="Business name"
+                value={partnerDealForm.partner_business}
+                onChange={(event) =>
+                  setPartnerDealForm({ ...partnerDealForm, partner_business: event.target.value })
+                }
+              />
+              <datalist id="business-partner-options">
+                {serviceDirectory
+                  .filter((business) => business.id !== selectedBusiness.id)
+                  .map((business) => (
+                    <option key={business.id} value={business.name} />
+                  ))}
+              </datalist>
+            </label>
+            <label>
+              Shared rider offer
+              <textarea
+                required
+                placeholder="Example: riders who book a cabin get 10% off dinner, and dinner customers get a cabin promo code."
+                value={partnerDealForm.offer}
+                onChange={(event) =>
+                  setPartnerDealForm({ ...partnerDealForm, offer: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Ride area / town
+              <input
+                value={partnerDealForm.target_area}
+                onChange={(event) =>
+                  setPartnerDealForm({ ...partnerDealForm, target_area: event.target.value })
+                }
+              />
+            </label>
+            <button type="submit" disabled={savingPartnerDeal}>
+              {savingPartnerDeal ? "Saving..." : "Request Partner Deal"}
+            </button>
+
+            <div className="deal-list">
+              <h3>Joint discount requests</h3>
+              {selectedBusiness.campaigns?.filter((campaign) => campaign.campaign_type === "joint_discount").length ? (
+                selectedBusiness.campaigns
+                  .filter((campaign) => campaign.campaign_type === "joint_discount")
+                  .map((campaign) => (
+                    <article key={campaign.id}>
+                      <strong>{campaign.title}</strong>
+                      <span>{campaign.status}</span>
+                      <p>{campaign.description}</p>
+                    </article>
+                  ))
+              ) : (
+                <p>No partner deal requests yet.</p>
               )}
             </div>
           </form>
