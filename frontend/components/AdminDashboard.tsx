@@ -687,11 +687,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                   />
                 </label>
                 <label>
-                  New login passcode
+                  New login password
                   <input
                     autoComplete="new-password"
                     minLength={4}
-                    placeholder="Leave blank to keep current passcode"
+                    placeholder="Leave blank to keep current password"
                     type="password"
                     value={editForm.owner_passcode || ""}
                     onChange={(event) => setEditForm({ ...editForm, owner_passcode: event.target.value })}

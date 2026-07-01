@@ -85,13 +85,13 @@ def login_business(
 
     if business.owner_passcode_hash:
         if not verify_passcode(owner_passcode, business.owner_passcode_hash):
-            raise HTTPException(status_code=401, detail="Invalid business passcode")
+            raise HTTPException(status_code=401, detail="Invalid business password")
     elif digits_only(business.phone)[-4:] == owner_passcode:
         business.owner_passcode_hash = hash_passcode(owner_passcode)
     else:
         raise HTTPException(
             status_code=401,
-            detail="Invalid business passcode. Existing listings can use the last 4 digits of the business phone number once to set it.",
+            detail="Invalid business password. Existing listings can use the last 4 digits of the business phone number once to set it.",
         )
 
     if not business.owner_access_token:

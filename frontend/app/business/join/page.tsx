@@ -315,11 +315,11 @@ export default function JoinPage() {
             />
           </label>
           <label>
-            Login passcode
+            Login password
             <input
               autoComplete="new-password"
               minLength={4}
-              placeholder="Create a passcode"
+              placeholder="Create a password"
               required
               type="password"
               value={form.owner_passcode}

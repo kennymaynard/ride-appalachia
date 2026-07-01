@@ -311,7 +311,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   ].filter(Boolean) as { label: string; count: number; panel: DashboardPanel }[];
   const notificationCount = attentionItems.reduce((sum, item) => sum + item.count, 0);
   const panelButtons = [
-    { id: "listing" as DashboardPanel, label: "Profile & Contact", count: 0 },
+    { id: "listing" as DashboardPanel, label: "Settings & Password", count: 0 },
     { id: "deals" as DashboardPanel, label: "Specials", count: selectedBusiness?.deals.filter((deal) => deal.is_active).length ?? 0 },
     { id: "stats" as DashboardPanel, label: "Clicks", count: 0 },
     { id: "bookingSetup" as DashboardPanel, label: "Payouts", count: selectedBusiness?.stripe_connect_onboarding_complete ? 0 : 1 },
@@ -916,10 +916,10 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       <div className="dashboard-grid business-dashboard-grid">
         {activePanel === "listing" ? (
         <form className="dashboard-card" onSubmit={saveListing}>
-          <h2>Profile & Contact</h2>
+          <h2>Business Settings</h2>
           <p className="field-help">
-            This email is the business login email. This phone is the public contact
-            number and the number to use for booking or service text alerts once SMS is connected.
+            This email and password control business login. This phone is the public
+            contact number and the number to use for booking or service text alerts once SMS is connected.
           </p>
           <label>
             Business name
@@ -943,11 +943,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             />
           </label>
           <label>
-            New login passcode
+            Change password
             <input
               autoComplete="new-password"
               minLength={4}
-              placeholder="Leave blank to keep current passcode"
+              placeholder="Leave blank to keep current password"
               type="password"
               value={listingForm.owner_passcode}
               onChange={(event) =>
@@ -955,6 +955,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
               }
             />
           </label>
+          <p className="field-help">
+            Enter a new password here and save settings to change it.
+          </p>
           <label>
             Category
             <select

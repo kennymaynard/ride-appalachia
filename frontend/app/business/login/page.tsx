@@ -43,8 +43,8 @@ export default function BusinessLoginPage() {
         <p className="eyebrow">Business login</p>
         <h1>Open your business portal.</h1>
         <p>
-          Enter the owner email and passcode for the business. Existing listings
-          without a passcode can use the last 4 digits of the public business phone once.
+          Enter the owner email and password for the business. Existing listings
+          without a password can use the last 4 digits of the public business phone once.
         </p>
       </section>
 
@@ -61,11 +61,11 @@ export default function BusinessLoginPage() {
             />
           </label>
           <label>
-            Passcode
+            Password
             <input
               autoComplete="current-password"
               minLength={4}
-              placeholder="Business passcode"
+              placeholder="Business password"
               required
               type="password"
               value={ownerPasscode}

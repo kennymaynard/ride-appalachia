@@ -22,7 +22,7 @@ export default async function BusinessAccessPage({ params }: Props) {
         <h1>Manage your Appalachia Offroad listing.</h1>
         <p>
           This private access link opens the dashboard for this business. Keep
-          your login passcode private and update it from your profile when needed.
+          your login password private and update it from Business Settings when needed.
         </p>
         <Link href={`/business/${business.slug}`}>View public listing</Link>
       </section>

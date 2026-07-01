@@ -402,7 +402,7 @@ class BusinessCreate(BusinessBase):
     def validate_owner_passcode(cls, value: str) -> str:
         stripped = value.strip()
         if len(stripped) < 4:
-            raise ValueError("Business passcode must be at least 4 characters")
+            raise ValueError("Business password must be at least 4 characters")
         return stripped
 
 
@@ -427,7 +427,7 @@ class BusinessUpdate(BaseModel):
             return value
         stripped = value.strip()
         if len(stripped) < 4:
-            raise ValueError("Business passcode must be at least 4 characters")
+            raise ValueError("Business password must be at least 4 characters")
         return stripped
 
     @field_validator("category")
@@ -519,7 +519,7 @@ class BusinessLoginRequest(BaseModel):
     def validate_login_passcode(cls, value: str) -> str:
         stripped = value.strip()
         if len(stripped) < 4:
-            raise ValueError("Business passcode must be at least 4 characters")
+            raise ValueError("Business password must be at least 4 characters")
         return stripped
 
 
