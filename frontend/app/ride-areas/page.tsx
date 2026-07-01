@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RideAreaFinder } from "../../components/RideAreaFinder";
+import { RideAreaGrid } from "../../components/RideAreaGrid";
 import { RideAreaMap } from "../../components/RideAreaMap";
 import { rideAreas, trailReviews } from "../../lib/sample-data";
 import { getListings } from "../../lib/api";
@@ -19,6 +20,14 @@ export default async function RideAreasPage() {
           lodging, food, fuel, rentals, repairs, and deals around the trip.
         </p>
         <Link href="/map-sources">Open map source checklist</Link>
+      </section>
+
+      <section className="page-section ride-area-browse-section">
+        <div className="section-heading">
+          <p className="eyebrow">Ride cards</p>
+          <h2>Know the trip before you tap.</h2>
+        </div>
+        <RideAreaGrid areas={rideAreas.slice(0, 9)} />
       </section>
 
       <RideAreaFinder areas={rideAreas} listings={listings} />

@@ -10,10 +10,11 @@ type Props = {
 export function ListingCard({ business }: Props) {
   const activeDeal = business.deals.find((deal) => deal.is_active);
   const isSponsored = business.campaigns.some((campaign) => campaign.status === "active");
+  const isHeroVerified = business.is_featured;
   const listingBadge = isSponsored
     ? "Sponsored"
-    : business.is_featured
-      ? "Featured"
+    : isHeroVerified
+      ? "Hero Verified"
       : business.subscription_tier === "veteran_owned"
         ? "Veteran Owned"
         : business.category;
@@ -33,7 +34,10 @@ export function ListingCard({ business }: Props) {
           <span>{business.category}</span>
           <span>{business.location}</span>
         </div>
-        <h3>{business.name}</h3>
+        <h3>
+          {business.name}
+          {isHeroVerified ? <span className="inline-hero-badge">Hero Verified</span> : null}
+        </h3>
         <p>{business.description}</p>
         {activeDeal ? (
           <div className="deal-pill">

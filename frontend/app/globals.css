@@ -739,6 +739,31 @@ p {
   box-shadow: none;
 }
 
+.home-hero-actions a:nth-child(3) {
+  border-color: rgba(72, 145, 214, 0.65);
+  background: rgba(72, 145, 214, 0.18);
+  color: #dbeeff;
+  box-shadow: none;
+}
+
+.home-feature-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+.home-feature-strip span {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.44);
+  color: var(--soft);
+  padding: 0.48rem 0.68rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .home-hero-panel {
   position: relative;
   z-index: 1;
@@ -801,6 +826,53 @@ p {
     linear-gradient(135deg, rgba(242, 106, 27, 0.08), rgba(255, 255, 255, 0.03)),
     rgba(10, 10, 10, 0.92);
   padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.trip-flow-section {
+  grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.trip-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.trip-flow-grid article {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.trip-flow-grid span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.4rem;
+  background: var(--orange);
+  color: #160801;
+  font-weight: 950;
+}
+
+.trip-flow-grid h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trip-flow-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 760;
+  line-height: 1.35;
 }
 
 .home-section-heading {
@@ -2722,8 +2794,27 @@ p {
 }
 
 .listing-body h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
   margin: 0.7rem 0 0;
   font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.inline-hero-badge {
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+  border: 1px solid rgba(98, 168, 120, 0.58);
+  border-radius: 999px;
+  background: rgba(98, 168, 120, 0.14);
+  color: #b8f3ce;
+  padding: 0 0.5rem;
+  font-size: 0.62rem;
   font-weight: 950;
   line-height: 1;
   text-transform: uppercase;
@@ -2755,6 +2846,67 @@ p {
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
   margin-top: 1rem;
+}
+
+.marketplace-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  width: min(94rem, calc(100% - 2rem));
+  margin: 1rem auto 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(72, 145, 214, 0.08), rgba(242, 106, 27, 0.05)),
+    rgba(10, 10, 10, 0.92);
+  padding: 1rem;
+}
+
+.marketplace-filter-panel h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+  font-weight: 950;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.marketplace-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.marketplace-filter-row a {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--soft);
+  padding: 0 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.marketplace-filter-row a.is-active {
+  border-color: rgba(242, 106, 27, 0.72);
+  background: var(--orange);
+  color: #160801;
+}
+
+.marketplace-filter-row a.hero-filter {
+  border-color: rgba(98, 168, 120, 0.48);
+  color: #b8f3ce;
+}
+
+.marketplace-filter-row a.hero-filter.is-active {
+  background: #78d89c;
+  color: #07120b;
 }
 
 .page {
@@ -4939,6 +5091,35 @@ button.tier-card.is-selected {
   line-height: 1.42;
 }
 
+.ride-fact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.ride-fact-grid div {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.42rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.65rem;
+}
+
+.ride-fact-grid dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ride-fact-grid dd {
+  margin: 0.18rem 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 950;
+  line-height: 1.05;
+}
+
 .ride-area-tags {
   display: flex;
   flex-wrap: wrap;
@@ -6335,6 +6516,8 @@ button.tier-card.is-selected {
   .homepage-phone-proof,
   .homepage-pricing,
   .home-hero,
+  .trip-flow-section,
+  .marketplace-filter-panel,
   .business-owner-section,
   .coverage-section,
   .trail-pack-header,
@@ -6422,6 +6605,7 @@ button.tier-card.is-selected {
   .homepage-pricing-grid,
   .homepage-testimonials,
   .home-card-grid,
+  .trip-flow-grid,
   .trust-card-grid,
   .testimonial-grid,
   .phone-mockup-grid,
@@ -6455,6 +6639,10 @@ button.tier-card.is-selected {
   .detail-hero,
   .detail-copy dl {
     grid-template-columns: 1fr;
+  }
+
+  .marketplace-filter-row {
+    justify-content: flex-start;
   }
 
   .admin-stats,

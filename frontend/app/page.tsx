@@ -13,6 +13,12 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const quickRideTowns = ["Rush KY", "Harlan KY", "Matewan WV", "Pikeville KY"];
+const planningFeatures = ["Trails", "Lodging", "Rentals", "Food", "Fuel", "Repairs", "Deals", "Offline packs"];
+const planningSteps = [
+  { label: "Search", detail: "Start with a ride town or trail system." },
+  { label: "Choose dates", detail: "Line up lodging, food, fuel, and backup." },
+  { label: "Book & save", detail: "Keep the itinerary ready before service drops." },
+];
 
 export default async function Home() {
   const listings = await getListings("all");
@@ -21,15 +27,21 @@ export default async function Home() {
     <main className="home-base">
       <section className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero-copy">
-          <p className="eyebrow">Start your ride plan</p>
-          <h1 id="home-hero-title">Where are you riding?</h1>
+          <p className="eyebrow">Appalachia trip command center</p>
+          <h1 id="home-hero-title">Plan your entire off-road adventure.</h1>
           <p>
-            Search a trail town, see nearby trails, then add lodging, food,
-            fuel, repair, and deals to one saved trip.
+            Discover trails, build an itinerary, find rider-friendly stops,
+            book the right place to stay, and save the plan before you lose service.
           </p>
+          <div className="home-feature-strip" aria-label="What riders can plan">
+            {planningFeatures.map((feature) => (
+              <span key={feature}>{feature}</span>
+            ))}
+          </div>
           <div className="home-hero-actions" aria-label="Primary actions">
-            <Link href="#ride-search">Search Ride Areas</Link>
             <Link href="/planner">Plan a Trip</Link>
+            <Link href="#ride-search">Search Ride Areas</Link>
+            <Link href="/marketplace">Browse Stops</Link>
           </div>
         </div>
         <div className="home-hero-panel" aria-label="Popular ride towns">
@@ -41,6 +53,22 @@ export default async function Home() {
               <span>Popular search</span>
               <strong>{town}</strong>
             </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-section trip-flow-section" aria-labelledby="trip-flow-title">
+        <div className="home-section-heading">
+          <p className="eyebrow">Plan your ride</p>
+          <h2 id="trip-flow-title">Search. Build. Book. Ride.</h2>
+        </div>
+        <div className="trip-flow-grid">
+          {planningSteps.map((step, index) => (
+            <article key={step.label}>
+              <span>{index + 1}</span>
+              <h3>{step.label}</h3>
+              <p>{step.detail}</p>
+            </article>
           ))}
         </div>
       </section>
