@@ -17,6 +17,11 @@ import {
   updateBusiness,
   updateDeal,
 } from "../lib/api";
+import {
+  formatPhoneNumber,
+  isValidPhoneNumber,
+  normalizeWebsiteUrl,
+} from "../lib/contact-format";
 import type {
   BookableListingCreateInput,
   Business,
@@ -364,17 +369,26 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       const hasLatitude = Boolean(listingForm.latitude.trim());
       const hasLongitude = Boolean(listingForm.longitude.trim());
 
+      if (!isValidPhoneNumber(listingForm.phone)) {
+        setError("Enter a 10-digit phone number so riders can reach your business.");
+        setSavingListing(false);
+        return;
+      }
+
       if (
         hasLatitude !== hasLongitude ||
         (hasLatitude && latitude === undefined) ||
         (hasLongitude && longitude === undefined)
       ) {
         setError("Enter both valid latitude and longitude numbers, or leave both blank.");
+        setSavingListing(false);
         return;
       }
 
       const payload: BusinessUpdateInput = {
         ...listingForm,
+        phone: formatPhoneNumber(listingForm.phone),
+        website_url: normalizeWebsiteUrl(listingForm.website_url),
         latitude,
         longitude,
       };
@@ -944,10 +958,16 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           <label>
             Phone
             <input
+              inputMode="tel"
+              pattern="1?[ .-]?[(]?[0-9]{3}[)]?[ .-]?[0-9]{3}[ .-]?[0-9]{4}"
               required
+              title="Enter a 10-digit phone number."
               value={listingForm.phone}
               onChange={(event) =>
                 setListingForm({ ...listingForm, phone: event.target.value })
+              }
+              onBlur={() =>
+                setListingForm({ ...listingForm, phone: formatPhoneNumber(listingForm.phone) })
               }
             />
           </label>
@@ -994,9 +1014,17 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           <label>
             Website
             <input
+              inputMode="url"
+              placeholder="yourbusiness.com"
               value={listingForm.website_url}
               onChange={(event) =>
                 setListingForm({ ...listingForm, website_url: event.target.value })
+              }
+              onBlur={() =>
+                setListingForm({
+                  ...listingForm,
+                  website_url: normalizeWebsiteUrl(listingForm.website_url),
+                })
               }
             />
           </label>

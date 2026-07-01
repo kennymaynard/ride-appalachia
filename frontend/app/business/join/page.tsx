@@ -2,6 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createBusiness, createCheckout, geocodeLocation } from "../../../lib/api";
+import {
+  formatPhoneNumber,
+  isValidPhoneNumber,
+  normalizeWebsiteUrl,
+} from "../../../lib/contact-format";
 import { partnerTiers } from "../../../lib/sample-data";
 import type { BusinessCreateInput, Category, Tier } from "../../../lib/types";
 
@@ -19,7 +24,7 @@ const categoryPhotos: Record<Exclude<Category, "deals">, string> = {
 const initialForm = {
   name: "",
   owner_email: "",
-  category: "lodging" as Exclude<Category, "deals">,
+  category: "food" as Exclude<Category, "deals">,
   phone: "",
   location: "",
   latitude: "",
@@ -30,6 +35,19 @@ const initialForm = {
 };
 
 const tierIds = partnerTiers.map((item) => item.id);
+const standardCategories: Array<Exclude<Category, "deals">> = [
+  "food",
+  "rentals",
+  "repairs",
+  "fuel",
+];
+const categoryLabels: Record<Exclude<Category, "deals">, string> = {
+  lodging: "Lodging",
+  food: "Food",
+  rentals: "Rentals",
+  repairs: "Repairs",
+  fuel: "Fuel",
+};
 
 const tierBestFor: Record<Tier["id"], string> = {
   local_business: "Best for food, fuel, repair, recovery, outfitters, and local shops.",
@@ -72,7 +90,7 @@ export default function JoinPage() {
     const params = new URLSearchParams(window.location.search);
     const requestedTier = params.get("tier") as Tier["id"] | null;
     if (requestedTier && tierIds.includes(requestedTier)) {
-      setTier(requestedTier);
+      selectTier(requestedTier);
     }
     if (params.get("checkout") === "cancelled") {
       setCheckoutNotice(
@@ -86,6 +104,19 @@ export default function JoinPage() {
     value: string,
   ) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function selectTier(nextTier: Tier["id"]) {
+    setTier(nextTier);
+    setForm((current) => ({
+      ...current,
+      category:
+        nextTier === "lodging_partner"
+          ? "lodging"
+          : current.category === "lodging"
+            ? "food"
+            : current.category,
+    }));
   }
 
   function useUploadedPhoto(file?: File) {
@@ -136,6 +167,12 @@ export default function JoinPage() {
     const hasLatitude = Boolean(form.latitude.trim());
     const hasLongitude = Boolean(form.longitude.trim());
 
+    if (!isValidPhoneNumber(form.phone)) {
+      setIsSubmitting(false);
+      setError("Enter a 10-digit phone number so riders can reach your business.");
+      return;
+    }
+
     if (
       hasLatitude !== hasLongitude ||
       (hasLatitude && latitude === undefined) ||
@@ -151,12 +188,12 @@ export default function JoinPage() {
       slug: slugify(form.name),
       category: form.category,
       description: form.description.trim(),
-      phone: form.phone.trim(),
+      phone: formatPhoneNumber(form.phone),
       location: form.location.trim(),
       latitude,
       longitude,
       photo_url: form.photo_url || categoryPhotos[form.category],
-      website_url: form.website_url.trim(),
+      website_url: normalizeWebsiteUrl(form.website_url),
       subscription_tier: tier,
       owner_email: form.owner_email.trim(),
     };
@@ -217,7 +254,7 @@ export default function JoinPage() {
             className={item.id === tier ? "tier-card is-selected" : "tier-card"}
             key={item.id}
             type="button"
-            onClick={() => setTier(item.id)}
+            onClick={() => selectTier(item.id)}
           >
             <div>
               <p>{item.name}</p>
@@ -284,20 +321,28 @@ export default function JoinPage() {
                 updateForm("category", event.target.value as Exclude<Category, "deals">)
               }
             >
-              <option value="lodging">Lodging</option>
-              <option value="food">Food</option>
-              <option value="rentals">Rentals</option>
-              <option value="repairs">Repairs</option>
-              <option value="fuel">Fuel</option>
+              {tier === "lodging_partner" ? (
+                <option value="lodging">Lodging</option>
+              ) : (
+                standardCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {categoryLabels[category]}
+                  </option>
+                ))
+              )}
             </select>
           </label>
           <label>
             Phone
             <input
+              inputMode="tel"
+              pattern="1?[ .-]?[(]?[0-9]{3}[)]?[ .-]?[0-9]{3}[ .-]?[0-9]{4}"
               placeholder="(606) 555-0142"
               required
+              title="Enter a 10-digit phone number."
               value={form.phone}
               onChange={(event) => updateForm("phone", event.target.value)}
+              onBlur={() => updateForm("phone", formatPhoneNumber(form.phone))}
             />
           </label>
           <label>
@@ -340,10 +385,11 @@ export default function JoinPage() {
           <label>
             Website or booking link
             <input
-              placeholder="https://yourbusiness.com"
-              type="url"
+              inputMode="url"
+              placeholder="yourbusiness.com"
               value={form.website_url}
               onChange={(event) => updateForm("website_url", event.target.value)}
+              onBlur={() => updateForm("website_url", normalizeWebsiteUrl(form.website_url))}
             />
           </label>
           <p className="field-help">

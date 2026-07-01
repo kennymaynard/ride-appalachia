@@ -2,6 +2,11 @@
 
 import { FormEvent, useState } from "react";
 import { createMarketingLead } from "../lib/api";
+import {
+  formatPhoneNumber,
+  isValidPhoneNumber,
+  normalizeWebsiteUrl,
+} from "../lib/contact-format";
 
 export function BusinessLeadForm() {
   const [status, setStatus] = useState<"idle" | "saving" | "sent">("idle");
@@ -12,6 +17,13 @@ export function BusinessLeadForm() {
     setError("");
     setStatus("saving");
     const form = new FormData(event.currentTarget);
+    const phone = String(form.get("phone") || "");
+
+    if (!isValidPhoneNumber(phone)) {
+      setError("Enter a 10-digit phone number so we can contact your business.");
+      setStatus("idle");
+      return;
+    }
 
     try {
       await createMarketingLead({
@@ -20,8 +32,8 @@ export function BusinessLeadForm() {
         business_name: String(form.get("business_name") || ""),
         category: String(form.get("category") || ""),
         area: String(form.get("area") || ""),
-        phone: String(form.get("phone") || ""),
-        website: String(form.get("website") || ""),
+        phone: formatPhoneNumber(phone),
+        website: normalizeWebsiteUrl(String(form.get("website") || "")),
         source: "business_check_availability",
         notes: "Business asked to check founding partner availability.",
       });
@@ -59,7 +71,14 @@ export function BusinessLeadForm() {
       </label>
       <label>
         Phone
-        <input required name="phone" placeholder="Best number" />
+        <input
+          inputMode="tel"
+          name="phone"
+          pattern="1?[ .-]?[(]?[0-9]{3}[)]?[ .-]?[0-9]{3}[ .-]?[0-9]{4}"
+          placeholder="(606) 555-0142"
+          required
+          title="Enter a 10-digit phone number."
+        />
       </label>
       <label>
         Email
@@ -67,7 +86,7 @@ export function BusinessLeadForm() {
       </label>
       <label>
         Website or Facebook
-        <input name="website" placeholder="https://..." />
+        <input inputMode="url" name="website" placeholder="yourbusiness.com or Facebook link" />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       {status === "sent" ? (
