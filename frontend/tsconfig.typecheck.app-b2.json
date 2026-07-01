@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.typecheck.json",
+  "include": [
+    "env.d.ts",
+    "next-env.d.ts",
+    "app/ride-areas/page.tsx",
+    "app/rider-tools/page.tsx",
+    "app/rider/access/[token]/page.tsx",
+    "app/rider/login/page.tsx",
+    "app/royal-blue-trails/page.tsx",
+    "app/rush-business-partners/page.tsx",
+    "app/rush-ky-atv-trails/page.tsx",
+    "app/terms/page.tsx",
+    "app/trail-talk/page.tsx"
+  ]
+}

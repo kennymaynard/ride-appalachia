@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.typecheck.json",
+  "include": [
+    "env.d.ts",
+    "next-env.d.ts",
+    "app/map-sources/page.tsx",
+    "app/marketplace/page.tsx",
+    "app/offline/page.tsx",
+    "app/page.tsx",
+    "app/partner/page.tsx",
+    "app/planner/page.tsx",
+    "app/privacy/page.tsx",
+    "app/refunds/page.tsx",
+    "app/ride-areas/[slug]/page.tsx"
+  ]
+}

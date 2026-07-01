@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.typecheck.json",
+  "include": ["env.d.ts", "components/**/*.tsx", "lib/**/*.ts"]
+}

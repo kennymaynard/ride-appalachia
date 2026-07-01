@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.typecheck.json",
+  "include": [
+    "env.d.ts",
+    "next-env.d.ts",
+    "app/business/login/page.tsx",
+    "app/business/page.tsx",
+    "app/business/success/page.tsx",
+    "app/contact/page.tsx",
+    "app/deals/page.tsx",
+    "app/harlan-county-riding/page.tsx",
+    "app/heroes/page.tsx",
+    "app/layout.tsx",
+    "app/lodging/page.tsx"
+  ]
+}

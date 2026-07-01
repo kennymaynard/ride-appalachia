@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "plugins": [],
+    "types": ["react", "react-dom"]
+  },
+  "files": [],
+  "exclude": ["node_modules", ".next"]
+}

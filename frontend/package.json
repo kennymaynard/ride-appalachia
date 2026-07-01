@@ -8,6 +8,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "npm run typecheck:components && (npm run typecheck:app-a1 & npm run typecheck:app-a2 & npm run typecheck:app-b1 & npm run typecheck:app-b2 & wait)",
+    "typecheck:components": "tsc --project tsconfig.typecheck.components.json --noEmit --pretty false",
+    "typecheck:app-a1": "tsc --project tsconfig.typecheck.app-a1.json --noEmit --pretty false",
+    "typecheck:app-a2": "tsc --project tsconfig.typecheck.app-a2.json --noEmit --pretty false",
+    "typecheck:app-b1": "tsc --project tsconfig.typecheck.app-b1.json --noEmit --pretty false",
+    "typecheck:app-b2": "tsc --project tsconfig.typecheck.app-b2.json --noEmit --pretty false",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "next lint"
   },
@@ -23,6 +29,6 @@
     "@types/node": "22.10.5",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   }
 }

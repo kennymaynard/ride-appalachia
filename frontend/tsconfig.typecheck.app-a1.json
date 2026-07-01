@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.typecheck.json",
+  "include": [
+    "env.d.ts",
+    "next-env.d.ts",
+    "app/admin/page.tsx",
+    "app/appalachia-atv-lodging/page.tsx",
+    "app/atv-repairs-near-rush/page.tsx",
+    "app/bookings/page.tsx",
+    "app/business/[slug]/page.tsx",
+    "app/business/access/[token]/page.tsx",
+    "app/business/claim/page.tsx",
+    "app/business/join/page.tsx"
+  ]
+}
