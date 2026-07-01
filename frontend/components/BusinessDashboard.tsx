@@ -63,6 +63,7 @@ type ListingForm = {
   photo_url: string;
   website_url: string;
   owner_email: string;
+  owner_passcode: string;
   subscription_tier: string;
 };
 
@@ -78,6 +79,7 @@ function toListingForm(business: Business): ListingForm {
     photo_url: business.photo_url,
     website_url: business.website_url,
     owner_email: business.owner_email || "",
+    owner_passcode: "",
     subscription_tier: getActiveTier(business.subscription_tier),
   };
 }
@@ -392,6 +394,9 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         latitude,
         longitude,
       };
+      if (!listingForm.owner_passcode.trim()) {
+        delete payload.owner_passcode;
+      }
 
       const updatedBusiness = await updateBusiness(
         selectedBusiness.id,
@@ -934,6 +939,19 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
               value={listingForm.owner_email}
               onChange={(event) =>
                 setListingForm({ ...listingForm, owner_email: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            New login passcode
+            <input
+              autoComplete="new-password"
+              minLength={4}
+              placeholder="Leave blank to keep current passcode"
+              type="password"
+              value={listingForm.owner_passcode}
+              onChange={(event) =>
+                setListingForm({ ...listingForm, owner_passcode: event.target.value })
               }
             />
           </label>

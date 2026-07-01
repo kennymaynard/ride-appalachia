@@ -24,6 +24,7 @@ const categoryPhotos: Record<Exclude<Category, "deals">, string> = {
 const initialForm = {
   name: "",
   owner_email: "",
+  owner_passcode: "",
   category: "food" as Exclude<Category, "deals">,
   phone: "",
   location: "",
@@ -196,6 +197,7 @@ export default function JoinPage() {
       website_url: normalizeWebsiteUrl(form.website_url),
       subscription_tier: tier,
       owner_email: form.owner_email.trim(),
+      owner_passcode: form.owner_passcode.trim(),
     };
 
     try {
@@ -310,6 +312,18 @@ export default function JoinPage() {
               type="email"
               value={form.owner_email}
               onChange={(event) => updateForm("owner_email", event.target.value)}
+            />
+          </label>
+          <label>
+            Login passcode
+            <input
+              autoComplete="new-password"
+              minLength={4}
+              placeholder="Create a passcode"
+              required
+              type="password"
+              value={form.owner_passcode}
+              onChange={(event) => updateForm("owner_passcode", event.target.value)}
             />
           </label>
           <label>

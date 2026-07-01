@@ -23,6 +23,7 @@ from app.schemas import (
     LodgingServiceRequestRead,
 )
 from app.services.email_service import send_business_approval_notification, send_business_login_email
+from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["business dashboard"])
@@ -71,19 +72,34 @@ def login_business(
     payload: BusinessLoginRequest,
     db: Session = Depends(get_db),
 ) -> BusinessLoginRead:
+    owner_email = payload.owner_email.strip().lower()
+    owner_passcode = payload.owner_passcode.strip()
     business = (
         db.query(Business)
-        .filter(Business.owner_email == payload.owner_email.strip().lower())
+        .filter(Business.owner_email == owner_email)
         .order_by(Business.created_at.desc())
         .first()
     )
     if not business:
         raise HTTPException(status_code=404, detail="No business found for that email")
 
+    if business.owner_passcode_hash:
+        if not verify_passcode(owner_passcode, business.owner_passcode_hash):
+            raise HTTPException(status_code=401, detail="Invalid business passcode")
+    elif digits_only(business.phone)[-4:] == owner_passcode:
+        business.owner_passcode_hash = hash_passcode(owner_passcode)
+    else:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid business passcode. Existing listings can use the last 4 digits of the business phone number once to set it.",
+        )
+
     if not business.owner_access_token:
         business.owner_access_token = secrets.token_urlsafe(24)
         db.commit()
         db.refresh(business)
+    elif business.owner_passcode_hash:
+        db.commit()
 
     settings = get_settings()
     access_path = f"/business/access/{business.owner_access_token}"
@@ -110,9 +126,11 @@ def login_business(
 @router.post("/businesses", response_model=BusinessDashboardRead)
 def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> Business:
     data = payload.model_dump()
+    owner_passcode = data.pop("owner_passcode")
     data["owner_email"] = data["owner_email"].strip().lower()
     data["photo_url"] = normalize_photo_url(data["photo_url"], data["category"])
     data["owner_access_token"] = secrets.token_urlsafe(24)
+    data["owner_passcode_hash"] = hash_passcode(owner_passcode.strip())
     business = Business(
         **data,
         is_approved=False,
@@ -176,6 +194,7 @@ def update_business(
     db: Session = Depends(get_db),
 ) -> Business:
     data = payload.model_dump(exclude_unset=True)
+    owner_passcode = data.pop("owner_passcode", None)
     if "owner_email" in data and data["owner_email"]:
         data["owner_email"] = data["owner_email"].strip().lower()
     next_category = data.get("category", business.category)
@@ -184,6 +203,8 @@ def update_business(
 
     for key, value in data.items():
         setattr(business, key, value)
+    if owner_passcode:
+        business.owner_passcode_hash = hash_passcode(owner_passcode.strip())
 
     db.commit()
     db.refresh(business)
@@ -221,6 +242,8 @@ def claim_business(
     business.subscription_tier = payload.subscription_tier
     if not business.owner_access_token:
         business.owner_access_token = secrets.token_urlsafe(24)
+    if not business.owner_passcode_hash:
+        business.owner_passcode_hash = hash_passcode(payload.phone_last4)
     if business.listing_status == "rejected":
         business.listing_status = "needs_changes"
         business.admin_notes = "Claim received. Admin will review ownership before publishing changes."

@@ -113,6 +113,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       description: business.description,
       phone: business.phone,
       owner_email: business.owner_email || "",
+      owner_passcode: "",
       location: business.location,
       latitude: business.latitude,
       longitude: business.longitude,
@@ -128,7 +129,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     setError("");
     setWorkingId(businessId);
     try {
-      replaceBusiness(await updateAdminBusiness(businessId, editForm, adminPassword));
+      const payload = { ...editForm };
+      if (!payload.owner_passcode?.trim()) {
+        delete payload.owner_passcode;
+      }
+      replaceBusiness(await updateAdminBusiness(businessId, payload, adminPassword));
       setEditingId(null);
       setEditForm({});
       setGeocodeStatus("");
@@ -679,6 +684,17 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                     type="email"
                     value={editForm.owner_email || ""}
                     onChange={(event) => setEditForm({ ...editForm, owner_email: event.target.value })}
+                  />
+                </label>
+                <label>
+                  New login passcode
+                  <input
+                    autoComplete="new-password"
+                    minLength={4}
+                    placeholder="Leave blank to keep current passcode"
+                    type="password"
+                    value={editForm.owner_passcode || ""}
+                    onChange={(event) => setEditForm({ ...editForm, owner_passcode: event.target.value })}
                   />
                 </label>
                 <label>

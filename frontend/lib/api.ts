@@ -206,11 +206,12 @@ export async function createBusiness(payload: BusinessCreateInput): Promise<Busi
 
 export async function loginBusiness(
   ownerEmail: string,
+  ownerPasscode: string,
 ): Promise<{ access_url: string; email_sent: boolean; message: string }> {
   const response = await fetch(`${getApiUrl()}/api/businesses/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ owner_email: ownerEmail }),
+    body: JSON.stringify({ owner_email: ownerEmail, owner_passcode: ownerPasscode }),
   });
 
   if (!response.ok) {

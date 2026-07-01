@@ -87,6 +87,7 @@ class Business(Base):
     website_url: Mapped[str] = mapped_column(Text, default="")
     owner_email: Mapped[str] = mapped_column(String(180), default="", index=True)
     owner_access_token: Mapped[str] = mapped_column(String(80), default="", index=True)
+    owner_passcode_hash: Mapped[str] = mapped_column(Text, default="")
     listing_status: Mapped[str] = mapped_column(String(40), default=ListingStatus.pending.value, index=True)
     admin_notes: Mapped[str] = mapped_column(Text, default="")
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, index=True)

@@ -184,6 +184,7 @@ export type BusinessCreateInput = {
   website_url: string;
   subscription_tier: Tier["id"];
   owner_email: string;
+  owner_passcode: string;
 };
 
 export type BusinessUpdateInput = Partial<
@@ -201,7 +202,9 @@ export type BusinessUpdateInput = Partial<
     | "subscription_tier"
     | "owner_email"
   >
->;
+> & {
+  owner_passcode?: string;
+};
 
 export type GeocodeResult = {
   display_name: string;

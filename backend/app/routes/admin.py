@@ -19,6 +19,7 @@ from app.schemas import (
 from app.services.email_service import send_business_approval_notification
 from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
+from app.services.passcodes import hash_passcode
 from app.services.photos import normalize_photo_url
 
 router = APIRouter(tags=["admin"])
@@ -114,6 +115,7 @@ def edit_business(
         raise HTTPException(status_code=404, detail="Business not found")
 
     data = payload.model_dump(exclude_unset=True)
+    owner_passcode = data.pop("owner_passcode", None)
     next_category = data.get("category", business.category)
     if "photo_url" in data:
         data["photo_url"] = normalize_photo_url(data["photo_url"], next_category)
@@ -122,6 +124,8 @@ def edit_business(
         if key == "owner_email" and value:
             value = value.strip().lower()
         setattr(business, key, value)
+    if owner_passcode:
+        business.owner_passcode_hash = hash_passcode(owner_passcode.strip())
 
     db.commit()
     db.refresh(business)

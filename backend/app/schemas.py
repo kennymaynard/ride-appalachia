@@ -395,6 +395,15 @@ class BusinessBase(BaseModel):
 
 class BusinessCreate(BusinessBase):
     owner_email: str = ""
+    owner_passcode: str = Field(min_length=4, max_length=32)
+
+    @field_validator("owner_passcode")
+    @classmethod
+    def validate_owner_passcode(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 4:
+            raise ValueError("Business passcode must be at least 4 characters")
+        return stripped
 
 
 class BusinessUpdate(BaseModel):
@@ -409,6 +418,17 @@ class BusinessUpdate(BaseModel):
     website_url: Optional[str] = None
     subscription_tier: Optional[str] = None
     owner_email: Optional[str] = None
+    owner_passcode: Optional[str] = Field(default=None, min_length=4, max_length=32)
+
+    @field_validator("owner_passcode")
+    @classmethod
+    def validate_optional_owner_passcode(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        stripped = value.strip()
+        if len(stripped) < 4:
+            raise ValueError("Business passcode must be at least 4 characters")
+        return stripped
 
     @field_validator("category")
     @classmethod
@@ -492,6 +512,15 @@ class StripeWebhookPayload(BaseModel):
 
 class BusinessLoginRequest(BaseModel):
     owner_email: str
+    owner_passcode: str = Field(min_length=4, max_length=32)
+
+    @field_validator("owner_passcode")
+    @classmethod
+    def validate_login_passcode(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 4:
+            raise ValueError("Business passcode must be at least 4 characters")
+        return stripped
 
 
 class BusinessLoginRead(BaseModel):

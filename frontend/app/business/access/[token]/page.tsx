@@ -21,8 +21,8 @@ export default async function BusinessAccessPage({ params }: Props) {
         <p className="eyebrow">Business access</p>
         <h1>Manage your Appalachia Offroad listing.</h1>
         <p>
-          This private access link opens the dashboard for this business while the
-          MVP keeps full account login simple.
+          This private access link opens the dashboard for this business. Keep
+          your login passcode private and update it from your profile when needed.
         </p>
         <Link href={`/business/${business.slug}`}>View public listing</Link>
       </section>
