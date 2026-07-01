@@ -1,4 +1,4 @@
-import type { Business, OutdoorStop, RideArea, Tier, TrailInfo, TrailReview } from "./types";
+import type { Business, OutdoorStop, RideArea, RideMapFeature, Tier, TrailInfo, TrailReview } from "./types";
 
 export const categories = [
   { label: "Lodging", href: "/lodging", value: "lodging" },
@@ -37,7 +37,7 @@ const trailLinks = {
   northCumberland: "https://www.tn.gov/twra/wildlife-management-areas/east-tennessee-r4/north-cumberland-wma.html",
 } as const;
 
-type RawRideArea = Omit<RideArea, "nearbyOutdoors">;
+type RawRideArea = Omit<RideArea, "mapFeatures" | "nearbyOutdoors">;
 
 const baseRideAreas: RawRideArea[] = [
   {
@@ -2075,6 +2075,193 @@ function buildDefaultOutdoorStops(area: RawRideArea): OutdoorStop[] {
   ];
 }
 
+function offsetCoordinate(area: RawRideArea, index: number) {
+  const seed = area.slug.split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  const direction = seed % 2 === 0 ? 1 : -1;
+  const ring = 0.018 + (index % 4) * 0.012;
+  const angle = ((seed + index * 47) % 360) * (Math.PI / 180);
+
+  return {
+    latitude: area.latitude + Math.sin(angle) * ring,
+    longitude: area.longitude + Math.cos(angle) * ring * direction,
+  };
+}
+
+function getOutdoorCoordinates(stop: OutdoorStop, area: RawRideArea) {
+  return typeof stop.latitude === "number" && typeof stop.longitude === "number"
+    ? { latitude: stop.latitude, longitude: stop.longitude }
+    : { latitude: area.latitude, longitude: area.longitude };
+}
+
+function getCellStatus(area: RawRideArea) {
+  const seed = area.slug.length + area.nearbyTowns.length;
+  if (seed % 5 === 0) return "No service pockets";
+  if (seed % 3 === 0) return "Weak signal";
+  return "Good near towns";
+}
+
+function getTrailCondition(area: RawRideArea) {
+  const state = area.state.toLowerCase();
+  if (state.includes("west virginia") || state.includes("kentucky")) return "Muddy after rain";
+  if (state.includes("tennessee") || state.includes("north carolina")) return "Rocky / steep";
+  if (state.includes("ohio") || state.includes("pennsylvania")) return "Seasonal status";
+  return "Verify before riding";
+}
+
+function buildMapFeatures(area: RawRideArea, outdoorStops: OutdoorStop[]): RideMapFeature[] {
+  const mainTown = area.nearbyTowns[0] ?? area.name;
+  const difficultyText = Array.from(new Set(area.trails.map((trail) => trail.difficulty))).join(" / ");
+  const hasEasy = area.trails.some((trail) => trail.difficulty === "Easy");
+  const hasHard = area.trails.some((trail) => trail.difficulty === "Hard");
+  const vehicleTypes: RideMapFeature["vehicleTypes"] = [
+    "ATV",
+    "SxS",
+    ...(hasHard ? ["Jeep" as const] : []),
+    ...(hasEasy ? ["Beginner" as const, "Family" as const] : []),
+  ];
+  const nowLabel = "Updated today";
+
+  const defaults: RideMapFeature[] = [
+    {
+      ...offsetCoordinate(area, 1),
+      id: `${area.slug}-conditions`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Trail conditions",
+      layer: "condition",
+      summary: getTrailCondition(area),
+      detail: "Use this as the rider-report hub for mud, dust, closures, washouts, downed trees, and crowding.",
+      status: "Rider reports needed",
+      updatedAt: nowLabel,
+      url: `/ride-areas/${area.slug}#trail-reviews`,
+    },
+    {
+      ...offsetCoordinate(area, 2),
+      id: `${area.slug}-cell-service`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Cell service",
+      layer: "cell",
+      summary: getCellStatus(area),
+      detail: "Mark Verizon, AT&T, and T-Mobile signal notes here as riders report dead zones.",
+      status: "Carrier notes",
+      updatedAt: nowLabel,
+      url: getOutdoorSearchUrl(area, "cell phone store"),
+    },
+    {
+      ...offsetCoordinate(area, 3),
+      id: `${area.slug}-trailer-parking`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Trailer parking / staging",
+      layer: "parking",
+      summary: "Staging and turnaround check",
+      detail: "Use for trailer parking, road width, low-clearance bridges, steep driveways, and turnaround notes.",
+      status: "Verify access",
+      updatedAt: nowLabel,
+      url: getOutdoorSearchUrl(area, "trailhead parking trailer staging"),
+    },
+    {
+      ...offsetCoordinate(area, 4),
+      id: `${area.slug}-vehicle-fit`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Vehicle fit",
+      layer: "difficulty",
+      summary: `${difficultyText || "Mixed"} terrain`,
+      detail: "Filter this area by ATV, SxS, Jeep, dirt bike, beginner, family, technical, mud, rock, and hill-climb notes.",
+      status: "Difficulty guide",
+      updatedAt: nowLabel,
+      vehicleTypes,
+      url: `/ride-areas/${area.slug}`,
+    },
+    {
+      ...offsetCoordinate(area, 5),
+      id: `${area.slug}-emergency`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Emergency and recovery",
+      layer: "emergency",
+      summary: "Hospital, recovery, fuel, and parts",
+      detail: "Quick access point for urgent care, recovery/tow, fuel, parts stores, and a meetup location if a group gets split.",
+      status: "Safety layer",
+      updatedAt: nowLabel,
+      url: getOutdoorSearchUrl(area, `hospital urgent care towing parts fuel near ${mainTown}`),
+    },
+    {
+      ...offsetCoordinate(area, 6),
+      id: `${area.slug}-offline-pack`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Offline trip pack",
+      layer: "offline",
+      summary: "Save before losing signal",
+      detail: "Download trails, planned stops, outdoor stops, emergency links, trail rules, and notes before heading out.",
+      status: "Available in planner",
+      updatedAt: nowLabel,
+      url: `/planner?area=${encodeURIComponent(area.locationQuery)}`,
+    },
+    {
+      ...offsetCoordinate(area, 7),
+      id: `${area.slug}-group-ride`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Group ride check-in",
+      layer: "group",
+      summary: "Track on before badge completion",
+      detail: "Use check-in, track on, last-seen status, and shared trip links for safer group rides.",
+      status: "Rider mode",
+      updatedAt: nowLabel,
+      url: "/rider/login",
+    },
+    {
+      ...offsetCoordinate(area, 8),
+      id: `${area.slug}-passport`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Ride passport",
+      layer: "passport",
+      summary: "Badges and completed places",
+      detail: "Show completed trails, checked-in parks, waterfalls visited, businesses visited, and earned badges on the map.",
+      status: "Badge layer",
+      updatedAt: nowLabel,
+      url: "/rider/login",
+    },
+    {
+      ...offsetCoordinate(area, 9),
+      id: `${area.slug}-local-deals`,
+      areaSlug: area.slug,
+      areaName: area.name,
+      title: "Local deals",
+      layer: "deal",
+      summary: "Food, fuel, lodging, and repair offers",
+      detail: "Highlight rider deals and bookable local businesses near the trails.",
+      status: "Marketplace",
+      updatedAt: nowLabel,
+      url: `/deals?area=${encodeURIComponent(area.locationQuery)}`,
+    },
+  ];
+
+  const scenicStops: RideMapFeature[] = outdoorStops.slice(0, 4).map((stop, index) => ({
+    ...getOutdoorCoordinates(stop, area),
+    id: `${area.slug}-scenic-${index}`,
+    areaSlug: area.slug,
+    areaName: area.name,
+    title: stop.name,
+    layer: "scenic",
+    summary: stop.kind.replace("_", " "),
+    detail: stop.description,
+    status: stop.access,
+    updatedAt: nowLabel,
+    url: stop.url,
+    photoUrl: stop.photoUrl,
+    photoCredit: stop.photoCredit,
+    photoSourceUrl: stop.photoSourceUrl,
+  }));
+
+  return [...defaults, ...scenicStops];
+}
+
 const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
   "rush-ky": [
     {
@@ -2085,6 +2272,9 @@ const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
       url: "https://parks.ky.gov/olive-hill/parks/resort/carter-caves-state-resort-park",
       latitude: 38.3708,
       longitude: -83.1224,
+      photoUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Carter_Caves_Visitor_Center.JPG",
+      photoCredit: "Wikimedia Commons",
+      photoSourceUrl: "https://commons.wikimedia.org/wiki/File:Carter_Caves_Visitor_Center.JPG",
     },
     {
       name: "Greenbo Lake State Resort Park",
@@ -2156,6 +2346,9 @@ const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
       url: "https://parks.ky.gov/slade/parks/resort/natural-bridge-state-resort-park",
       latitude: 37.778,
       longitude: -83.67,
+      photoUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Natural_Bridge_KY-27527-3.jpg",
+      photoCredit: "Wikimedia Commons",
+      photoSourceUrl: "https://commons.wikimedia.org/wiki/File:Natural_Bridge_KY-27527-3.jpg",
     },
   ],
   "turkey-bay-ky": [
@@ -2374,6 +2567,10 @@ export const rideAreas: RideArea[] = [...baseRideAreas, ...expandedRideAreas].ma
     ...(outdoorStopsByArea[area.slug] || []),
     ...buildDefaultOutdoorStops(area),
   ],
+  mapFeatures: buildMapFeatures(area, [
+    ...(outdoorStopsByArea[area.slug] || []),
+    ...buildDefaultOutdoorStops(area),
+  ]),
   trails: [
     ...area.trails.filter(isVisibleTrail),
     ...(hikingTrailsByArea[area.slug] || []),

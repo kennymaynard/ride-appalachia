@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getImportedTrailRouteSegments } from "../lib/imported-trail-routes";
-import type { Business, RideArea, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
+import type { Business, RideArea, RideMapFeature, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
 import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
 import { TrailMapShell } from "./TrailMapShell";
 
@@ -158,15 +158,17 @@ function hasBusinessCoordinates(business: Business) {
   return typeof business.latitude === "number" && typeof business.longitude === "number";
 }
 
-function getMapBounds(points: MapPoint[], businesses: Business[] = []): MapBounds {
+function getMapBounds(points: MapPoint[], businesses: Business[] = [], features: RideMapFeature[] = []): MapBounds {
   const businessesWithCoordinates = businesses.filter(hasBusinessCoordinates);
   const latitudes = [
     ...points.map((item) => item.latitude),
     ...businessesWithCoordinates.map((business) => business.latitude as number),
+    ...features.map((feature) => feature.latitude),
   ];
   const longitudes = [
     ...points.map((item) => item.longitude),
     ...businessesWithCoordinates.map((business) => business.longitude as number),
+    ...features.map((feature) => feature.longitude),
   ];
   const minLat = Math.min(...latitudes);
   const maxLat = Math.max(...latitudes);
@@ -206,7 +208,8 @@ export function RideAreaMap({
   const activeArea = areas.find((area) => area.slug === activeSlug);
   const mapPoints = getMapPoints(areas, reviews, activeArea);
   const mapBusinesses = businesses.filter(hasBusinessCoordinates);
-  const mapBounds = getMapBounds(mapPoints, mapBusinesses);
+  const mapFeatures = (activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures));
+  const mapBounds = getMapBounds(mapPoints, mapBusinesses, mapFeatures);
   const ohvCount = mapPoints.filter((point) => point.activity !== "Hiking").length;
   const hikingCount = mapPoints.filter((point) => point.activity === "Hiking").length;
   const visibleAreas = activeArea ? [activeArea] : areas;
@@ -228,6 +231,7 @@ export function RideAreaMap({
             ohvCount={ohvCount}
             points={mapPoints}
             businesses={mapBusinesses}
+            features={mapFeatures}
           />
         </div>
 

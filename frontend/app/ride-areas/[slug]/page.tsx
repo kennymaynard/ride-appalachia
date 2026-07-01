@@ -131,6 +131,13 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <div className="outdoor-stop-grid">
             {area.nearbyOutdoors.map((stop) => (
               <article key={`${stop.kind}-${stop.name}`}>
+                {stop.photoUrl ? (
+                  <img
+                    alt={stop.name}
+                    className="outdoor-stop-photo"
+                    src={stop.photoUrl}
+                  />
+                ) : null}
                 <span>{stop.kind.replace("_", " ")}</span>
                 <h3>{stop.name}</h3>
                 <p>{stop.description}</p>
@@ -138,6 +145,11 @@ export default async function RideAreaDetailPage({ params }: Props) {
                 <a href={stop.url} rel="noreferrer" target="_blank">
                   Open Map
                 </a>
+                {stop.photoCredit && stop.photoSourceUrl ? (
+                  <a href={stop.photoSourceUrl} rel="noreferrer" target="_blank">
+                    Photo source
+                  </a>
+                ) : null}
               </article>
             ))}
           </div>

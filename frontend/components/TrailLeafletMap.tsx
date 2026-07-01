@@ -12,7 +12,7 @@ import {
   Tooltip,
   useMap,
 } from "react-leaflet";
-import type { Business, Category } from "../lib/types";
+import type { Business, Category, RideMapFeature } from "../lib/types";
 import type { MapPoint } from "./RideAreaMap";
 
 type Props = {
@@ -22,9 +22,11 @@ type Props = {
   ohvCount: number;
   points: MapPoint[];
   businesses?: Business[];
+  features?: RideMapFeature[];
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
+type IntelligenceLayer = RideMapFeature["layer"];
 
 const businessLayerOptions: { id: BusinessLayer; label: string }[] = [
   { id: "food", label: "Food" },
@@ -44,6 +46,32 @@ const businessLayerLabels: Record<BusinessLayer, string> = {
   rentals: "Rentals",
   services: "Services",
   deals: "Deal",
+};
+
+const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
+  { id: "condition", label: "Conditions" },
+  { id: "cell", label: "Cell" },
+  { id: "parking", label: "Parking" },
+  { id: "difficulty", label: "Vehicle fit" },
+  { id: "emergency", label: "Emergency" },
+  { id: "scenic", label: "Photos" },
+  { id: "offline", label: "Offline" },
+  { id: "group", label: "Group" },
+  { id: "passport", label: "Passport" },
+  { id: "deal", label: "Deals" },
+];
+
+const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
+  cell: "Cell service",
+  condition: "Trail condition",
+  deal: "Local deal",
+  difficulty: "Vehicle fit",
+  emergency: "Emergency",
+  group: "Group ride",
+  offline: "Offline pack",
+  parking: "Trailer parking",
+  passport: "Ride passport",
+  scenic: "Photo / nature",
 };
 
 function escapeXml(value: string) {
@@ -265,6 +293,17 @@ function makeBusinessIcon(business: Business) {
   });
 }
 
+function makeFeatureIcon(feature: RideMapFeature) {
+  const label = feature.title.length > 24 ? `${feature.title.slice(0, 21)}...` : feature.title;
+
+  return L.divIcon({
+    className: `leaflet-feature-pin is-${feature.layer}`,
+    html: `<span></span><strong>${escapeXml(label)}</strong>`,
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
+
 function getTrailColor(point: MapPoint) {
   return point.activity === "Hiking" ? "#5cd68e" : "#f26a1b";
 }
@@ -276,6 +315,7 @@ function getTrailDash(point: MapPoint) {
 export function TrailLeafletMap({
   bounds,
   businesses = [],
+  features = [],
   points,
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
@@ -287,6 +327,13 @@ export function TrailLeafletMap({
     "repairs",
     "rentals",
     "deals",
+  ]);
+  const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([
+    "condition",
+    "parking",
+    "emergency",
+    "scenic",
+    "deal",
   ]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
@@ -326,6 +373,13 @@ export function TrailLeafletMap({
           }),
     [businessLayers, businesses, selectedTrailId],
   );
+  const visibleFeatures = useMemo(
+    () =>
+      selectedTrailId
+        ? []
+        : features.filter((feature) => intelligenceLayers.includes(feature.layer)),
+    [features, intelligenceLayers, selectedTrailId],
+  );
   const handleTrackMe = () => {
     if (!navigator.geolocation) {
       setTrackingStatus("Location unavailable");
@@ -362,6 +416,13 @@ export function TrailLeafletMap({
   };
   const toggleBusinessLayer = (layer: BusinessLayer) => {
     setBusinessLayers((current) =>
+      current.includes(layer)
+        ? current.filter((item) => item !== layer)
+        : [...current, layer],
+    );
+  };
+  const toggleIntelligenceLayer = (layer: IntelligenceLayer) => {
+    setIntelligenceLayers((current) =>
       current.includes(layer)
         ? current.filter((item) => item !== layer)
         : [...current, layer],
@@ -432,6 +493,21 @@ export function TrailLeafletMap({
               key={layer.id}
               type="button"
               onClick={() => toggleBusinessLayer(layer.id)}
+            >
+              {layer.label}
+            </button>
+          ))}
+          <span>Ride intel</span>
+          {intelligenceLayerOptions.map((layer) => (
+            <button
+              className={
+                intelligenceLayers.includes(layer.id)
+                  ? "is-active is-intel"
+                  : "is-intel"
+              }
+              key={layer.id}
+              type="button"
+              onClick={() => toggleIntelligenceLayer(layer.id)}
             >
               {layer.label}
             </button>
@@ -609,6 +685,48 @@ export function TrailLeafletMap({
                   </p>
                 ) : null}
                 <a href={`/business/${business.slug}`}>View listing</a>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {visibleFeatures.map((feature) => (
+          <Marker
+            icon={makeFeatureIcon(feature)}
+            key={`feature-${feature.id}`}
+            position={[feature.latitude, feature.longitude]}
+          >
+            <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
+              {feature.title}
+            </Tooltip>
+            <Popup>
+              <div className="trail-popup">
+                {feature.photoUrl ? (
+                  <img
+                    alt={feature.title}
+                    className="trail-popup-photo"
+                    src={feature.photoUrl}
+                  />
+                ) : null}
+                <strong>{feature.title}</strong>
+                <span>
+                  {intelligenceLayerLabels[feature.layer]} • {feature.areaName}
+                </span>
+                <p>{feature.summary}</p>
+                <p>{feature.detail}</p>
+                {feature.status ? <p>{feature.status}</p> : null}
+                {feature.vehicleTypes?.length ? (
+                  <p>Fits: {feature.vehicleTypes.join(", ")}</p>
+                ) : null}
+                {feature.photoCredit && feature.photoSourceUrl ? (
+                  <a href={feature.photoSourceUrl} rel="noreferrer" target="_blank">
+                    Photo: {feature.photoCredit}
+                  </a>
+                ) : null}
+                {feature.url ? (
+                  <a href={feature.url} rel="noreferrer" target="_blank">
+                    Open
+                  </a>
+                ) : null}
               </div>
             </Popup>
           </Marker>

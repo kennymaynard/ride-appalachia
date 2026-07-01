@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { BusinessLeadForm } from "../../components/BusinessLeadForm";
-import { partnerTiers, rideAreas } from "../../lib/sample-data";
+import { partnerTiers } from "../../lib/sample-data";
 
 const businessCategories = [
   { title: "Stay", copy: "Cabins, lodges, campgrounds, hotels" },
@@ -26,11 +25,6 @@ const launchBenefits = [
   "Affordable monthly plans",
   "Veteran-owned plan available",
 ];
-
-const launchAreas = rideAreas.map((area) => [
-  area.name,
-  `${area.state} founding spots`,
-]);
 
 export default function BusinessWelcomePage() {
   return (
@@ -64,26 +58,6 @@ export default function BusinessWelcomePage() {
             <li>Veteran-owned business support</li>
           </ul>
         </div>
-      </section>
-
-      <section className="business-availability" id="check-availability">
-        <div>
-          <p className="eyebrow">Founding partner areas</p>
-          <h2>Claim your trail-area spot before ads launch.</h2>
-          <p>
-            We are opening founding partner placement by trail area. Tell us
-            where your business serves riders and we will confirm availability.
-          </p>
-          <div className="business-area-slots">
-            {launchAreas.map(([area, spots]) => (
-              <article key={area}>
-                <strong>{area}</strong>
-                <span>{spots}</span>
-              </article>
-            ))}
-          </div>
-        </div>
-        <BusinessLeadForm />
       </section>
 
       <section className="business-pricing-panel">

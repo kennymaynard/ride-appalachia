@@ -277,7 +277,35 @@ export type RideArea = {
   nearbyTowns: string[];
   checklist: string[];
   nearbyOutdoors: OutdoorStop[];
+  mapFeatures: RideMapFeature[];
   trails: TrailInfo[];
+};
+
+export type RideMapFeature = TrailCoordinate & {
+  id: string;
+  areaSlug: string;
+  areaName: string;
+  title: string;
+  layer:
+    | "condition"
+    | "cell"
+    | "parking"
+    | "difficulty"
+    | "emergency"
+    | "scenic"
+    | "offline"
+    | "group"
+    | "passport"
+    | "deal";
+  summary: string;
+  detail: string;
+  status?: string;
+  updatedAt?: string;
+  vehicleTypes?: Array<"ATV" | "SxS" | "Jeep" | "Dirt bike" | "Beginner" | "Family">;
+  url?: string;
+  photoUrl?: string;
+  photoCredit?: string;
+  photoSourceUrl?: string;
 };
 
 export type OutdoorStop = {
@@ -288,6 +316,9 @@ export type OutdoorStop = {
   url: string;
   latitude?: number;
   longitude?: number;
+  photoUrl?: string;
+  photoCredit?: string;
+  photoSourceUrl?: string;
 };
 
 export type TrailInfo = {

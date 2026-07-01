@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { Business } from "../lib/types";
+import type { Business, RideMapFeature } from "../lib/types";
 import type { MapPoint } from "./RideAreaMap";
 
 const TrailLeafletMap = dynamic(
@@ -19,6 +19,7 @@ type Props = {
   ohvCount: number;
   points: MapPoint[];
   businesses?: Business[];
+  features?: RideMapFeature[];
 };
 
 export function TrailMapShell(props: Props) {
