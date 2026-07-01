@@ -276,7 +276,18 @@ export type RideArea = {
   bestFor: string[];
   nearbyTowns: string[];
   checklist: string[];
+  nearbyOutdoors: OutdoorStop[];
   trails: TrailInfo[];
+};
+
+export type OutdoorStop = {
+  name: string;
+  kind: "state_park" | "campground" | "photo_spot" | "waterfall" | "nature";
+  description: string;
+  access: string;
+  url: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type TrailInfo = {

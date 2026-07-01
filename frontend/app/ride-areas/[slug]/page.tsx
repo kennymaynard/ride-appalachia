@@ -122,6 +122,26 @@ export default async function RideAreaDetailPage({ params }: Props) {
             </div>
           </article>
         </div>
+
+        <details className="ride-area-accordion" open>
+          <summary>
+            <span>Parks and nature</span>
+            <strong>State parks, campgrounds, photo spots, and waterfalls</strong>
+          </summary>
+          <div className="outdoor-stop-grid">
+            {area.nearbyOutdoors.map((stop) => (
+              <article key={`${stop.kind}-${stop.name}`}>
+                <span>{stop.kind.replace("_", " ")}</span>
+                <h3>{stop.name}</h3>
+                <p>{stop.description}</p>
+                <small>{stop.access}</small>
+                <a href={stop.url} rel="noreferrer" target="_blank">
+                  Open Map
+                </a>
+              </article>
+            ))}
+          </div>
+        </details>
       </section>
 
       <TrailReviews areaSlug={area.slug} areaName={area.name} reviews={areaReviews} />

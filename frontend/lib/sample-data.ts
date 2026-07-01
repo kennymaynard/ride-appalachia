@@ -1,4 +1,4 @@
-import type { Business, RideArea, Tier, TrailInfo, TrailReview } from "./types";
+import type { Business, OutdoorStop, RideArea, Tier, TrailInfo, TrailReview } from "./types";
 
 export const categories = [
   { label: "Lodging", href: "/lodging", value: "lodging" },
@@ -37,7 +37,9 @@ const trailLinks = {
   northCumberland: "https://www.tn.gov/twra/wildlife-management-areas/east-tennessee-r4/north-cumberland-wma.html",
 } as const;
 
-const baseRideAreas: RideArea[] = [
+type RawRideArea = Omit<RideArea, "nearbyOutdoors">;
+
+const baseRideAreas: RawRideArea[] = [
   {
     slug: "rush-ky",
     name: "Rush",
@@ -404,7 +406,7 @@ const baseRideAreas: RideArea[] = [
   },
 ];
 
-const expandedRideAreas: RideArea[] = [
+const expandedRideAreas: RawRideArea[] = [
   {
     slug: "first-frontier-ky",
     name: "First Frontier Appalachian Trails",
@@ -2036,6 +2038,324 @@ const hikingTrailsByArea: Record<string, RideArea["trails"]> = {
   ],
 };
 
+function getOutdoorSearchUrl(area: RawRideArea, query: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query} near ${area.locationQuery} ${area.state}`)}`;
+}
+
+function buildDefaultOutdoorStops(area: RawRideArea): OutdoorStop[] {
+  return [
+    {
+      name: "State parks nearby",
+      kind: "state_park",
+      description: "Find nearby state parks for picnic areas, short walks, lake views, and non-riding time.",
+      access: "Check current park hours, entry fees, and seasonal closures before driving over.",
+      url: getOutdoorSearchUrl(area, "state parks"),
+    },
+    {
+      name: "State park campgrounds",
+      kind: "campground",
+      description: "Look for public campgrounds that work for tents, campers, and extra nights around the ride.",
+      access: "Verify reservations, quiet hours, trailer rules, and check-in windows.",
+      url: getOutdoorSearchUrl(area, "state park campground"),
+    },
+    {
+      name: "Waterfalls and creek stops",
+      kind: "waterfall",
+      description: "Search nearby waterfalls, creek pull-offs, and short nature stops for a break from the trail.",
+      access: "Use marked access only and check weather before visiting slick rock or creek crossings.",
+      url: getOutdoorSearchUrl(area, "waterfalls scenic creek"),
+    },
+    {
+      name: "Photo overlooks",
+      kind: "photo_spot",
+      description: "Find overlooks, lake views, bridges, murals, and roadside spots worth adding to the weekend plan.",
+      access: "Use legal parking and avoid blocking roads, trailheads, or local businesses.",
+      url: getOutdoorSearchUrl(area, "scenic overlook photo spot"),
+    },
+  ];
+}
+
+const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
+  "rush-ky": [
+    {
+      name: "Carter Caves State Resort Park",
+      kind: "state_park",
+      description: "Caves, hiking trails, cabins, campground options, and photo stops near the Rush and Grayson side of the trip.",
+      access: "Check Kentucky State Parks hours, cave tour availability, and campground reservations.",
+      url: "https://parks.ky.gov/olive-hill/parks/resort/carter-caves-state-resort-park",
+      latitude: 38.3708,
+      longitude: -83.1224,
+    },
+    {
+      name: "Greenbo Lake State Resort Park",
+      kind: "state_park",
+      description: "Lake views, lodge/campground planning, fishing, and easier nature time for mixed rider groups.",
+      access: "Verify park hours, lodging, and campground availability before arrival.",
+      url: "https://parks.ky.gov/greenup/parks/resort/greenbo-lake-state-resort-park",
+      latitude: 38.557,
+      longitude: -82.863,
+    },
+  ],
+  "inez-ky": [
+    {
+      name: "Yatesville Lake State Park",
+      kind: "state_park",
+      description: "Lake, campground, marina area, and easy photo stops near Louisa and Inez weekend plans.",
+      access: "Verify campground reservations, boat ramp status, and park notices.",
+      url: "https://parks.ky.gov/louisa/parks/recreation/yatesville-lake-state-park",
+      latitude: 38.073,
+      longitude: -82.688,
+    },
+    {
+      name: "Paintsville Lake State Park",
+      kind: "campground",
+      description: "Campground and lake stop near Paintsville for groups adding a quieter night around the ride.",
+      access: "Check campground availability and lake access rules.",
+      url: "https://parks.ky.gov/staffordsville/parks/recreation/paintsville-lake-state-park",
+      latitude: 37.852,
+      longitude: -82.858,
+    },
+  ],
+  "harlan-ky": [
+    {
+      name: "Kingdom Come State Park",
+      kind: "photo_spot",
+      description: "Mountain overlooks, rock formations, picnic areas, and short nature stops near Harlan and Cumberland.",
+      access: "Verify road conditions and seasonal park access before climbing up the mountain.",
+      url: "https://parks.ky.gov/cumberland/parks/recreation/kingdom-come-state-park",
+      latitude: 36.974,
+      longitude: -82.995,
+    },
+    {
+      name: "Bad Branch Falls State Nature Preserve",
+      kind: "waterfall",
+      description: "Waterfall hike and forested photo stop for groups adding a nature day around southeast Kentucky.",
+      access: "Stay on marked trails and check preserve guidance before visiting.",
+      url: "https://eec.ky.gov/Nature-Preserves/Locations/Pages/Bad-Branch-Falls.aspx",
+      latitude: 37.052,
+      longitude: -82.836,
+    },
+  ],
+  "black-mountain-ky": [
+    {
+      name: "Kingdom Come State Park",
+      kind: "state_park",
+      description: "High-elevation state park stop with overlooks and picnic areas near Black Mountain ride plans.",
+      access: "Check road and park status before hauling or driving up.",
+      url: "https://parks.ky.gov/cumberland/parks/recreation/kingdom-come-state-park",
+      latitude: 36.974,
+      longitude: -82.995,
+    },
+  ],
+  "hollerwood-ky": [
+    {
+      name: "Natural Bridge State Resort Park",
+      kind: "state_park",
+      description: "Signature arch, hiking, lodge/campground planning, and Red River Gorge photo stops near Slade.",
+      access: "Check trail conditions, parking, and lodging/campground availability.",
+      url: "https://parks.ky.gov/slade/parks/resort/natural-bridge-state-resort-park",
+      latitude: 37.778,
+      longitude: -83.67,
+    },
+  ],
+  "turkey-bay-ky": [
+    {
+      name: "Land Between the Lakes campgrounds",
+      kind: "campground",
+      description: "Public campground options, lake access, and scenic shoreline stops around Turkey Bay.",
+      access: "Verify LBL permits, campground reservations, and seasonal alerts.",
+      url: "https://landbetweenthelakes.us/stay/camping/",
+      latitude: 36.85,
+      longitude: -88.05,
+    },
+  ],
+  "matewan-wv": [
+    {
+      name: "Matewan riverfront photo walk",
+      kind: "photo_spot",
+      description: "Historic town, floodwall, Tug Fork views, and an easy walking break from the trail.",
+      access: "Use public parking and respect town traffic during events.",
+      url: "https://wvtourism.com/company/matewan/",
+      latitude: 37.6223,
+      longitude: -82.1571,
+    },
+  ],
+  "bearwallow-wv": [
+    {
+      name: "Chief Logan State Park",
+      kind: "state_park",
+      description: "State park trails, picnic areas, lodge/camping nearby, and family time around Logan ride plans.",
+      access: "Check West Virginia State Parks hours, facilities, and lodging/camping status.",
+      url: "https://wvstateparks.com/park/chief-logan-state-park/",
+      latitude: 37.8608,
+      longitude: -82.006,
+    },
+  ],
+  "cabwaylingo-wv": [
+    {
+      name: "Cabwaylingo State Forest",
+      kind: "nature",
+      description: "State forest scenery, cabins, campground planning, and quieter nature stops around the trail system.",
+      access: "Verify forest rules, lodging/camping availability, and current trail notices.",
+      url: "https://wvstateparks.com/park/cabwaylingo-state-forest/",
+      latitude: 38.118,
+      longitude: -82.363,
+    },
+  ],
+  "pocahontas-wv": [
+    {
+      name: "Pinnacle Rock State Park",
+      kind: "photo_spot",
+      description: "Rock overlook, short trails, and an easy scenic add-on near Bramwell and Bluefield.",
+      access: "Check park hours and use marked trails.",
+      url: "https://wvstateparks.com/park/pinnacle-rock-state-park/",
+      latitude: 37.422,
+      longitude: -81.262,
+    },
+  ],
+  "pinnacle-creek-wv": [
+    {
+      name: "Twin Falls Resort State Park",
+      kind: "state_park",
+      description: "State park basecamp option with lodge/camping, trails, and photo stops near Mullens and Pineville.",
+      access: "Verify lodging, campground, and trail status before arrival.",
+      url: "https://wvstateparks.com/park/twin-falls-resort-state-park/",
+      latitude: 37.632,
+      longitude: -81.429,
+    },
+  ],
+  "monday-creek-oh": [
+    {
+      name: "Hocking Hills State Park",
+      kind: "waterfall",
+      description: "Caves, waterfalls, cliffs, and major photo stops near southeast Ohio ride weekends.",
+      access: "Check Ohio State Parks trail closures, parking, and crowd notices.",
+      url: "https://ohiodnr.gov/go-and-do/plan-a-visit/find-a-property/hocking-hills-state-park",
+      latitude: 39.426,
+      longitude: -82.545,
+    },
+  ],
+  "royal-blue-tn": [
+    {
+      name: "Cove Lake State Park",
+      kind: "state_park",
+      description: "Lake, campground, picnic, and easy nature stop near Royal Blue and LaFollette.",
+      access: "Check Tennessee State Parks campground and facility status.",
+      url: "https://tnstateparks.com/parks/cove-lake",
+      latitude: 36.314,
+      longitude: -84.213,
+    },
+    {
+      name: "Big South Fork waterfalls and overlooks",
+      kind: "waterfall",
+      description: "Waterfalls, overlooks, and gorge-country hikes for riders extending the trip toward Oneida.",
+      access: "Check National Park Service alerts, trail difficulty, and daylight before visiting.",
+      url: "https://www.nps.gov/biso/index.htm",
+      latitude: 36.53,
+      longitude: -84.69,
+    },
+  ],
+  "windrock-tn": [
+    {
+      name: "Frozen Head State Park",
+      kind: "state_park",
+      description: "Mountain hiking, campground/cabin planning, waterfalls, and scenic stops near Windrock.",
+      access: "Check Tennessee State Parks trail conditions and campground availability.",
+      url: "https://tnstateparks.com/parks/frozen-head",
+      latitude: 36.133,
+      longitude: -84.506,
+    },
+  ],
+  "doe-mountain-tn": [
+    {
+      name: "Roan Mountain State Park",
+      kind: "state_park",
+      description: "Cabins, campground, mountain views, and nature stops near northeast Tennessee ride plans.",
+      access: "Check Tennessee State Parks lodging, camping, and weather conditions.",
+      url: "https://tnstateparks.com/parks/roan-mountain",
+      latitude: 36.169,
+      longitude: -82.097,
+    },
+  ],
+  "prentice-cooper-tn": [
+    {
+      name: "Tennessee River Gorge overlooks",
+      kind: "photo_spot",
+      description: "River gorge views and Cumberland Trail access near Chattanooga and Prentice Cooper.",
+      access: "Check WMA closures and posted parking before visiting overlooks.",
+      url: "https://tnstateparks.com/parks/cumberland-trail",
+      latitude: 35.117,
+      longitude: -85.421,
+    },
+  ],
+  "spearhead-coal-canyon-va": [
+    {
+      name: "Breaks Interstate Park",
+      kind: "state_park",
+      description: "Canyon overlooks, hiking, campground/lodging options, and big photo stops near Grundy and Haysi.",
+      access: "Check park hours, lodging/camping, and trail conditions.",
+      url: "https://www.breakspark.com/",
+      latitude: 37.287,
+      longitude: -82.296,
+    },
+  ],
+  "spearhead-ridgeview-va": [
+    {
+      name: "Breaks Interstate Park",
+      kind: "photo_spot",
+      description: "Scenic canyon overlooks and park stops close to Ridgeview, Haysi, and Clintwood trip plans.",
+      access: "Check park hours, fees, and trail conditions before arrival.",
+      url: "https://www.breakspark.com/",
+      latitude: 37.287,
+      longitude: -82.296,
+    },
+  ],
+  "badin-lake-ohv-nc": [
+    {
+      name: "Badin Lake campground areas",
+      kind: "campground",
+      description: "National forest camping, lake views, and picnic stops around Uwharrie ride weekends.",
+      access: "Check Uwharrie National Forest camping rules, fees, and seasonal status.",
+      url: "https://www.fs.usda.gov/r08/northcarolina/recreation/camping-cabins",
+      latitude: 35.419,
+      longitude: -80.07,
+    },
+  ],
+  "brown-mountain-ohv-nc": [
+    {
+      name: "Linville Falls and Gorge",
+      kind: "waterfall",
+      description: "Waterfall, gorge overlooks, and rugged hiking near Brown Mountain and Morganton.",
+      access: "Check Pisgah National Forest alerts and use marked trailheads.",
+      url: "https://www.fs.usda.gov/recarea/nfsnc/recarea/?recid=48974",
+      latitude: 35.902,
+      longitude: -81.904,
+    },
+  ],
+  "brushy-mountain-nc": [
+    {
+      name: "Stone Mountain State Park",
+      kind: "waterfall",
+      description: "Granite dome, waterfall trail, campground, and scenic photo stops near Wilkesboro.",
+      access: "Check North Carolina State Parks hours, campground status, and trail notices.",
+      url: "https://www.ncparks.gov/state-parks/stone-mountain-state-park",
+      latitude: 36.387,
+      longitude: -81.027,
+    },
+  ],
+  "michaux-atv-pa": [
+    {
+      name: "Caledonia State Park",
+      kind: "state_park",
+      description: "Campground, picnic areas, and South Mountain nature stops near Michaux ATV routes.",
+      access: "Check Pennsylvania DCNR campground reservations and seasonal notices.",
+      url: "https://www.pa.gov/agencies/dcnr/recreation/where-to-go/state-parks/find-a-park/caledonia-state-park.html",
+      latitude: 39.914,
+      longitude: -77.478,
+    },
+  ],
+};
+
 const nonTrailTypes = new Set([
   "Nearby riding",
   "Planning area",
@@ -2050,6 +2370,10 @@ function isVisibleTrail(trail: TrailInfo) {
 
 export const rideAreas: RideArea[] = [...baseRideAreas, ...expandedRideAreas].map((area) => ({
   ...area,
+  nearbyOutdoors: [
+    ...(outdoorStopsByArea[area.slug] || []),
+    ...buildDefaultOutdoorStops(area),
+  ],
   trails: [
     ...area.trails.filter(isVisibleTrail),
     ...(hikingTrailsByArea[area.slug] || []),

@@ -4945,13 +4945,15 @@ button.tier-card.is-selected {
   margin-bottom: 0;
 }
 
-.planner-trail-grid {
+.planner-trail-grid,
+.planner-outdoor-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
-.planner-trail-grid article {
+.planner-trail-grid article,
+.planner-outdoor-grid article {
   display: grid;
   gap: 0.65rem;
   border: 1px solid var(--line);
@@ -4961,6 +4963,7 @@ button.tier-card.is-selected {
 }
 
 .planner-trail-grid article.is-planned,
+.planner-outdoor-grid article.is-planned,
 .planner-match.is-planned {
   border-color: rgba(242, 106, 27, 0.78);
   background:
@@ -4968,14 +4971,16 @@ button.tier-card.is-selected {
     rgba(255, 255, 255, 0.04);
 }
 
-.planner-trail-grid span {
+.planner-trail-grid span,
+.planner-outdoor-grid span {
   color: var(--orange);
   font-size: 0.72rem;
   font-weight: 950;
   text-transform: uppercase;
 }
 
-.planner-trail-grid h3 {
+.planner-trail-grid h3,
+.planner-outdoor-grid h3 {
   margin: 0;
   font-size: clamp(1.15rem, 2.5vw, 1.45rem);
   font-weight: 950;
@@ -4983,10 +4988,18 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
-.planner-trail-grid p {
+.planner-trail-grid p,
+.planner-outdoor-grid p,
+.planner-outdoor-grid small {
   margin: 0;
   color: var(--muted);
   line-height: 1.35;
+}
+
+.planner-outdoor-grid small {
+  color: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .success-shell {
@@ -5161,6 +5174,64 @@ button.tier-card.is-selected {
   width: 1rem;
   height: 1rem;
   accent-color: var(--orange);
+}
+
+.outdoor-stop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.outdoor-stop-grid article {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.outdoor-stop-grid span {
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.outdoor-stop-grid h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-weight: 950;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.outdoor-stop-grid p,
+.outdoor-stop-grid small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.outdoor-stop-grid small {
+  color: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.outdoor-stop-grid a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.45rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .ride-area-actions {
@@ -6598,6 +6669,11 @@ button.tier-card.is-selected {
     grid-template-columns: 1fr 1fr;
   }
 
+  .planner-outdoor-grid,
+  .outdoor-stop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ride-finder-results {
     grid-template-columns: 1fr 1fr;
   }
@@ -6723,6 +6799,8 @@ button.tier-card.is-selected {
   .map-source-stats,
   .trail-pack-preview-grid,
   .planner-trail-grid,
+  .planner-outdoor-grid,
+  .outdoor-stop-grid,
   .offline-pack-grid,
   .offline-pack-list,
   .ride-area-preview-grid,

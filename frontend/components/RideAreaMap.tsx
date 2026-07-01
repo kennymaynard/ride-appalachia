@@ -302,6 +302,9 @@ export function RideAreaMap({
                   <a href={getAreaSearch(area, "ATV UTV repair")} rel="noreferrer" target="_blank">
                     Repair map
                   </a>
+                  <a href={getAreaSearch(area, "state parks campgrounds waterfalls scenic overlooks")} rel="noreferrer" target="_blank">
+                    Nature map
+                  </a>
                 </div>
               </article>
             ))}

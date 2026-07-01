@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { Business, Category, RideArea, TrailInfo } from "../lib/types";
+import type { Business, Category, OutdoorStop, RideArea, TrailInfo } from "../lib/types";
 import { TrackedAction } from "./TrackedAction";
 
 type PlannerItem = {
@@ -23,6 +23,11 @@ type NearbyTrail = TrailInfo & {
 };
 
 type NearbyBusiness = Business & {
+  distanceMiles?: number;
+};
+
+type NearbyOutdoorStop = OutdoorStop & {
+  area: RideArea;
   distanceMiles?: number;
 };
 
@@ -60,6 +65,15 @@ type OfflineTripPack = {
     website_url: string;
     deal?: string;
   }>;
+  outdoorStops: Array<{
+    area: string;
+    name: string;
+    kind: OutdoorStop["kind"];
+    access: string;
+    latitude?: number;
+    longitude?: number;
+    url: string;
+  }>;
 };
 
 const plannerItems: PlannerItem[] = [
@@ -93,8 +107,8 @@ const plannerItems: PlannerItem[] = [
   },
   {
     id: "family",
-    label: "Family activities",
-    detail: "Easy stops for kids, non-riders, rainy days, and evenings.",
+    label: "Parks and nature",
+    detail: "State parks, campgrounds, waterfalls, overlooks, and photo stops.",
   },
   {
     id: "rent",
@@ -134,7 +148,7 @@ const knownTravelCities: Array<Coordinates & { names: string[] }> = [
   { names: ["lafollette", "lafollette tn"], latitude: 36.3829, longitude: -84.1199 },
 ];
 
-const defaultSelected = ["trails", "sleep", "eat", "fuel"];
+const defaultSelected = ["trails", "sleep", "eat", "fuel", "family"];
 const storageKey = "ride-appalachia-trip-planner";
 const offlinePackKey = "ride-appalachia-offline-trip-pack";
 const planSelectionKey = "ride-appalachia-trip-planner-selections";
@@ -142,6 +156,7 @@ const planSelectionKey = "ride-appalachia-trip-planner-selections";
 type PlanSelections = {
   trails: string[];
   stops: number[];
+  outdoors: string[];
 };
 
 function readStoredValue(key: string) {
@@ -232,6 +247,28 @@ function getTrailKey(trail: NearbyTrail) {
   return `${trail.area.slug}-${trail.name}`;
 }
 
+function getOutdoorKey(stop: NearbyOutdoorStop) {
+  return `${stop.area.slug}-${stop.kind}-${stop.name}`;
+}
+
+function getOutdoorCoordinates(stop: OutdoorStop, area: RideArea) {
+  return typeof stop.latitude === "number" && typeof stop.longitude === "number"
+    ? { latitude: stop.latitude, longitude: stop.longitude }
+    : { latitude: area.latitude, longitude: area.longitude };
+}
+
+function getOutdoorKindLabel(kind: OutdoorStop["kind"]) {
+  const labels: Record<OutdoorStop["kind"], string> = {
+    campground: "Campground",
+    nature: "Nature",
+    photo_spot: "Photo spot",
+    state_park: "State park",
+    waterfall: "Waterfall",
+  };
+
+  return labels[kind];
+}
+
 function getMapSearchUrl(destination: string, query: string) {
   const target = destination.trim() || "Appalachia";
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query} near ${target}`)}`;
@@ -243,7 +280,7 @@ function getNeedMapLinks(selectedIds: string[], destination: string) {
       ? { label: "Wash bays", url: getMapSearchUrl(destination, "self service car wash wash bay") }
       : undefined,
     selectedIds.includes("family")
-      ? { label: "Family activities", url: getMapSearchUrl(destination, "family activities parks attractions") }
+      ? { label: "Parks and nature", url: getMapSearchUrl(destination, "state parks campgrounds waterfalls scenic overlooks") }
       : undefined,
     selectedIds.includes("fuel")
       ? { label: "Gas and diesel", url: getMapSearchUrl(destination, "gas diesel fuel") }
@@ -266,6 +303,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [planSelections, setPlanSelections] = useState<PlanSelections>({
     trails: [],
     stops: [],
+    outdoors: [],
   });
 
   const searchCoordinates = findKnownCity(locationFilter);
@@ -336,6 +374,34 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       .sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999))
       .slice(0, 9);
   }, [areas, listings, locationFilter, radiusMiles, searchCoordinates, selectedCategories]);
+  const nearbyOutdoors = useMemo<NearbyOutdoorStop[]>(() => {
+    if (!selected.includes("family")) return [];
+
+    const stops = areas.flatMap((area) =>
+      area.nearbyOutdoors.map((stop) => {
+        const distance = searchCoordinates
+          ? distanceMiles(searchCoordinates, getOutdoorCoordinates(stop, area))
+          : undefined;
+
+        return { ...stop, area, distanceMiles: distance };
+      }),
+    );
+
+    const filtered = searchCoordinates
+      ? stops.filter((stop) => (stop.distanceMiles ?? 0) <= radiusMiles)
+      : locationFilter
+        ? stops.filter((stop) =>
+            [stop.name, stop.description, stop.area.name, stop.area.state, ...stop.area.nearbyTowns]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalize(locationFilter)),
+          )
+        : stops;
+
+    return filtered
+      .sort((a, b) => (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0))
+      .slice(0, 10);
+  }, [areas, locationFilter, radiusMiles, searchCoordinates, selected]);
   const plannedTrails = useMemo(
     () => nearbyTrails.filter((trail) => planSelections.trails.includes(getTrailKey(trail))),
     [nearbyTrails, planSelections.trails],
@@ -344,8 +410,13 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     () => nearbyStops.filter((business) => planSelections.stops.includes(business.id)),
     [nearbyStops, planSelections.stops],
   );
+  const plannedOutdoors = useMemo(
+    () => nearbyOutdoors.filter((stop) => planSelections.outdoors.includes(getOutdoorKey(stop))),
+    [nearbyOutdoors, planSelections.outdoors],
+  );
   const planTrails = plannedTrails.length ? plannedTrails : nearbyTrails.slice(0, 5);
   const planStops = plannedStops.length ? plannedStops : nearbyStops.slice(0, 8);
+  const planOutdoors = plannedOutdoors.length ? plannedOutdoors : nearbyOutdoors.slice(0, 5);
   const mapLinks = useMemo(
     () => getNeedMapLinks(selected, locationFilter),
     [locationFilter, selected],
@@ -363,6 +434,9 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       })
       .join("\n\n");
     const mapText = mapLinks.map((link) => `- ${link.label}: ${link.url}`).join("\n");
+    const outdoorText = planOutdoors
+      .map((stop) => `- ${stop.name} (${getOutdoorKindLabel(stop.kind)}, ${stop.area.name})${stop.distanceMiles !== undefined ? ` - ${Math.round(stop.distanceMiles)} mi` : ""}\n  ${stop.access}\n  ${stop.url}`)
+      .join("\n\n");
 
     return [
       "Appalachia Offroad Trip Plan",
@@ -379,13 +453,16 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       "Local stops:",
       stopText || "- No local stops match yet",
       "",
+      "Parks, campgrounds, waterfalls, and photo stops:",
+      outdoorText || "- No outdoor stops selected yet",
+      "",
       "Map searches:",
       mapText || "- No extra map searches selected",
       "",
       "Your directions:",
       directions || "- Add road notes, meetup points, parking, and backup routes.",
     ].join("\n");
-  }, [directions, locationFilter, mapLinks, planStops, planTrails, radiusMiles, selectedItems]);
+  }, [directions, locationFilter, mapLinks, planOutdoors, planStops, planTrails, radiusMiles, selectedItems]);
 
   useEffect(() => {
     const savedValue = readStoredValue(storageKey);
@@ -419,6 +496,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         setPlanSelections({
           trails: Array.isArray(nextSelections.trails) ? nextSelections.trails : [],
           stops: Array.isArray(nextSelections.stops) ? nextSelections.stops : [],
+          outdoors: Array.isArray(nextSelections.outdoors) ? nextSelections.outdoors : [],
         });
       }
     } catch {
@@ -446,9 +524,9 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     setLocationFilter(initialLocation);
     setRadiusMiles(50);
     setCopyStatus("");
-    setPlanSelections({ trails: [], stops: [] });
+    setPlanSelections({ trails: [], stops: [], outdoors: [] });
     writeStoredValue(storageKey, JSON.stringify(defaultSelected));
-    writeStoredValue(planSelectionKey, JSON.stringify({ trails: [], stops: [] }));
+    writeStoredValue(planSelectionKey, JSON.stringify({ trails: [], stops: [], outdoors: [] }));
   }
 
   function toggleTrailPlan(trail: NearbyTrail) {
@@ -467,6 +545,16 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       stops: current.stops.includes(id)
         ? current.stops.filter((item) => item !== id)
         : [...current.stops, id],
+    }));
+  }
+
+  function toggleOutdoorPlan(stop: NearbyOutdoorStop) {
+    const key = getOutdoorKey(stop);
+    setPlanSelections((current) => ({
+      ...current,
+      outdoors: current.outdoors.includes(key)
+        ? current.outdoors.filter((item) => item !== key)
+        : [...current.outdoors, key],
     }));
   }
 
@@ -511,6 +599,15 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
           deal: activeDeal?.title,
         };
       }),
+      outdoorStops: (plannedOutdoors.length ? plannedOutdoors : nearbyOutdoors.slice(0, 12)).map((stop) => ({
+        area: stop.area.name,
+        name: stop.name,
+        kind: stop.kind,
+        access: stop.access,
+        latitude: stop.latitude ?? stop.area.latitude,
+        longitude: stop.longitude ?? stop.area.longitude,
+        url: stop.url,
+      })),
     };
   }
 
@@ -606,6 +703,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
           <div className="planner-pick-summary">
             <span>{plannedTrails.length || "Auto"} trail picks</span>
             <span>{plannedStops.length || "Auto"} local stops</span>
+            <span>{plannedOutdoors.length || "Auto"} outdoor stops</span>
             <span>{mapLinks.length} map searches</span>
           </div>
           <ol className="roadmap-list">
@@ -739,6 +837,45 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         <section className="planner-card">
           <div className="section-heading">
             <p>Step 5</p>
+            <h2>Add parks, campgrounds, waterfalls, and photo stops.</h2>
+          </div>
+          {nearbyOutdoors.length ? (
+            <div className="planner-outdoor-grid">
+              {nearbyOutdoors.map((stop) => {
+                const outdoorKey = getOutdoorKey(stop);
+                const isPlanned = planSelections.outdoors.includes(outdoorKey);
+
+                return (
+                  <article className={isPlanned ? "is-planned" : ""} key={outdoorKey}>
+                    <span>{stop.area.name} • {getOutdoorKindLabel(stop.kind)}</span>
+                    <h3>{stop.name}</h3>
+                    <p>
+                      {stop.description}
+                      {stop.distanceMiles !== undefined ? ` • ${Math.round(stop.distanceMiles)} miles` : ""}
+                    </p>
+                    <small>{stop.access}</small>
+                    <div className="trail-actions">
+                      <button type="button" onClick={() => toggleOutdoorPlan(stop)}>
+                        {isPlanned ? "Added" : "Add stop"}
+                      </button>
+                      <a href={stop.url} rel="noreferrer" target="_blank">
+                        Open Map
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="empty-state">Pick Parks and nature or try a wider range.</p>
+          )}
+        </section>
+      ) : null}
+
+      {mapLinks.length ? (
+        <section className="planner-card">
+          <div className="section-heading">
+            <p>Step 6</p>
             <h2>Open quick map searches.</h2>
           </div>
           <div className="planner-map-link-grid">
