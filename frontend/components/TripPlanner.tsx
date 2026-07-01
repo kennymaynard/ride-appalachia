@@ -108,6 +108,12 @@ const plannerItems: PlannerItem[] = [
     detail: "Tires, belts, fluids, parts, and quick-turn service.",
     category: "repairs",
   },
+  {
+    id: "services",
+    label: "Local services",
+    detail: "Recovery, wash, towing, guide help, and rider support.",
+    category: "services",
+  },
 ];
 
 const knownTravelCities: Array<Coordinates & { names: string[] }> = [

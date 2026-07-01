@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   approveBusiness,
   geocodeLocation,
+  getAdminAnalytics,
   getAdminBusinesses,
   getAdminMarketingLeads,
   getAdminBookingTransfers,
@@ -21,6 +22,7 @@ import {
   updateServiceRequestStatus,
 } from "../lib/api";
 import type {
+  AdminAnalytics,
   Business,
   BusinessUpdateInput,
   BookingTransfer,
@@ -42,6 +44,19 @@ function statusLabel(business: Business) {
   return "Approved";
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function mapPoint(latitude: number, longitude: number) {
+  const x = ((longitude + 125) / 59) * 100;
+  const y = ((50 - latitude) / 26) * 100;
+  return {
+    left: `${clamp(x, 4, 96)}%`,
+    top: `${clamp(y, 6, 94)}%`,
+  };
+}
+
 export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [pendingReviews, setPendingReviews] = useState<TrailReview[]>([]);
@@ -49,6 +64,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
   const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
   const [bookingTransfers, setBookingTransfers] = useState<BookingTransfer[]>([]);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [adminPassword, setAdminPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(initialBusinesses.length > 0);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,12 +104,14 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
       const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
       const loadedBookingTransfers = await getAdminBookingTransfers(adminPassword);
+      const loadedAnalytics = await getAdminAnalytics(adminPassword).catch(() => null);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
       setPendingTrailTalkPosts(loadedTrailTalkPosts);
       setServiceRequests(loadedServiceRequests);
       setMarketingLeads(loadedMarketingLeads);
       setBookingTransfers(loadedBookingTransfers);
+      setAnalytics(loadedAnalytics);
       setIsUnlocked(true);
     } catch (caughtError) {
       setError(
@@ -340,6 +358,60 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <span>Queues</span>
         </article>
       </div>
+
+      {analytics ? (
+        <section className="dashboard-card admin-analytics-card">
+          <div className="section-heading">
+            <p>Launch analytics</p>
+            <h2>Riders, visits, and hometowns</h2>
+          </div>
+          <div className="admin-analytics-stats">
+            <div>
+              <strong>{analytics.rider_count}</strong>
+              <span>Riders joined</span>
+            </div>
+            <div>
+              <strong>{analytics.page_visits}</strong>
+              <span>Page visits</span>
+            </div>
+            <div>
+              <strong>{analytics.business_count}</strong>
+              <span>Businesses</span>
+            </div>
+          </div>
+          <div className="admin-analytics-layout">
+            <div className="admin-location-map" aria-label="Rider hometown map">
+              {analytics.rider_locations.length ? (
+                analytics.rider_locations.map((location) => (
+                  <span
+                    className="admin-location-pin"
+                    key={`${location.label}-${location.latitude}-${location.longitude}`}
+                    style={mapPoint(location.latitude, location.longitude)}
+                    title={`${location.label}: ${location.riders} rider${location.riders === 1 ? "" : "s"}`}
+                  >
+                    {location.riders}
+                  </span>
+                ))
+              ) : (
+                <p>No rider hometowns captured yet.</p>
+              )}
+            </div>
+            <div className="admin-top-paths">
+              <h3>Top pages</h3>
+              {analytics.top_paths.length ? (
+                analytics.top_paths.map((path) => (
+                  <div key={path.path}>
+                    <span>{path.path}</span>
+                    <strong>{path.visits}</strong>
+                  </div>
+                ))
+              ) : (
+                <p>No page visits tracked yet.</p>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <div className="admin-email-tools">
         <button type="button" disabled={sendingTestEmail} onClick={sendTestApprovalEmail}>

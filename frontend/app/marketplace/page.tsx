@@ -21,6 +21,7 @@ const marketplaceCategories: Array<Exclude<Category, "deals">> = [
   "rentals",
   "repairs",
   "fuel",
+  "services",
 ];
 
 const marketplaceFilters = [
@@ -30,6 +31,7 @@ const marketplaceFilters = [
   { label: "Fuel", category: "fuel" },
   { label: "Repairs", category: "repairs" },
   { label: "Rentals", category: "rentals" },
+  { label: "Services", category: "services" },
 ] as const;
 
 function getCategory(value?: string): Exclude<Category, "deals"> | "all" {

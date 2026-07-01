@@ -32,6 +32,7 @@ const businessLayerOptions: { id: BusinessLayer; label: string }[] = [
   { id: "lodging", label: "Lodging" },
   { id: "repairs", label: "Repairs" },
   { id: "rentals", label: "Rentals" },
+  { id: "services", label: "Services" },
   { id: "deals", label: "Deals" },
 ];
 
@@ -41,6 +42,7 @@ const businessLayerLabels: Record<BusinessLayer, string> = {
   lodging: "Lodging",
   repairs: "Repairs",
   rentals: "Rentals",
+  services: "Services",
   deals: "Deal",
 };
 

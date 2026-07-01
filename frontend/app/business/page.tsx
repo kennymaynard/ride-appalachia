@@ -8,6 +8,7 @@ const businessCategories = [
   { title: "Rentals", copy: "ATV, UTV, trailers, gear" },
   { title: "Repairs", copy: "Parts, tires, belts, emergency help" },
   { title: "Fuel", copy: "Gas, ice, snacks, supplies" },
+  { title: "Services", copy: "Recovery, washes, guides, local support" },
   { title: "Deals", copy: "Coupons, specials, rider discounts" },
   { title: "Veteran owned", copy: "Trusted local operators and service providers" },
 ];

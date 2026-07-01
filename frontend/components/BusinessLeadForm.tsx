@@ -61,6 +61,7 @@ export function BusinessLeadForm() {
           <option>Fuel</option>
           <option>Repairs</option>
           <option>Rentals</option>
+          <option>Services</option>
           <option>Events</option>
           <option>Deals</option>
         </select>

@@ -1,11 +1,15 @@
 import secrets
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead
+from app.models import BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider
 from app.schemas import (
+    AdminAnalyticsLocation,
+    AdminAnalyticsPath,
+    AdminAnalyticsRead,
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
@@ -100,6 +104,52 @@ def list_businesses(
             Business.created_at.desc(),
         )
         .all()
+    )
+
+
+@router.get("/analytics", response_model=AdminAnalyticsRead)
+def get_admin_analytics(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> AdminAnalyticsRead:
+    location_rows = (
+        db.query(
+            Rider.home_location,
+            Rider.home_latitude,
+            Rider.home_longitude,
+            func.count(Rider.id),
+        )
+        .filter(Rider.home_latitude.isnot(None), Rider.home_longitude.isnot(None))
+        .group_by(Rider.home_location, Rider.home_latitude, Rider.home_longitude)
+        .order_by(func.count(Rider.id).desc())
+        .limit(50)
+        .all()
+    )
+    path_rows = (
+        db.query(PageVisit.path, func.count(PageVisit.id))
+        .group_by(PageVisit.path)
+        .order_by(func.count(PageVisit.id).desc())
+        .limit(8)
+        .all()
+    )
+
+    return AdminAnalyticsRead(
+        rider_count=db.query(Rider).count(),
+        business_count=db.query(Business).count(),
+        page_visits=db.query(PageVisit).count(),
+        rider_locations=[
+            AdminAnalyticsLocation(
+                label=location or "Unknown",
+                latitude=float(latitude),
+                longitude=float(longitude),
+                riders=count,
+            )
+            for location, latitude, longitude, count in location_rows
+        ],
+        top_paths=[
+            AdminAnalyticsPath(path=path, visits=count)
+            for path, count in path_rows
+        ],
     )
 
 

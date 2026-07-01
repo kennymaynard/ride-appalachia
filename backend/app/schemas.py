@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel"}
+BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel", "services"}
 SUBSCRIPTION_TIERS = {
     "local_business",
     "lodging_partner",
@@ -531,8 +531,20 @@ class BusinessLoginRead(BaseModel):
 
 class RiderLoginRequest(BaseModel):
     email: str = Field(min_length=5, max_length=180)
+    password: str = Field(min_length=4, max_length=64)
     display_name: str = ""
     phone: str = ""
+    home_location: str = ""
+    home_latitude: Optional[float] = None
+    home_longitude: Optional[float] = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_rider_password(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 4:
+            raise ValueError("Rider password must be at least 4 characters")
+        return stripped
 
 
 class RiderLoginRead(BaseModel):
@@ -617,6 +629,9 @@ class RiderRead(BaseModel):
     display_name: str
     email: str
     phone: str = ""
+    home_location: str = ""
+    home_latitude: Optional[float] = None
+    home_longitude: Optional[float] = None
     veteran_verification_status: str = "unverified"
     veteran_verification_notes: str = ""
     veteran_document_name: str = ""
@@ -693,3 +708,28 @@ class MarketingLeadStatusUpdate(BaseModel):
         if value not in LEAD_STATUSES:
             raise ValueError("Unknown lead status")
         return value
+
+
+class PageVisitCreate(BaseModel):
+    path: str = Field(min_length=1, max_length=240)
+    referrer: str = ""
+
+
+class AdminAnalyticsLocation(BaseModel):
+    label: str
+    latitude: float
+    longitude: float
+    riders: int
+
+
+class AdminAnalyticsPath(BaseModel):
+    path: str
+    visits: int
+
+
+class AdminAnalyticsRead(BaseModel):
+    rider_count: int
+    business_count: int
+    page_visits: int
+    rider_locations: list[AdminAnalyticsLocation]
+    top_paths: list[AdminAnalyticsPath]

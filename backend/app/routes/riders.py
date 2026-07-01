@@ -1,4 +1,5 @@
 import secrets
+import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -13,6 +14,7 @@ from app.models import (
     RiderBadge,
     RiderTrailProgress,
 )
+from app.services.passcodes import hash_passcode, verify_passcode
 from app.schemas import (
     BusinessReviewCreate,
     BusinessReviewRead,
@@ -121,6 +123,7 @@ def award_partner_visit_badges(db: Session, rider: Rider) -> None:
 @router.post("/riders/login", response_model=RiderLoginRead)
 def login_rider(payload: RiderLoginRequest, db: Session = Depends(get_db)) -> RiderLoginRead:
     email = normalize_email(payload.email)
+    password = payload.password.strip()
     rider = db.query(Rider).filter(Rider.email == email).first()
     if not rider:
         display_name = payload.display_name.strip() or email.split("@")[0]
@@ -128,16 +131,35 @@ def login_rider(payload: RiderLoginRequest, db: Session = Depends(get_db)) -> Ri
             display_name=display_name[:120],
             email=email,
             phone=payload.phone.strip(),
+            password_hash=hash_passcode(password),
+            home_location=payload.home_location.strip()[:180],
+            home_latitude=payload.home_latitude,
+            home_longitude=payload.home_longitude,
             access_token=secrets.token_urlsafe(24),
         )
         db.add(rider)
         db.commit()
         db.refresh(rider)
     else:
+        if rider.password_hash:
+            if not verify_passcode(password, rider.password_hash):
+                raise HTTPException(status_code=401, detail="Invalid rider password")
+        elif re.sub(r"\D+", "", rider.phone)[-4:] == password:
+            rider.password_hash = hash_passcode(password)
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid rider password. Existing rider profiles can use the last 4 digits of the profile phone number once to set it.",
+            )
         if payload.display_name.strip():
             rider.display_name = payload.display_name.strip()[:120]
         if payload.phone.strip():
             rider.phone = payload.phone.strip()
+        if payload.home_location.strip():
+            rider.home_location = payload.home_location.strip()[:180]
+        if payload.home_latitude is not None and payload.home_longitude is not None:
+            rider.home_latitude = payload.home_latitude
+            rider.home_longitude = payload.home_longitude
         if not rider.access_token:
             rider.access_token = secrets.token_urlsafe(24)
         db.commit()
@@ -186,6 +208,18 @@ def save_rider_progress(
         )
         .first()
     )
+    if payload.status == "completed" and (
+        not progress or progress.source not in {"checked_in", "tracked"}
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Check in and start tracking this trail before marking it complete.",
+        )
+    if payload.status == "completed" and payload.source != "tracked":
+        raise HTTPException(
+            status_code=400,
+            detail="Tracked completion is required before badges are awarded.",
+        )
     if not progress:
         progress = RiderTrailProgress(rider_id=rider.id, **payload.model_dump())
         db.add(progress)

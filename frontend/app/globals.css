@@ -6309,6 +6309,105 @@ button.tier-card.is-selected {
   font-weight: 850;
 }
 
+.admin-analytics-card {
+  margin-top: 1rem;
+}
+
+.admin-analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-analytics-stats div,
+.admin-top-paths div {
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.admin-analytics-stats strong {
+  display: block;
+  color: var(--orange);
+  font-size: 2rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.admin-analytics-stats span,
+.admin-top-paths span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.admin-analytics-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 0.75fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-location-map {
+  position: relative;
+  min-height: 19rem;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 35% 45%, rgba(242, 106, 27, 0.18), transparent 24rem),
+    rgba(0, 0, 0, 0.24);
+  background-size: 4rem 4rem, 4rem 4rem, auto, auto;
+}
+
+.admin-location-map p {
+  margin: 1rem;
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.admin-location-pin {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.84);
+  border-radius: 999px;
+  background: var(--orange);
+  color: #160801;
+  font-size: 0.78rem;
+  font-weight: 950;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0.5rem 1.4rem rgba(0, 0, 0, 0.35);
+}
+
+.admin-top-paths {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+}
+
+.admin-top-paths h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.admin-top-paths div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-top-paths strong {
+  color: var(--orange);
+}
+
 .admin-list {
   display: grid;
   gap: 1rem;
@@ -6646,6 +6745,8 @@ button.tier-card.is-selected {
   }
 
   .admin-stats,
+  .admin-analytics-stats,
+  .admin-analytics-layout,
   .rider-stat-grid,
   .rider-badge-grid,
   .booking-feature-grid,

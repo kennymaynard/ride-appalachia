@@ -54,6 +54,7 @@ const marketplaceCategories: Array<{ label: string; value: Exclude<Category, "de
   { label: "Rentals", value: "rentals" },
   { label: "Repairs", value: "repairs" },
   { label: "Fuel", value: "fuel" },
+  { label: "Services", value: "services" },
   { label: "Deals", value: "deals" },
 ];
 

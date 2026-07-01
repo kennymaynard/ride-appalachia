@@ -13,6 +13,7 @@ class Category(str, Enum):
     rentals = "rentals"
     repairs = "repairs"
     fuel = "fuel"
+    services = "services"
     deals = "deals"
 
 
@@ -217,6 +218,10 @@ class Rider(Base):
     display_name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(180), unique=True, index=True)
     phone: Mapped[str] = mapped_column(String(40), default="")
+    password_hash: Mapped[str] = mapped_column(Text, default="")
+    home_location: Mapped[str] = mapped_column(String(180), default="", index=True)
+    home_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    home_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     access_token: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     veteran_verification_status: Mapped[str] = mapped_column(
         String(40),
@@ -433,3 +438,12 @@ class BookingTransfer(Base):
 
     booking: Mapped[Booking] = relationship()
     business: Mapped[Business] = relationship()
+
+
+class PageVisit(Base):
+    __tablename__ = "page_visits"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    path: Mapped[str] = mapped_column(String(240), index=True)
+    referrer: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

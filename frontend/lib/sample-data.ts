@@ -6,6 +6,7 @@ export const categories = [
   { label: "Rentals", href: "/marketplace?category=rentals", value: "rentals" },
   { label: "Repairs", href: "/marketplace?category=repairs", value: "repairs" },
   { label: "Fuel", href: "/marketplace?category=fuel", value: "fuel" },
+  { label: "Services", href: "/marketplace?category=services", value: "services" },
   { label: "Deals", href: "/deals", value: "deals" },
 ] as const;
 

@@ -7,6 +7,7 @@ CATEGORY_FALLBACK_PHOTOS = {
     "rentals": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
     "repairs": "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1200&q=80",
     "fuel": "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17?auto=format&fit=crop&w=1200&q=80",
+    "services": "https://images.unsplash.com/photo-1581092921461-7d65ca45393a?auto=format&fit=crop&w=1200&q=80",
 }
 
 DIRECT_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif")

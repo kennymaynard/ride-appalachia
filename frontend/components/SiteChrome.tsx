@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { recordPageVisit } from "../lib/api";
 import { BrandLogo } from "./BrandLogo";
 import { LaunchAccessPopup } from "./LaunchAccessPopup";
 
@@ -21,6 +23,13 @@ function isBusinessPath(pathname: string) {
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const businessSide = isBusinessPath(pathname);
+
+  useEffect(() => {
+    recordPageVisit({
+      path: pathname,
+      referrer: document.referrer,
+    });
+  }, [pathname]);
 
   return (
     <>

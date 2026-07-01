@@ -46,6 +46,7 @@ const mapLayers: MapLayer[] = [
   { id: "lodging", label: "Lodging", query: "cabins campgrounds hotels lodging" },
   { id: "repairs", label: "Repairs", query: "ATV UTV repair parts recovery" },
   { id: "rentals", label: "Rentals", query: "ATV UTV rentals" },
+  { id: "services", label: "Services", query: "ATV UTV local services recovery support" },
   { id: "deals", label: "Deals", query: "restaurants lodging fuel ATV deals" },
 ];
 

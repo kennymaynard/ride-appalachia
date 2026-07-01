@@ -112,8 +112,11 @@ export function RiderDashboard({ accessToken }: Props) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [trackedTrailKey, setTrackedTrailKey] = useState("");
 
   const rider = rideCard?.rider;
+  const currentTrailKey = `${(areaSlug.trim() || "appalachia").toLowerCase()}::${trailName.trim().toLowerCase()}`;
+  const isTrackingCurrentTrail = Boolean(trailName.trim()) && trackedTrailKey === currentTrailKey;
   const completedProgress = useMemo(
     () => rider?.progress.filter((item) => item.status === "completed") || [],
     [rider],
@@ -154,10 +157,44 @@ export function RiderDashboard({ accessToken }: Props) {
     refreshRideCard();
   }, [accessToken]);
 
+  async function checkInAndTrack() {
+    setError("");
+    setMessage("");
+    if (!trailName.trim()) {
+      setError("Enter a trail name before checking in.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await saveRiderProgress(
+        {
+          area_slug: areaSlug.trim() || "appalachia",
+          trail_name: trailName.trim(),
+          activity,
+          status: "saved",
+          source: "checked_in",
+          is_group_ride: isGroupRide,
+        },
+        accessToken,
+      );
+      setTrackedTrailKey(currentTrailKey);
+      await refreshRideCard();
+      setMessage("Checked in. Tracking is on for this trail.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to check in.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function submitProgress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setMessage("");
+    if (!isTrackingCurrentTrail) {
+      setError("Check in and start tracking this trail before marking it complete.");
+      return;
+    }
     setIsSaving(true);
     try {
       await saveRiderProgress(
@@ -166,7 +203,7 @@ export function RiderDashboard({ accessToken }: Props) {
           trail_name: trailName.trim(),
           activity,
           status: "completed",
-          source: "manual",
+          source: "tracked",
           is_group_ride: isGroupRide,
         },
         accessToken,
@@ -174,8 +211,9 @@ export function RiderDashboard({ accessToken }: Props) {
       setTrailName("");
       setAreaSlug("");
       setIsGroupRide(false);
+      setTrackedTrailKey("");
       await refreshRideCard();
-      setMessage("Trail saved and badges checked.");
+      setMessage("Tracked trail completed and badges checked.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to save trail.");
     } finally {
@@ -294,8 +332,8 @@ export function RiderDashboard({ accessToken }: Props) {
         </article>
 
         <form className="dashboard-card" onSubmit={submitProgress}>
-          <p className="eyebrow">Track me finish</p>
-          <h2>Mark a trail complete</h2>
+          <p className="eyebrow">Check in first</p>
+          <h2>Track a trail before completion</h2>
           <label>
             Trail name
             <input
@@ -331,9 +369,15 @@ export function RiderDashboard({ accessToken }: Props) {
             />
             Group ride
           </label>
-          <button type="submit" disabled={isSaving}>
-            Save Finish
+          <button type="button" disabled={isSaving || !trailName.trim()} onClick={checkInAndTrack}>
+            {isTrackingCurrentTrail ? "Tracking On" : "Check In & Start Tracking"}
           </button>
+          <button type="submit" disabled={isSaving || !isTrackingCurrentTrail}>
+            Complete Tracked Trail
+          </button>
+          <p className="field-help">
+            Badges unlock only after the trail has been checked in and tracked.
+          </p>
         </form>
 
         <form className="dashboard-card" onSubmit={submitVerification}>

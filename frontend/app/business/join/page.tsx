@@ -19,6 +19,8 @@ const categoryPhotos: Record<Exclude<Category, "deals">, string> = {
   repairs:
     "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1200&q=80",
   fuel: "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17?auto=format&fit=crop&w=1200&q=80",
+  services:
+    "https://images.unsplash.com/photo-1581092921461-7d65ca45393a?auto=format&fit=crop&w=1200&q=80",
 };
 
 const initialForm = {
@@ -41,6 +43,7 @@ const standardCategories: Array<Exclude<Category, "deals">> = [
   "rentals",
   "repairs",
   "fuel",
+  "services",
 ];
 const categoryLabels: Record<Exclude<Category, "deals">, string> = {
   lodging: "Lodging",
@@ -48,10 +51,11 @@ const categoryLabels: Record<Exclude<Category, "deals">, string> = {
   rentals: "Rentals",
   repairs: "Repairs",
   fuel: "Fuel",
+  services: "Services",
 };
 
 const tierBestFor: Record<Tier["id"], string> = {
-  local_business: "Best for food, fuel, repair, recovery, outfitters, and local shops.",
+  local_business: "Best for food, fuel, repair, recovery, services, outfitters, and local shops.",
   lodging_partner: "Best for cabins, campgrounds, hotels, and trailer-friendly stays.",
   veteran_owned: "Best for veteran-owned businesses serving riders and trail towns.",
 };

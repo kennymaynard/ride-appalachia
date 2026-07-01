@@ -1,6 +1,7 @@
 import { sampleBusinesses } from "./sample-data";
 import type {
   AdminEmailTestResult,
+  AdminAnalytics,
   Business,
   Booking,
   BookingDetail,
@@ -224,8 +225,12 @@ export async function loginBusiness(
 
 export async function loginRider(payload: {
   email: string;
+  password: string;
   display_name?: string;
   phone?: string;
+  home_location?: string;
+  home_latitude?: number;
+  home_longitude?: number;
 }): Promise<{ access_url: string; access_token: string; message: string }> {
   const response = await fetch(`${getApiUrl()}/api/riders/login`, {
     method: "POST",
@@ -239,6 +244,19 @@ export async function loginRider(payload: {
   }
 
   return response.json();
+}
+
+export async function recordPageVisit(payload: { path: string; referrer?: string }) {
+  try {
+    await fetch(`${getApiUrl()}/api/analytics/page-visits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+  } catch {
+    // Analytics should never block the app.
+  }
 }
 
 export async function getRiderProfile(riderAccessToken: string): Promise<Rider | null> {
@@ -792,6 +810,17 @@ export async function getAdminBusinesses(adminPassword?: string): Promise<Busine
     throw new Error(`Unable to load admin businesses. API returned ${response.status}.`);
   }
 
+  return response.json();
+}
+
+export async function getAdminAnalytics(adminPassword?: string): Promise<AdminAnalytics> {
+  const response = await fetch(`${getApiUrl()}/api/admin/analytics`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to load admin analytics");
+  }
   return response.json();
 }
 

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const quickRideTowns = ["Rush KY", "Harlan KY", "Matewan WV", "Pikeville KY"];
-const planningFeatures = ["Trails", "Lodging", "Rentals", "Food", "Fuel", "Repairs", "Deals", "Offline packs"];
+const planningFeatures = ["Trails", "Lodging", "Rentals", "Food", "Fuel", "Repairs", "Services", "Deals"];
 const planningSteps = [
   { label: "Search", detail: "Start with a ride town or trail system." },
   { label: "Choose dates", detail: "Line up lodging, food, fuel, and backup." },

@@ -1,4 +1,4 @@
-export type Category = "lodging" | "food" | "rentals" | "repairs" | "fuel" | "deals";
+export type Category = "lodging" | "food" | "rentals" | "repairs" | "fuel" | "services" | "deals";
 
 export type Deal = {
   id: number;
@@ -136,6 +136,22 @@ export type AdminEmailTestResult = {
   message: string;
   to: string;
   from: string;
+};
+
+export type AdminAnalytics = {
+  rider_count: number;
+  business_count: number;
+  page_visits: number;
+  rider_locations: Array<{
+    label: string;
+    latitude: number;
+    longitude: number;
+    riders: number;
+  }>;
+  top_paths: Array<{
+    path: string;
+    visits: number;
+  }>;
 };
 
 export type Business = {
@@ -360,6 +376,9 @@ export type Rider = {
   display_name: string;
   email: string;
   phone: string;
+  home_location: string;
+  home_latitude?: number | null;
+  home_longitude?: number | null;
   veteran_verification_status: "unverified" | "pending" | "verified" | "rejected";
   veteran_verification_notes: string;
   veteran_document_name: string;

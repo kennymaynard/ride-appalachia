@@ -40,6 +40,7 @@ const categories: Exclude<Category, "deals">[] = [
   "rentals",
   "repairs",
   "fuel",
+  "services",
 ];
 
 const tiers = [
