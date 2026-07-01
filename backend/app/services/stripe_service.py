@@ -44,6 +44,7 @@ def create_checkout_session(
     stripe.api_key = settings.stripe_secret_key
     session_params = {
         "mode": "subscription",
+        "allow_promotion_codes": True,
         "line_items": [{"price": price_id, "quantity": 1}],
         "success_url": success_url,
         "cancel_url": cancel_url,
@@ -136,6 +137,7 @@ def create_booking_checkout_session(
 
     session_params = {
         "mode": "payment",
+        "allow_promotion_codes": True,
         "line_items": [
             {
                 "price_data": {
