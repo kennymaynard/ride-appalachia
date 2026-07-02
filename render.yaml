@@ -48,4 +48,4 @@ services:
 
 databases:
   - name: appalachia-offroad-db
-    plan: free
+    plan: basic-256mb
