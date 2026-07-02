@@ -2254,9 +2254,6 @@ function buildMapFeatures(area: RawRideArea, outdoorStops: OutdoorStop[]): RideM
     status: stop.access,
     updatedAt: nowLabel,
     url: stop.url,
-    photoUrl: stop.photoUrl,
-    photoCredit: stop.photoCredit,
-    photoSourceUrl: stop.photoSourceUrl,
   }));
 
   return [...defaults, ...scenicStops];
@@ -2272,9 +2269,6 @@ const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
       url: "https://parks.ky.gov/olive-hill/parks/resort/carter-caves-state-resort-park",
       latitude: 38.3708,
       longitude: -83.1224,
-      photoUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Carter_Caves_Visitor_Center.JPG",
-      photoCredit: "Wikimedia Commons",
-      photoSourceUrl: "https://commons.wikimedia.org/wiki/File:Carter_Caves_Visitor_Center.JPG",
     },
     {
       name: "Greenbo Lake State Resort Park",
@@ -2346,9 +2340,6 @@ const outdoorStopsByArea: Record<string, OutdoorStop[]> = {
       url: "https://parks.ky.gov/slade/parks/resort/natural-bridge-state-resort-park",
       latitude: 37.778,
       longitude: -83.67,
-      photoUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Natural_Bridge_KY-27527-3.jpg",
-      photoCredit: "Wikimedia Commons",
-      photoSourceUrl: "https://commons.wikimedia.org/wiki/File:Natural_Bridge_KY-27527-3.jpg",
     },
   ],
   "turkey-bay-ky": [

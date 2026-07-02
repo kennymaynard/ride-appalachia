@@ -303,9 +303,6 @@ export type RideMapFeature = TrailCoordinate & {
   updatedAt?: string;
   vehicleTypes?: Array<"ATV" | "SxS" | "Jeep" | "Dirt bike" | "Beginner" | "Family">;
   url?: string;
-  photoUrl?: string;
-  photoCredit?: string;
-  photoSourceUrl?: string;
 };
 
 export type OutdoorStop = {
@@ -316,9 +313,6 @@ export type OutdoorStop = {
   url: string;
   latitude?: number;
   longitude?: number;
-  photoUrl?: string;
-  photoCredit?: string;
-  photoSourceUrl?: string;
 };
 
 export type TrailInfo = {

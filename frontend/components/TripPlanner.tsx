@@ -847,13 +847,10 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
 
                 return (
                   <article className={isPlanned ? "is-planned" : ""} key={outdoorKey}>
-                    {stop.photoUrl ? (
-                      <img
-                        alt={stop.name}
-                        className="planner-outdoor-photo"
-                        src={stop.photoUrl}
-                      />
-                    ) : null}
+                    <div className="planner-photo-prompt">
+                      <strong>Rider photo needed</strong>
+                      <small>Add one after your stop.</small>
+                    </div>
                     <span>{stop.area.name} • {getOutdoorKindLabel(stop.kind)}</span>
                     <h3>{stop.name}</h3>
                     <p>
@@ -868,11 +865,9 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
                       <a href={stop.url} rel="noreferrer" target="_blank">
                         Open Map
                       </a>
-                      {stop.photoCredit && stop.photoSourceUrl ? (
-                        <a href={stop.photoSourceUrl} rel="noreferrer" target="_blank">
-                          Photo
-                        </a>
-                      ) : null}
+                      <a href={`/ride-areas/${stop.area.slug}#trail-reviews`}>
+                        Add Photo
+                      </a>
                     </div>
                   </article>
                 );

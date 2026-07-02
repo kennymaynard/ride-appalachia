@@ -700,13 +700,10 @@ export function TrailLeafletMap({
             </Tooltip>
             <Popup>
               <div className="trail-popup">
-                {feature.photoUrl ? (
-                  <img
-                    alt={feature.title}
-                    className="trail-popup-photo"
-                    src={feature.photoUrl}
-                  />
-                ) : null}
+                <div className="trail-popup-photo-prompt">
+                  <strong>Rider photo needed</strong>
+                  <span>Add one from this area.</span>
+                </div>
                 <strong>{feature.title}</strong>
                 <span>
                   {intelligenceLayerLabels[feature.layer]} • {feature.areaName}
@@ -717,11 +714,9 @@ export function TrailLeafletMap({
                 {feature.vehicleTypes?.length ? (
                   <p>Fits: {feature.vehicleTypes.join(", ")}</p>
                 ) : null}
-                {feature.photoCredit && feature.photoSourceUrl ? (
-                  <a href={feature.photoSourceUrl} rel="noreferrer" target="_blank">
-                    Photo: {feature.photoCredit}
-                  </a>
-                ) : null}
+                <a href={`/ride-areas/${feature.areaSlug}#trail-reviews`}>
+                  Add rider photo
+                </a>
                 {feature.url ? (
                   <a href={feature.url} rel="noreferrer" target="_blank">
                     Open

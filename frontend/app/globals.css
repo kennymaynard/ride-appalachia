@@ -5002,13 +5002,34 @@ button.tier-card.is-selected {
   font-weight: 800;
 }
 
-.planner-outdoor-photo,
-.outdoor-stop-photo {
+.planner-photo-prompt,
+.outdoor-photo-prompt {
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
   width: 100%;
   aspect-ratio: 16 / 9;
+  border: 1px dashed rgba(242, 106, 27, 0.45);
   border-radius: 0.45rem;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.12), rgba(93, 148, 186, 0.1)),
+    rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.planner-photo-prompt strong,
+.outdoor-photo-prompt strong {
+  color: var(--orange-soft);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-photo-prompt small,
+.outdoor-photo-prompt small {
+  color: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .success-shell {
@@ -5745,12 +5766,26 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
-.trail-popup-photo {
+.trail-popup-photo-prompt {
+  display: grid;
+  align-content: center;
+  gap: 0.15rem;
   width: 100%;
   aspect-ratio: 16 / 9;
+  border: 1px dashed rgba(191, 75, 18, 0.35);
   border-radius: 0.35rem;
-  object-fit: cover;
-  background: #ececec;
+  background: #f3ece6;
+  padding: 0.65rem;
+}
+
+.trail-popup-photo-prompt strong {
+  color: #7c2d12;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.trail-popup-photo-prompt span {
+  color: #4a372e;
 }
 
 .trail-map-list {
