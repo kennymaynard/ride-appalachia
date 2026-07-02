@@ -10,8 +10,88 @@ type Props = {
   reviews: TrailReview[];
 };
 
+const MAX_REVIEW_PHOTO_BYTES = 950_000;
+const MAX_REVIEW_PHOTO_EDGE = 1600;
+const REVIEW_PHOTO_QUALITIES = [0.82, 0.74, 0.66, 0.58, 0.5];
+
 function stars(rating: number) {
   return "★★★★★".slice(0, rating);
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Unable to read that image."));
+    };
+    image.src = url;
+  });
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Unable to prepare that image."));
+    };
+    reader.onerror = () => reject(new Error("Unable to prepare that image."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+        reject(new Error("Unable to resize that image."));
+      },
+      "image/jpeg",
+      quality,
+    );
+  });
+}
+
+async function resizeReviewPhoto(file: File): Promise<string> {
+  const image = await loadImage(file);
+  const scale = Math.min(
+    1,
+    MAX_REVIEW_PHOTO_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
+  );
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Unable to resize that image.");
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+
+  const lowestQuality = REVIEW_PHOTO_QUALITIES[REVIEW_PHOTO_QUALITIES.length - 1];
+  for (const quality of REVIEW_PHOTO_QUALITIES) {
+    const blob = await canvasToBlob(canvas, quality);
+    if (blob.size <= MAX_REVIEW_PHOTO_BYTES || quality === lowestQuality) {
+      if (blob.size > MAX_REVIEW_PHOTO_BYTES) break;
+      return blobToDataUrl(blob);
+    }
+  }
+
+  throw new Error("That photo is still too large after resizing. Try a different image.");
 }
 
 export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
@@ -19,6 +99,8 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
+  const [photoStatus, setPhotoStatus] = useState("");
+  const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const averageRating = useMemo(() => {
     if (!visibleReviews.length) return 0;
@@ -64,10 +146,11 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
     }
   }
 
-  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     setError("");
     setPhotoPreview("");
+    setPhotoStatus("");
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -76,17 +159,23 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
       return;
     }
 
-    if (file.size > 1_250_000) {
-      setError("Photo is too large. Please choose one under 1.25 MB.");
-      event.target.value = "";
-      return;
-    }
+    setIsPreparingPhoto(true);
+    setPhotoStatus("Preparing photo...");
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") setPhotoPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const resizedPhoto = await resizeReviewPhoto(file);
+      setPhotoPreview(resizedPhoto);
+      setPhotoStatus("Photo resized and ready.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to prepare that photo.",
+      );
+      event.target.value = "";
+    } finally {
+      setIsPreparingPhoto(false);
+    }
   }
 
   return (
@@ -182,9 +271,10 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
           </label>
           <label>
             Add rider photo
-            <input accept="image/*" type="file" onChange={handlePhotoUpload} />
+            <input accept="image/*" type="file" disabled={isPreparingPhoto} onChange={handlePhotoUpload} />
           </label>
           <input name="photoUrl" type="hidden" value={photoPreview} readOnly />
+          {photoStatus ? <p className="form-hint">{photoStatus}</p> : null}
           {photoPreview ? (
             <figure className="review-photo-preview">
               <img alt="Selected rider upload preview" src={photoPreview} />
@@ -199,8 +289,8 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
             <p className="form-success">Review submitted. It will show after admin approval.</p>
           ) : null}
           {error ? <p className="form-error">{error}</p> : null}
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Review"}
+          <button type="submit" disabled={isSubmitting || isPreparingPhoto}>
+            {isPreparingPhoto ? "Preparing Photo..." : isSubmitting ? "Submitting..." : "Submit Review"}
           </button>
         </form>
       </div>
