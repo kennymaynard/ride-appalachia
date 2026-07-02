@@ -73,6 +73,8 @@ type ApiTrailReview = {
   difficulty: "Easy" | "Moderate" | "Hard";
   trail_condition: string;
   comment: string;
+  photo_url: string;
+  photo_caption: string;
   status: "pending" | "approved" | "rejected";
 };
 
@@ -87,6 +89,8 @@ function mapTrailReview(review: ApiTrailReview): TrailReview {
     difficulty: review.difficulty,
     trailCondition: review.trail_condition,
     comment: review.comment,
+    photoUrl: review.photo_url || "",
+    photoCaption: review.photo_caption || "",
     status: review.status,
   };
 }
@@ -101,6 +105,8 @@ function serializeTrailReview(review: TrailReviewCreateInput) {
     difficulty: review.difficulty,
     trail_condition: review.trailCondition,
     comment: review.comment,
+    photo_url: review.photoUrl,
+    photo_caption: review.photoCaption,
   };
 }
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from urllib.parse import urlparse
 
 from app.database import get_db
 from app.models import TrailReview
@@ -7,6 +8,19 @@ from app.routes.admin import require_admin
 from app.schemas import TrailReviewCreate, TrailReviewModerationUpdate, TrailReviewRead
 
 router = APIRouter(tags=["trail reviews"])
+
+
+def is_valid_review_photo(photo_url: str) -> bool:
+    if not photo_url:
+        return True
+    if photo_url.startswith("data:image/"):
+        return len(photo_url) <= 1_500_000
+
+    parsed_url = urlparse(photo_url.strip())
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        return False
+
+    return parsed_url.path.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".gif"))
 
 
 @router.get("/trail-reviews", response_model=list[TrailReviewRead])
@@ -30,6 +44,8 @@ def create_trail_review(
 ) -> TrailReview:
     if payload.rating < 1 or payload.rating > 5:
         raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    if not is_valid_review_photo(payload.photo_url):
+        raise HTTPException(status_code=400, detail="Use a direct image URL or upload a smaller image")
 
     review = TrailReview(
         **payload.model_dump(),

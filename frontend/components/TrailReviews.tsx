@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { createTrailReview } from "../lib/api";
 import type { TrailReview } from "../lib/types";
 
@@ -18,6 +18,7 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
   const [visibleReviews] = useState(reviews);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [photoPreview, setPhotoPreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const averageRating = useMemo(() => {
     if (!visibleReviews.length) return 0;
@@ -46,8 +47,11 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
         difficulty: String(formData.get("difficulty") || "Moderate") as TrailReview["difficulty"],
         trailCondition: String(formData.get("trailCondition") || "").trim(),
         comment: String(formData.get("comment") || "").trim(),
+        photoUrl: String(formData.get("photoUrl") || "").trim(),
+        photoCaption: String(formData.get("photoCaption") || "").trim(),
       });
       setSubmitted(true);
+      setPhotoPreview("");
       event.currentTarget.reset();
     } catch (caughtError) {
       setError(
@@ -58,6 +62,31 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setError("");
+    setPhotoPreview("");
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 1_250_000) {
+      setError("Photo is too large. Please choose one under 1.25 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setPhotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -97,6 +126,12 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
                 <small>{review.difficulty}</small>
                 <small>{review.trailCondition}</small>
               </div>
+              {review.photoUrl ? (
+                <figure className="review-photo">
+                  <img alt={review.photoCaption || `${review.riderName} trail photo`} src={review.photoUrl} />
+                  {review.photoCaption ? <figcaption>{review.photoCaption}</figcaption> : null}
+                </figure>
+              ) : null}
               <p>{review.comment}</p>
             </article>
           ))}
@@ -144,6 +179,21 @@ export function TrailReviews({ areaSlug, areaName, reviews }: Props) {
           <label>
             Review
             <textarea required name="comment" placeholder="Trail condition, difficulty, staging, fuel, lodging, or anything riders should know." />
+          </label>
+          <label>
+            Add rider photo
+            <input accept="image/*" type="file" onChange={handlePhotoUpload} />
+          </label>
+          <input name="photoUrl" type="hidden" value={photoPreview} readOnly />
+          {photoPreview ? (
+            <figure className="review-photo-preview">
+              <img alt="Selected rider upload preview" src={photoPreview} />
+              <figcaption>Photo will show after admin approval.</figcaption>
+            </figure>
+          ) : null}
+          <label>
+            Photo caption
+            <input name="photoCaption" placeholder="Overlook, muddy section, waterfall stop..." />
           </label>
           {submitted ? (
             <p className="form-success">Review submitted. It will show after admin approval.</p>

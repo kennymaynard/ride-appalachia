@@ -12,7 +12,7 @@ import {
   Tooltip,
   useMap,
 } from "react-leaflet";
-import type { Business, Category, RideMapFeature } from "../lib/types";
+import type { Business, Category, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapPoint } from "./RideAreaMap";
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
   points: MapPoint[];
   businesses?: Business[];
   features?: RideMapFeature[];
+  riderPhotos?: TrailReview[];
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
@@ -317,6 +318,7 @@ export function TrailLeafletMap({
   businesses = [],
   features = [],
   points,
+  riderPhotos = [],
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
   const [showHiking, setShowHiking] = useState(true);
@@ -380,6 +382,13 @@ export function TrailLeafletMap({
         : features.filter((feature) => intelligenceLayers.includes(feature.layer)),
     [features, intelligenceLayers, selectedTrailId],
   );
+  const photoByArea = useMemo(() => {
+    const map = new Map<string, TrailReview>();
+    riderPhotos.forEach((review) => {
+      if (review.photoUrl && !map.has(review.areaSlug)) map.set(review.areaSlug, review);
+    });
+    return map;
+  }, [riderPhotos]);
   const handleTrackMe = () => {
     if (!navigator.geolocation) {
       setTrackingStatus("Location unavailable");
@@ -700,10 +709,23 @@ export function TrailLeafletMap({
             </Tooltip>
             <Popup>
               <div className="trail-popup">
-                <div className="trail-popup-photo-prompt">
-                  <strong>Rider photo needed</strong>
-                  <span>Add one from this area.</span>
-                </div>
+                {(() => {
+                  const riderPhoto = photoByArea.get(feature.areaSlug);
+                  return riderPhoto ? (
+                    <figure className="trail-popup-rider-photo">
+                      <img
+                        alt={riderPhoto.photoCaption || `${feature.areaName} rider photo`}
+                        src={riderPhoto.photoUrl}
+                      />
+                      <figcaption>{riderPhoto.photoCaption || `Added by ${riderPhoto.riderName}`}</figcaption>
+                    </figure>
+                  ) : (
+                    <div className="trail-popup-photo-prompt">
+                      <strong>Rider photo needed</strong>
+                      <span>Add one from this area.</span>
+                    </div>
+                  );
+                })()}
                 <strong>{feature.title}</strong>
                 <span>
                   {intelligenceLayerLabels[feature.layer]} • {feature.areaName}

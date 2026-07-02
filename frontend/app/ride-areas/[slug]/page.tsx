@@ -35,6 +35,8 @@ export default async function RideAreaDetailPage({ params }: Props) {
   } catch {
     areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
   }
+  const riderPhotos = areaReviews.filter((review) => review.photoUrl);
+  const primaryRiderPhoto = riderPhotos[0];
 
   return (
     <main className="page">
@@ -131,10 +133,20 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <div className="outdoor-stop-grid">
             {area.nearbyOutdoors.map((stop) => (
               <article key={`${stop.kind}-${stop.name}`}>
-                <div className="outdoor-photo-prompt">
-                  <strong>Rider photo needed</strong>
-                  <small>Be the first to add one after your trip.</small>
-                </div>
+                {primaryRiderPhoto ? (
+                  <figure className="outdoor-rider-photo">
+                    <img
+                      alt={primaryRiderPhoto.photoCaption || `${area.name} rider photo`}
+                      src={primaryRiderPhoto.photoUrl}
+                    />
+                    <figcaption>{primaryRiderPhoto.photoCaption || `Added by ${primaryRiderPhoto.riderName}`}</figcaption>
+                  </figure>
+                ) : (
+                  <div className="outdoor-photo-prompt">
+                    <strong>Rider photo needed</strong>
+                    <small>Be the first to add one after your trip.</small>
+                  </div>
+                )}
                 <span>{stop.kind.replace("_", " ")}</span>
                 <h3>{stop.name}</h3>
                 <p>{stop.description}</p>

@@ -156,6 +156,8 @@ class TrailReview(Base):
     difficulty: Mapped[str] = mapped_column(String(40), default="Moderate")
     trail_condition: Mapped[str] = mapped_column(String(220), default="")
     comment: Mapped[str] = mapped_column(Text)
+    photo_url: Mapped[str] = mapped_column(Text, default="")
+    photo_caption: Mapped[str] = mapped_column(String(180), default="")
     status: Mapped[str] = mapped_column(String(40), default=ReviewStatus.pending.value, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

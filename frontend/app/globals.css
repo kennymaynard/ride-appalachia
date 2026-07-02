@@ -5788,6 +5788,26 @@ button.tier-card.is-selected {
   color: #4a372e;
 }
 
+.trail-popup-rider-photo {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.trail-popup-rider-photo img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.35rem;
+  object-fit: cover;
+  background: #ececec;
+}
+
+.trail-popup-rider-photo figcaption {
+  color: #4a372e;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .trail-map-list {
   min-width: 0;
 }
@@ -6375,6 +6395,37 @@ button.tier-card.is-selected {
   margin: 0;
   color: var(--soft);
   line-height: 1.45;
+}
+
+.review-photo,
+.review-photo-preview,
+.admin-review-photo,
+.outdoor-rider-photo {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.review-photo img,
+.review-photo-preview img,
+.admin-review-photo img,
+.outdoor-rider-photo img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.review-photo figcaption,
+.review-photo-preview figcaption,
+.admin-review-photo figcaption,
+.outdoor-rider-photo figcaption {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 850;
+  line-height: 1.3;
 }
 
 .review-form {

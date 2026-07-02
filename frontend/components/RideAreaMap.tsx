@@ -209,6 +209,7 @@ export function RideAreaMap({
   const mapPoints = getMapPoints(areas, reviews, activeArea);
   const mapBusinesses = businesses.filter(hasBusinessCoordinates);
   const mapFeatures = (activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures));
+  const mapRiderPhotos = reviews.filter((review) => review.photoUrl);
   const mapBounds = getMapBounds(mapPoints, mapBusinesses, mapFeatures);
   const ohvCount = mapPoints.filter((point) => point.activity !== "Hiking").length;
   const hikingCount = mapPoints.filter((point) => point.activity === "Hiking").length;
@@ -232,6 +233,7 @@ export function RideAreaMap({
             points={mapPoints}
             businesses={mapBusinesses}
             features={mapFeatures}
+            riderPhotos={mapRiderPhotos}
           />
         </div>
 

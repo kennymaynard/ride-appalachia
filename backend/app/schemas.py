@@ -313,6 +313,8 @@ class TrailReviewBase(BaseModel):
     difficulty: str = "Moderate"
     trail_condition: str = ""
     comment: str
+    photo_url: str = ""
+    photo_caption: str = ""
 
 
 class TrailReviewCreate(TrailReviewBase):

@@ -568,6 +568,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                     <span>{review.rating} stars</span>
                   </div>
                   <h2>{review.riderName}</h2>
+                  {review.photoUrl ? (
+                    <figure className="admin-review-photo">
+                      <img alt={review.photoCaption || `${review.riderName} trail photo`} src={review.photoUrl} />
+                      {review.photoCaption ? <figcaption>{review.photoCaption}</figcaption> : null}
+                    </figure>
+                  ) : null}
                   <p>{review.comment}</p>
                   <dl>
                     <div>

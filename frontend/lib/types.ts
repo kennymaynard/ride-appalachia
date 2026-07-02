@@ -351,6 +351,8 @@ export type TrailReview = {
   difficulty: "Easy" | "Moderate" | "Hard";
   trailCondition: string;
   comment: string;
+  photoUrl: string;
+  photoCaption: string;
   status?: "pending" | "approved" | "rejected";
 };
 
