@@ -5632,7 +5632,8 @@ button.tier-card.is-selected {
 }
 
 .leaflet-business-pin,
-.leaflet-feature-pin {
+.leaflet-feature-pin,
+.leaflet-condition-report-pin {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -5653,7 +5654,8 @@ button.tier-card.is-selected {
 }
 
 .leaflet-business-pin span,
-.leaflet-feature-pin span {
+.leaflet-feature-pin span,
+.leaflet-condition-report-pin span {
   width: 0.65rem;
   height: 0.65rem;
   border: 2px solid #06150c;
@@ -5663,12 +5665,14 @@ button.tier-card.is-selected {
   flex: 0 0 auto;
 }
 
+.leaflet-condition-report-pin,
 .leaflet-feature-pin {
   border-color: rgba(93, 148, 186, 0.5);
   background: rgba(5, 19, 31, 0.86);
 }
 
-.leaflet-feature-pin span {
+.leaflet-feature-pin span,
+.leaflet-condition-report-pin span {
   background: #5d94ba;
   box-shadow: 0 0 0 0.18rem rgba(93, 148, 186, 0.25);
 }
@@ -5676,6 +5680,35 @@ button.tier-card.is-selected {
 .leaflet-feature-pin.is-condition span {
   background: #f26a1b;
   box-shadow: 0 0 0 0.18rem rgba(242, 106, 27, 0.25);
+}
+
+.leaflet-condition-report-pin.is-muddy span,
+.leaflet-condition-report-pin.is-washed_out span {
+  background: #f26a1b;
+  box-shadow: 0 0 0 0.18rem rgba(242, 106, 27, 0.25);
+}
+
+.leaflet-condition-report-pin.is-closed span,
+.leaflet-condition-report-pin.is-downed_tree span {
+  background: #ef4444;
+  box-shadow: 0 0 0 0.18rem rgba(239, 68, 68, 0.25);
+}
+
+.leaflet-condition-report-pin.is-weak_cell span {
+  background: #7dd3fc;
+  box-shadow: 0 0 0 0.18rem rgba(125, 211, 252, 0.25);
+}
+
+.leaflet-condition-report-pin.is-trailer_warning span,
+.leaflet-condition-report-pin.is-dusty span,
+.leaflet-condition-report-pin.is-crowded span {
+  background: #ffc857;
+  box-shadow: 0 0 0 0.18rem rgba(255, 200, 87, 0.25);
+}
+
+.leaflet-condition-report-pin.is-clear span {
+  background: #5cd68e;
+  box-shadow: 0 0 0 0.18rem rgba(92, 214, 142, 0.25);
 }
 
 .leaflet-feature-pin.is-cell span {
@@ -5721,7 +5754,8 @@ button.tier-card.is-selected {
 }
 
 .leaflet-business-pin strong,
-.leaflet-feature-pin strong {
+.leaflet-feature-pin strong,
+.leaflet-condition-report-pin strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6249,13 +6283,100 @@ button.tier-card.is-selected {
   cursor: pointer;
 }
 
-.trail-reviews {
+.trail-reviews,
+.trail-condition-reports {
   width: min(94rem, calc(100% - 2rem));
   margin: 1rem auto 0;
   border: 1px solid var(--line);
   border-radius: 0.7rem;
   background: rgba(10, 10, 10, 0.9);
   padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.condition-report-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.55fr) minmax(0, 1fr) minmax(18rem, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.condition-report-summary,
+.condition-report-list article {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.condition-report-summary {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.condition-report-summary > strong {
+  color: var(--orange);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.condition-report-summary > span {
+  color: var(--orange-soft);
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.condition-report-summary p,
+.condition-report-list p {
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.45;
+}
+
+.condition-report-pills,
+.condition-report-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.condition-report-pills {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.condition-report-pills small,
+.condition-report-list small {
+  border: 1px solid rgba(93, 148, 186, 0.42);
+  border-radius: 0.35rem;
+  background: rgba(93, 148, 186, 0.1);
+  color: #bde4ff;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.condition-report-list article {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.condition-report-list article > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.condition-report-list strong,
+.condition-report-list span {
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.condition-report-list span {
+  color: var(--orange-soft);
+  font-size: 0.8rem;
 }
 
 .business-review-section {
@@ -6469,6 +6590,19 @@ button.tier-card.is-selected {
   padding: 0 1rem;
   font-weight: 950;
   text-transform: uppercase;
+}
+
+.review-form .secondary-button {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.form-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
 }
 
 .admin-shell {
@@ -6845,6 +6979,7 @@ button.tier-card.is-selected {
 
   .trail-map-layout,
   .trail-review-layout,
+  .condition-report-layout,
   .homepage-phone-proof,
   .homepage-pricing,
   .home-hero,
@@ -7125,6 +7260,7 @@ button.tier-card.is-selected {
 
   .trail-map-shell,
   .trail-reviews,
+  .trail-condition-reports,
   .launch-strip {
     width: min(100% - 1rem, 94rem);
   }

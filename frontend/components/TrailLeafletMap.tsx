@@ -13,7 +13,7 @@ import {
   useMap,
 } from "react-leaflet";
 import type { Business, Category, RideMapFeature, TrailReview } from "../lib/types";
-import type { MapPoint } from "./RideAreaMap";
+import type { MapConditionReport, MapPoint } from "./RideAreaMap";
 
 type Props = {
   activeTitle: string;
@@ -24,6 +24,7 @@ type Props = {
   businesses?: Business[];
   features?: RideMapFeature[];
   riderPhotos?: TrailReview[];
+  conditionReports?: MapConditionReport[];
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
@@ -305,6 +306,21 @@ function makeFeatureIcon(feature: RideMapFeature) {
   });
 }
 
+function formatConditionType(value: MapConditionReport["reportType"]) {
+  return value.replaceAll("_", " ");
+}
+
+function makeConditionReportIcon(report: MapConditionReport) {
+  const label = formatConditionType(report.reportType);
+
+  return L.divIcon({
+    className: `leaflet-condition-report-pin is-${report.reportType}`,
+    html: `<span></span><strong>${escapeXml(label)}</strong>`,
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
+
 function getTrailColor(point: MapPoint) {
   return point.activity === "Hiking" ? "#5cd68e" : "#f26a1b";
 }
@@ -319,6 +335,7 @@ export function TrailLeafletMap({
   features = [],
   points,
   riderPhotos = [],
+  conditionReports = [],
 }: Props) {
   const [showOhv, setShowOhv] = useState(true);
   const [showHiking, setShowHiking] = useState(true);
@@ -381,6 +398,13 @@ export function TrailLeafletMap({
         ? []
         : features.filter((feature) => intelligenceLayers.includes(feature.layer)),
     [features, intelligenceLayers, selectedTrailId],
+  );
+  const visibleConditionReports = useMemo(
+    () =>
+      selectedTrailId || !intelligenceLayers.includes("condition")
+        ? []
+        : conditionReports,
+    [conditionReports, intelligenceLayers, selectedTrailId],
   );
   const photoByArea = useMemo(() => {
     const map = new Map<string, TrailReview>();
@@ -744,6 +768,30 @@ export function TrailLeafletMap({
                     Open
                   </a>
                 ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {visibleConditionReports.map((report) => (
+          <Marker
+            icon={makeConditionReportIcon(report)}
+            key={`condition-report-${report.id}`}
+            position={[report.latitude, report.longitude]}
+          >
+            <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
+              {formatConditionType(report.reportType)}
+            </Tooltip>
+            <Popup>
+              <div className="trail-popup">
+                <strong>{formatConditionType(report.reportType)}</strong>
+                <span>
+                  Rider report - {report.severity} - {report.areaName}
+                </span>
+                <p>{report.note || "Rider condition report."}</p>
+                <p>{report.trailName || report.areaName}</p>
+                <a href={`/ride-areas/${report.areaSlug}#trail-conditions`}>
+                  Add condition report
+                </a>
               </div>
             </Popup>
           </Marker>

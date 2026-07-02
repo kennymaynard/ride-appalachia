@@ -27,6 +27,8 @@ import type {
   RiderRideCard,
   RiderTrailProgress,
   RiderTrailProgressCreateInput,
+  TrailConditionReport,
+  TrailConditionReportCreateInput,
   TrailReview,
   TrailReviewCreateInput,
   TrailTalkPost,
@@ -78,6 +80,19 @@ type ApiTrailReview = {
   status: "pending" | "approved" | "rejected";
 };
 
+type ApiTrailConditionReport = {
+  id: number;
+  area_slug: string;
+  trail_name: string;
+  rider_name: string;
+  report_type: TrailConditionReport["reportType"];
+  severity: TrailConditionReport["severity"];
+  note: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  status: "pending" | "approved" | "rejected";
+};
+
 function mapTrailReview(review: ApiTrailReview): TrailReview {
   return {
     id: review.id,
@@ -95,6 +110,21 @@ function mapTrailReview(review: ApiTrailReview): TrailReview {
   };
 }
 
+function mapTrailConditionReport(report: ApiTrailConditionReport): TrailConditionReport {
+  return {
+    id: report.id,
+    areaSlug: report.area_slug,
+    trailName: report.trail_name,
+    riderName: report.rider_name,
+    reportType: report.report_type,
+    severity: report.severity,
+    note: report.note,
+    latitude: report.latitude,
+    longitude: report.longitude,
+    status: report.status,
+  };
+}
+
 function serializeTrailReview(review: TrailReviewCreateInput) {
   return {
     area_slug: review.areaSlug,
@@ -107,6 +137,19 @@ function serializeTrailReview(review: TrailReviewCreateInput) {
     comment: review.comment,
     photo_url: review.photoUrl,
     photo_caption: review.photoCaption,
+  };
+}
+
+function serializeTrailConditionReport(report: TrailConditionReportCreateInput) {
+  return {
+    area_slug: report.areaSlug,
+    trail_name: report.trailName,
+    rider_name: report.riderName,
+    report_type: report.reportType,
+    severity: report.severity,
+    note: report.note,
+    latitude: report.latitude,
+    longitude: report.longitude,
   };
 }
 
@@ -757,6 +800,36 @@ export async function createTrailReview(payload: TrailReviewCreateInput): Promis
   return mapTrailReview((await response.json()) as ApiTrailReview);
 }
 
+export async function getTrailConditionReports(areaSlug: string): Promise<TrailConditionReport[]> {
+  if (shouldSkipApiDuringBuild()) {
+    return [];
+  }
+
+  const response = await apiFetch(`/api/trail-condition-reports?area_slug=${areaSlug}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Unable to load trail condition reports");
+  }
+  const reports = (await response.json()) as ApiTrailConditionReport[];
+  return reports.map(mapTrailConditionReport);
+}
+
+export async function createTrailConditionReport(
+  payload: TrailConditionReportCreateInput,
+): Promise<TrailConditionReport> {
+  const response = await fetch(`${getApiUrl()}/api/trail-condition-reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(serializeTrailConditionReport(payload)),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to submit condition report");
+  }
+  return mapTrailConditionReport((await response.json()) as ApiTrailConditionReport);
+}
+
 export async function getTrailTalkPosts(filters?: {
   category?: string;
   areaSlug?: string;
@@ -856,6 +929,20 @@ export async function getAdminTrailReviews(adminPassword?: string): Promise<Trai
   }
   const reviews = (await response.json()) as ApiTrailReview[];
   return reviews.map(mapTrailReview);
+}
+
+export async function getAdminTrailConditionReports(
+  adminPassword?: string,
+): Promise<TrailConditionReport[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/trail-condition-reports?status=pending`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to load pending trail condition reports");
+  }
+  const reports = (await response.json()) as ApiTrailConditionReport[];
+  return reports.map(mapTrailConditionReport);
 }
 
 export async function getAdminTrailTalkPosts(adminPassword?: string): Promise<TrailTalkPost[]> {
@@ -972,6 +1059,22 @@ export async function moderateTrailReview(
     throw new Error("Unable to moderate trail review");
   }
   return mapTrailReview((await response.json()) as ApiTrailReview);
+}
+
+export async function moderateTrailConditionReport(
+  reportId: number,
+  status: "approved" | "rejected",
+  adminPassword?: string,
+): Promise<TrailConditionReport> {
+  const response = await fetch(`${getApiUrl()}/api/admin/trail-condition-reports/${reportId}/moderate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    throw new Error("Unable to moderate trail condition report");
+  }
+  return mapTrailConditionReport((await response.json()) as ApiTrailConditionReport);
 }
 
 export async function moderateTrailTalkPost(

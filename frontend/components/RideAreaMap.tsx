@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { getImportedTrailRouteSegments } from "../lib/imported-trail-routes";
-import type { Business, RideArea, RideMapFeature, TrailCoordinate, TrailInfo, TrailPhotoStop, TrailReview } from "../lib/types";
+import type {
+  Business,
+  RideArea,
+  RideMapFeature,
+  TrailConditionReport,
+  TrailCoordinate,
+  TrailInfo,
+  TrailPhotoStop,
+  TrailReview,
+} from "../lib/types";
 import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
 import { TrailMapShell } from "./TrailMapShell";
 
@@ -10,6 +19,7 @@ type Props = {
   businesses?: Business[];
   compact?: boolean;
   reviews?: TrailReview[];
+  conditionReports?: TrailConditionReport[];
 };
 
 export type MapPoint = {
@@ -36,6 +46,12 @@ export type MapPoint = {
   reviewRating?: number;
   reviewSnippet?: string;
   reviewText: string;
+};
+
+export type MapConditionReport = TrailConditionReport & {
+  areaName: string;
+  latitude: number;
+  longitude: number;
 };
 
 type MapBounds = {
@@ -158,17 +174,24 @@ function hasBusinessCoordinates(business: Business) {
   return typeof business.latitude === "number" && typeof business.longitude === "number";
 }
 
-function getMapBounds(points: MapPoint[], businesses: Business[] = [], features: RideMapFeature[] = []): MapBounds {
+function getMapBounds(
+  points: MapPoint[],
+  businesses: Business[] = [],
+  features: RideMapFeature[] = [],
+  reports: MapConditionReport[] = [],
+): MapBounds {
   const businessesWithCoordinates = businesses.filter(hasBusinessCoordinates);
   const latitudes = [
     ...points.map((item) => item.latitude),
     ...businessesWithCoordinates.map((business) => business.latitude as number),
     ...features.map((feature) => feature.latitude),
+    ...reports.map((report) => report.latitude),
   ];
   const longitudes = [
     ...points.map((item) => item.longitude),
     ...businessesWithCoordinates.map((business) => business.longitude as number),
     ...features.map((feature) => feature.longitude),
+    ...reports.map((report) => report.longitude),
   ];
   const minLat = Math.min(...latitudes);
   const maxLat = Math.max(...latitudes);
@@ -198,19 +221,43 @@ function getLeafletBounds(bounds: MapBounds): [[number, number], [number, number
   ];
 }
 
+function getMapConditionReports(
+  reports: TrailConditionReport[],
+  areas: RideArea[],
+  activeArea?: RideArea,
+): MapConditionReport[] {
+  const visibleAreaSlugs = new Set((activeArea ? [activeArea] : areas).map((area) => area.slug));
+
+  return reports
+    .filter((report) => visibleAreaSlugs.has(report.areaSlug))
+    .map((report) => {
+      const area = areas.find((item) => item.slug === report.areaSlug) ?? activeArea ?? areas[0];
+      const trail = area?.trails.find((item) => item.name === report.trailName);
+
+      return {
+        ...report,
+        areaName: area?.name ?? report.areaSlug,
+        latitude: report.latitude ?? trail?.latitude ?? area?.latitude ?? 0,
+        longitude: report.longitude ?? trail?.longitude ?? area?.longitude ?? 0,
+      };
+    });
+}
+
 export function RideAreaMap({
   areas,
   activeSlug,
   businesses = [],
   compact = false,
   reviews = [],
+  conditionReports = [],
 }: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
   const mapPoints = getMapPoints(areas, reviews, activeArea);
   const mapBusinesses = businesses.filter(hasBusinessCoordinates);
   const mapFeatures = (activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures));
+  const mapConditionReports = getMapConditionReports(conditionReports, areas, activeArea);
   const mapRiderPhotos = reviews.filter((review) => review.photoUrl);
-  const mapBounds = getMapBounds(mapPoints, mapBusinesses, mapFeatures);
+  const mapBounds = getMapBounds(mapPoints, mapBusinesses, mapFeatures, mapConditionReports);
   const ohvCount = mapPoints.filter((point) => point.activity !== "Hiking").length;
   const hikingCount = mapPoints.filter((point) => point.activity === "Hiking").length;
   const visibleAreas = activeArea ? [activeArea] : areas;
@@ -234,6 +281,7 @@ export function RideAreaMap({
             businesses={mapBusinesses}
             features={mapFeatures}
             riderPhotos={mapRiderPhotos}
+            conditionReports={mapConditionReports}
           />
         </div>
 

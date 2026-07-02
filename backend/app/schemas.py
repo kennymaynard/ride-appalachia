@@ -332,6 +332,32 @@ class TrailReviewModerationUpdate(BaseModel):
     status: str
 
 
+class TrailConditionReportBase(BaseModel):
+    area_slug: str
+    trail_name: str = ""
+    rider_name: str = ""
+    report_type: str
+    severity: str = "moderate"
+    note: str = ""
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+
+class TrailConditionReportCreate(TrailConditionReportBase):
+    pass
+
+
+class TrailConditionReportRead(TrailConditionReportBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: str = "pending"
+
+
+class TrailConditionReportModerationUpdate(BaseModel):
+    status: str
+
+
 class TrailTalkPostBase(BaseModel):
     rider_name: str = Field(min_length=2, max_length=120)
     category: str

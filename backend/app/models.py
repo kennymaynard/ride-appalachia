@@ -162,6 +162,22 @@ class TrailReview(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class TrailConditionReport(Base):
+    __tablename__ = "trail_condition_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    area_slug: Mapped[str] = mapped_column(String(120), index=True)
+    trail_name: Mapped[str] = mapped_column(String(180), default="")
+    rider_name: Mapped[str] = mapped_column(String(120), default="")
+    report_type: Mapped[str] = mapped_column(String(60), index=True)
+    severity: Mapped[str] = mapped_column(String(40), default="moderate")
+    note: Mapped[str] = mapped_column(Text, default="")
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[str] = mapped_column(String(40), default=ReviewStatus.pending.value, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class TrailTalkPost(Base):
     __tablename__ = "trail_talk_posts"
 

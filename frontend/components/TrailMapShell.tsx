@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { Business, RideMapFeature, TrailReview } from "../lib/types";
-import type { MapPoint } from "./RideAreaMap";
+import type { MapConditionReport, MapPoint } from "./RideAreaMap";
 
 const TrailLeafletMap = dynamic(
   () => import("./TrailLeafletMap").then((module) => module.TrailLeafletMap),
@@ -21,6 +21,7 @@ type Props = {
   businesses?: Business[];
   features?: RideMapFeature[];
   riderPhotos?: TrailReview[];
+  conditionReports?: MapConditionReport[];
 };
 
 export function TrailMapShell(props: Props) {

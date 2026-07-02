@@ -9,9 +9,11 @@ import {
   getAdminMarketingLeads,
   getAdminBookingTransfers,
   getAdminServiceRequests,
+  getAdminTrailConditionReports,
   getAdminTrailTalkPosts,
   getAdminTrailReviews,
   moderateBusiness,
+  moderateTrailConditionReport,
   moderateTrailTalkPost,
   moderateTrailReview,
   processAdminBookingTransfers,
@@ -28,6 +30,7 @@ import type {
   BookingTransfer,
   LodgingServiceRequest,
   MarketingLead,
+  TrailConditionReport,
   TrailReview,
   TrailTalkPost,
 } from "../lib/types";
@@ -60,6 +63,7 @@ function mapPoint(latitude: number, longitude: number) {
 export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [pendingReviews, setPendingReviews] = useState<TrailReview[]>([]);
+  const [pendingConditionReports, setPendingConditionReports] = useState<TrailConditionReport[]>([]);
   const [pendingTrailTalkPosts, setPendingTrailTalkPosts] = useState<TrailTalkPost[]>([]);
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
   const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
@@ -100,6 +104,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     try {
       const loadedBusinesses = await getAdminBusinesses(adminPassword);
       const loadedReviews = await getAdminTrailReviews(adminPassword);
+      const loadedConditionReports = await getAdminTrailConditionReports(adminPassword);
       const loadedTrailTalkPosts = await getAdminTrailTalkPosts(adminPassword);
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
       const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
@@ -107,6 +112,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       const loadedAnalytics = await getAdminAnalytics(adminPassword).catch(() => null);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
+      setPendingConditionReports(loadedConditionReports);
       setPendingTrailTalkPosts(loadedTrailTalkPosts);
       setServiceRequests(loadedServiceRequests);
       setMarketingLeads(loadedMarketingLeads);
@@ -246,6 +252,23 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         caughtError instanceof Error
           ? caughtError.message
           : "Unable to moderate review.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function runConditionReportAction(reportId: number, status: "approved" | "rejected") {
+    setError("");
+    setWorkingId(reportId);
+    try {
+      await moderateTrailConditionReport(reportId, status, adminPassword);
+      setPendingConditionReports((current) => current.filter((report) => report.id !== reportId));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to moderate condition report.",
       );
     } finally {
       setWorkingId(null);
@@ -611,6 +634,65 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           </div>
         ) : (
           <p className="empty-state">No pending trail reviews.</p>
+        )}
+      </div>
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Condition queue</p>
+          <h2>Pending map condition reports</h2>
+        </div>
+        {pendingConditionReports.length ? (
+          <div className="admin-list">
+            {pendingConditionReports.map((report) => (
+              <article className="admin-business-card" key={report.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{report.areaSlug.replaceAll("-", " ")}</span>
+                    <span>{report.severity}</span>
+                  </div>
+                  <h2>{report.reportType.replaceAll("_", " ")}</h2>
+                  <p>{report.note || "No rider note provided."}</p>
+                  <dl>
+                    <div>
+                      <dt>Trail</dt>
+                      <dd>{report.trailName || "Whole area"}</dd>
+                    </div>
+                    <div>
+                      <dt>Rider</dt>
+                      <dd>{report.riderName || "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt>Pin</dt>
+                      <dd>
+                        {typeof report.latitude === "number" && typeof report.longitude === "number"
+                          ? `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`
+                          : "Uses trail fallback"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    disabled={workingId === report.id}
+                    onClick={() => runConditionReportAction(report.id, "approved")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === report.id}
+                    onClick={() => runConditionReportAction(report.id, "rejected")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No pending condition reports.</p>
         )}
       </div>
 

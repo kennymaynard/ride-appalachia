@@ -358,6 +358,30 @@ export type TrailReview = {
 
 export type TrailReviewCreateInput = Omit<TrailReview, "id" | "status">;
 
+export type TrailConditionReport = {
+  id: number;
+  areaSlug: string;
+  trailName: string;
+  riderName: string;
+  reportType:
+    | "muddy"
+    | "dusty"
+    | "closed"
+    | "washed_out"
+    | "downed_tree"
+    | "weak_cell"
+    | "trailer_warning"
+    | "crowded"
+    | "clear";
+  severity: "low" | "moderate" | "high" | "closed";
+  note: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  status?: "pending" | "approved" | "rejected";
+};
+
+export type TrailConditionReportCreateInput = Omit<TrailConditionReport, "id" | "status">;
+
 export type TrailTalkCategory =
   | "group_ride"
   | "trail_conditions"

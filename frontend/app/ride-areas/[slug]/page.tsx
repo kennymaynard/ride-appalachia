@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarketplaceGrid } from "../../../components/MarketplaceGrid";
 import { RideAreaMap } from "../../../components/RideAreaMap";
+import { TrailConditionReports } from "../../../components/TrailConditionReports";
 import { TrailPack } from "../../../components/TrailPack";
 import { TrailReviews } from "../../../components/TrailReviews";
-import { getListings, getTrailReviews } from "../../../lib/api";
+import { getListings, getTrailConditionReports, getTrailReviews } from "../../../lib/api";
+import type { TrailConditionReport } from "../../../lib/types";
 import { rideAreas, trailReviews } from "../../../lib/sample-data";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +31,17 @@ export default async function RideAreaDetailPage({ params }: Props) {
     ? nearbyListings
     : await getListings("all");
   let areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
+  let areaConditionReports: TrailConditionReport[] = [];
   try {
     const loadedReviews = await getTrailReviews(area.slug);
     areaReviews = loadedReviews.length ? loadedReviews : areaReviews;
   } catch {
     areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
+  }
+  try {
+    areaConditionReports = await getTrailConditionReports(area.slug);
+  } catch {
+    areaConditionReports = [];
   }
   const riderPhotos = areaReviews.filter((review) => review.photoUrl);
   const primaryRiderPhoto = riderPhotos[0];
@@ -92,7 +100,13 @@ export default async function RideAreaDetailPage({ params }: Props) {
             <span>Map</span>
             <strong>Open map for {area.name}</strong>
           </summary>
-          <RideAreaMap areas={rideAreas} activeSlug={area.slug} compact reviews={areaReviews} />
+          <RideAreaMap
+            areas={rideAreas}
+            activeSlug={area.slug}
+            compact
+            reviews={areaReviews}
+            conditionReports={areaConditionReports}
+          />
         </details>
 
         <div className="ride-area-detail-grid">
@@ -160,6 +174,13 @@ export default async function RideAreaDetailPage({ params }: Props) {
           </div>
         </details>
       </section>
+
+      <TrailConditionReports
+        areaSlug={area.slug}
+        areaName={area.name}
+        trails={area.trails}
+        reports={areaConditionReports}
+      />
 
       <TrailReviews areaSlug={area.slug} areaName={area.name} reviews={areaReviews} />
 
