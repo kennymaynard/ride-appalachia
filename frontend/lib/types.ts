@@ -127,6 +127,8 @@ export type MarketingLead = {
   source: string;
   notes: string;
   status: "new" | "contacted" | "converted" | "closed";
+  email_sent?: boolean;
+  email_message?: string;
 };
 
 export type MarketingLeadCreateInput = Omit<MarketingLead, "id" | "status">;

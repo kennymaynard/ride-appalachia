@@ -319,8 +319,13 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     setError("");
     setWorkingId(leadId);
     try {
-      await updateMarketingLeadStatus(leadId, status, adminPassword);
+      const updatedLead = await updateMarketingLeadStatus(leadId, status, adminPassword);
       setMarketingLeads((current) => current.filter((lead) => lead.id !== leadId));
+      setEmailStatus(
+        updatedLead.email_sent
+          ? `Lead marked ${status}. Email sent to ${updatedLead.email}.`
+          : `Lead marked ${status}. Email was not sent: ${updatedLead.email_message || "email service not configured"}.`,
+      );
     } catch (caughtError) {
       setError(
         caughtError instanceof Error

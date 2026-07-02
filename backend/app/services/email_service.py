@@ -111,6 +111,69 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
     return EmailResult(sent=False, message="Unable to send lead notification.")
 
 
+def send_marketing_lead_status_email(
+    to_email: str,
+    status: str,
+    lead_type: str,
+    business_name: str = "",
+) -> EmailResult:
+    settings = get_settings()
+    if not settings.resend_api_key or not to_email:
+        return EmailResult(sent=False, message="Lead status email is not configured.")
+
+    display_name = business_name.strip() or "there"
+    lead_label = "business listing" if lead_type == "business_availability" else "launch access"
+    status_messages = {
+        "contacted": (
+            "We received your request",
+            f"Hi {display_name}, we received your {lead_label} request for Appalachia Offroad. "
+            "Someone from our team will follow up with the next steps.",
+        ),
+        "converted": (
+            "Your Appalachia Offroad request is moving forward",
+            f"Hi {display_name}, your {lead_label} request is moving forward. "
+            "Watch for the next message from Appalachia Offroad with setup details.",
+        ),
+        "closed": (
+            "Update on your Appalachia Offroad request",
+            f"Hi {display_name}, thank you for reaching out to Appalachia Offroad. "
+            "We are not moving forward with this request right now, but we appreciate your interest.",
+        ),
+    }
+    subject_text, body_text = status_messages.get(status, status_messages["contacted"])
+    payload = {
+        "from": settings.email_from,
+        "to": [to_email],
+        "subject": f"Appalachia Offroad: {subject_text}",
+        "html": (
+            f"<h1>{subject_text}</h1>"
+            f"<p>{body_text}</p>"
+            f"<p>If you have questions, reply to this email or visit {settings.frontend_url}/contact.</p>"
+        ),
+        "text": f"{subject_text}\n\n{body_text}\n\nQuestions? Visit {settings.frontend_url}/contact.",
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Lead status email sent.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=f"Unable to send lead status email: {get_http_error_message(exc)}")
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send lead status email: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send lead status email.")
+
+
 def send_business_approval_notification(
     business_name: str,
     owner_email: str,

@@ -725,6 +725,8 @@ class MarketingLeadRead(MarketingLeadCreate):
 
     id: int
     status: str = "new"
+    email_sent: bool = False
+    email_message: str = ""
 
 
 class MarketingLeadStatusUpdate(BaseModel):

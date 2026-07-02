@@ -20,7 +20,7 @@ from app.schemas import (
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
 )
-from app.services.email_service import send_business_approval_notification
+from app.services.email_service import send_business_approval_notification, send_marketing_lead_status_email
 from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
@@ -258,6 +258,14 @@ def set_marketing_lead_status(
     lead.status = payload.status
     db.commit()
     db.refresh(lead)
+    email_result = send_marketing_lead_status_email(
+        lead.email,
+        lead.status,
+        lead.lead_type,
+        lead.business_name,
+    )
+    setattr(lead, "email_sent", email_result.sent)
+    setattr(lead, "email_message", email_result.message)
     return lead
 
 
