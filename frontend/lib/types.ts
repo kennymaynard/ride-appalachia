@@ -129,9 +129,17 @@ export type MarketingLead = {
   status: "new" | "contacted" | "converted" | "closed";
   email_sent?: boolean;
   email_message?: string;
+  sms_sent?: boolean;
+  sms_message?: string;
 };
 
 export type MarketingLeadCreateInput = Omit<MarketingLead, "id" | "status">;
+
+export type AdminSmsTestResult = {
+  sent: boolean;
+  message: string;
+  to: string;
+};
 
 export type AdminEmailTestResult = {
   sent: boolean;

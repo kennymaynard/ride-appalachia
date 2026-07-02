@@ -10,6 +10,7 @@ from app.schemas import (
     AdminAnalyticsLocation,
     AdminAnalyticsPath,
     AdminAnalyticsRead,
+    AdminSmsTestRequest,
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
@@ -25,6 +26,7 @@ from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
 from app.services.photos import normalize_photo_url
+from app.services.sms_service import send_marketing_lead_status_sms, send_sms
 
 router = APIRouter(tags=["admin"])
 
@@ -53,6 +55,22 @@ def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str]:
         "message": result.message,
         "to": settings.lead_notify_email or "Not configured",
         "from": settings.email_from or "Not configured",
+    }
+
+
+@router.post("/test-sms")
+def send_test_sms(
+    payload: AdminSmsTestRequest,
+    _: None = Depends(require_admin),
+) -> dict[str, bool | str]:
+    result = send_sms(
+        payload.phone,
+        f"Appalachia Offroad test SMS for {payload.audience}. Reply STOP to opt out.",
+    )
+    return {
+        "sent": result.sent,
+        "message": result.message,
+        "to": payload.phone,
     }
 
 
@@ -264,8 +282,11 @@ def set_marketing_lead_status(
         lead.lead_type,
         lead.business_name,
     )
+    sms_result = send_marketing_lead_status_sms(lead.phone, lead.status, lead.lead_type)
     setattr(lead, "email_sent", email_result.sent)
     setattr(lead, "email_message", email_result.message)
+    setattr(lead, "sms_sent", sms_result.sent)
+    setattr(lead, "sms_message", sms_result.message)
     return lead
 
 

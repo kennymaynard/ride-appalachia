@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "Appalachia Offroad <support@appalachiaoffroadapp.com>"
     lead_notify_email: str = "support@appalachiaoffroadapp.com"
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from_phone: str = ""
 
 
 @lru_cache

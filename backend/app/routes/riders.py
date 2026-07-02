@@ -15,6 +15,7 @@ from app.models import (
     RiderTrailProgress,
 )
 from app.services.passcodes import hash_passcode, verify_passcode
+from app.services.sms_service import send_sms
 from app.schemas import (
     BusinessReviewCreate,
     BusinessReviewRead,
@@ -190,6 +191,11 @@ def update_rider_alert_preferences(
             setattr(rider, key, value)
     db.commit()
     db.refresh(rider)
+    if rider.phone and rider.alert_phone_opt_in:
+        send_sms(
+            rider.phone,
+            "Appalachia Offroad rider SMS alerts are on. Reply STOP to opt out.",
+        )
     return rider
 
 

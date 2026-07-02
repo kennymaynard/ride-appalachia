@@ -18,6 +18,7 @@ import {
   moderateTrailReview,
   processAdminBookingTransfers,
   sendAdminTestEmail,
+  sendAdminTestSms,
   setBusinessFeatured,
   updateAdminBusiness,
   updateMarketingLeadStatus,
@@ -79,6 +80,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [geocodeStatus, setGeocodeStatus] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [smsStatus, setSmsStatus] = useState("");
+  const [smsPhone, setSmsPhone] = useState("");
+  const [smsAudience, setSmsAudience] = useState<"rider" | "business">("rider");
+  const [sendingTestSms, setSendingTestSms] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -192,6 +197,30 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setSendingTestEmail(false);
+    }
+  }
+
+  async function sendTestSms(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setSmsStatus("");
+    setSendingTestSms(true);
+
+    try {
+      const result = await sendAdminTestSms(smsPhone, smsAudience, adminPassword);
+      setSmsStatus(
+        result.sent
+          ? `Test SMS sent to ${result.to}.`
+          : `Test SMS failed: ${result.message}. To: ${result.to}.`,
+      );
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to send test SMS.",
+      );
+    } finally {
+      setSendingTestSms(false);
     }
   }
 
@@ -326,6 +355,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           ? `Lead marked ${status}. Email sent to ${updatedLead.email}.`
           : `Lead marked ${status}. Email was not sent: ${updatedLead.email_message || "email service not configured"}.`,
       );
+      setSmsStatus(
+        updatedLead.sms_sent
+          ? `SMS sent to ${updatedLead.phone}.`
+          : `SMS was not sent: ${updatedLead.sms_message || "SMS service not configured or no phone number"}.`,
+      );
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -447,9 +481,29 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         </button>
         <span>Uses the same Resend settings as new business approval emails.</span>
       </div>
+      <form className="admin-email-tools admin-sms-tools" onSubmit={sendTestSms}>
+        <input
+          required
+          value={smsPhone}
+          onChange={(event) => setSmsPhone(event.target.value)}
+          placeholder="(606) 555-0199"
+        />
+        <select
+          value={smsAudience}
+          onChange={(event) => setSmsAudience(event.target.value as "rider" | "business")}
+        >
+          <option value="rider">Rider</option>
+          <option value="business">Business</option>
+        </select>
+        <button type="submit" disabled={sendingTestSms}>
+          {sendingTestSms ? "Sending..." : "Send Test SMS"}
+        </button>
+        <span>Uses Twilio SMS settings for rider and business texts.</span>
+      </form>
 
       {error ? <p className="form-error">{error}</p> : null}
       {emailStatus ? <p className="form-success">{emailStatus}</p> : null}
+      {smsStatus ? <p className="form-success">{smsStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
       <div className="admin-review-queue">

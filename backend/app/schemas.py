@@ -727,6 +727,8 @@ class MarketingLeadRead(MarketingLeadCreate):
     status: str = "new"
     email_sent: bool = False
     email_message: str = ""
+    sms_sent: bool = False
+    sms_message: str = ""
 
 
 class MarketingLeadStatusUpdate(BaseModel):
@@ -738,6 +740,11 @@ class MarketingLeadStatusUpdate(BaseModel):
         if value not in LEAD_STATUSES:
             raise ValueError("Unknown lead status")
         return value
+
+
+class AdminSmsTestRequest(BaseModel):
+    phone: str = Field(min_length=7, max_length=40)
+    audience: str = "rider"
 
 
 class PageVisitCreate(BaseModel):

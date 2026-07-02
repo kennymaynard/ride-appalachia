@@ -28,6 +28,12 @@ services:
         value: Appalachia Offroad <support@appalachiaoffroadapp.com>
       - key: LEAD_NOTIFY_EMAIL
         value: support@appalachiaoffroadapp.com
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_PHONE
+        sync: false
       - key: ADMIN_PASSWORD
         generateValue: true
 

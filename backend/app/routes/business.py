@@ -25,6 +25,7 @@ from app.schemas import (
 from app.services.email_service import send_business_approval_notification, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import normalize_photo_url
+from app.services.sms_service import send_sms
 
 router = APIRouter(tags=["business dashboard"])
 
@@ -51,6 +52,13 @@ def send_business_pending_approval_email(business: Business) -> None:
         business.subscription_tier,
         business.location,
         f"{settings.frontend_url}/admin",
+    )
+
+
+def send_business_pending_approval_sms(business: Business) -> None:
+    send_sms(
+        business.phone,
+        "Appalachia Offroad: your business listing was received and is pending approval. Reply STOP to opt out.",
     )
 
 
@@ -109,6 +117,10 @@ def login_business(
         business.name,
         full_access_url,
     )
+    send_sms(
+        business.phone,
+        "Appalachia Offroad: your business dashboard login was requested. Check your email for the secure link.",
+    )
 
     if email_result.sent:
         return BusinessLoginRead(
@@ -142,6 +154,7 @@ def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> B
     db.refresh(business)
     send_business_access_email(business)
     send_business_pending_approval_email(business)
+    send_business_pending_approval_sms(business)
     return business
 
 

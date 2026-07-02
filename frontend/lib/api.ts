@@ -3,6 +3,7 @@ import type {
   AdminEmailTestResult,
   AdminAnalytics,
   Business,
+  AdminSmsTestResult,
   Booking,
   BookingDetail,
   BookingTransfer,
@@ -914,6 +915,25 @@ export async function sendAdminTestEmail(
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Unable to send test email");
+  }
+
+  return response.json();
+}
+
+export async function sendAdminTestSms(
+  phone: string,
+  audience: "rider" | "business",
+  adminPassword?: string,
+): Promise<AdminSmsTestResult> {
+  const response = await fetch(`${getApiUrl()}/api/admin/test-sms`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify({ phone, audience }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to send test SMS");
   }
 
   return response.json();
