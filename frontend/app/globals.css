@@ -6783,18 +6783,25 @@ button.tier-card.is-selected {
   padding: 1rem;
 }
 
+.admin-business-card > div:first-child {
+  min-width: 0;
+}
+
 .admin-business-card h2 {
   margin: 0.65rem 0 0;
   font-size: clamp(1.45rem, 3vw, 2.4rem);
   font-weight: 950;
   line-height: 0.98;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .admin-business-card p {
   max-width: 58rem;
   color: var(--soft);
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .admin-business-card dl {
@@ -6805,6 +6812,7 @@ button.tier-card.is-selected {
 }
 
 .admin-business-card dl div {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 0.42rem;
   background: rgba(255, 255, 255, 0.04);
@@ -6821,7 +6829,8 @@ button.tier-card.is-selected {
 .admin-business-card dd {
   margin: 0.3rem 0 0;
   font-weight: 850;
-  text-transform: capitalize;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .admin-actions {
