@@ -13,6 +13,7 @@ export type TrailMapSource = {
   trailName: string;
   activity: TrailInfo["activity"];
   mapUrl: string;
+  mapDataUrl?: string;
   passUrl?: string;
   sourceLabel: string;
   status: TrailMapSourceStatus;
@@ -81,6 +82,13 @@ export function getTrailMapSource(area: RideArea, trail: TrailInfo): TrailMapSou
         "Verify alignment on topo map",
         "Add exact route and offline download",
       ]
+    : trail.mapDataUrl
+      ? [
+          "Open official Trail Heaven map data",
+          "Download GPX/KMZ when available",
+          "Check attribution/use requirements",
+          "Import only verified route geometry",
+        ]
     : status === "available_public"
       ? [
           "Confirm map is current",
@@ -102,6 +110,7 @@ export function getTrailMapSource(area: RideArea, trail: TrailInfo): TrailMapSou
     trailName: trail.name,
     activity: trail.activity ?? (type.includes("hiking") ? "Hiking" : "OHV"),
     mapUrl: trail.url,
+    mapDataUrl: trail.mapDataUrl,
     passUrl: trail.passUrl,
     sourceLabel,
     status,

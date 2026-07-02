@@ -334,6 +334,7 @@ export type TrailInfo = {
   description: string;
   url: string;
   passUrl?: string;
+  mapDataUrl?: string;
   latitude?: number;
   longitude?: number;
   lengthMiles?: number;

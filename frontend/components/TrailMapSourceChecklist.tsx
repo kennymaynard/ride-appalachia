@@ -57,6 +57,11 @@ export function TrailMapSourceChecklist({ areas }: Props) {
               <a href={source.mapUrl} rel="noreferrer" target="_blank">
                 Source reference
               </a>
+              {source.mapDataUrl ? (
+                <a href={source.mapDataUrl} rel="noreferrer" target="_blank">
+                  Map data
+                </a>
+              ) : null}
               {source.passUrl ? (
                 <a href={source.passUrl} rel="noreferrer" target="_blank">
                   Rules / passes
