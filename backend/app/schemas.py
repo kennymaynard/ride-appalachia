@@ -30,6 +30,12 @@ BOOKING_STATUSES = {"requested", "approved", "checkout_sent", "paid", "declined"
 PAYOUT_TIMINGS = {"after_check_in", "on_payment"}
 PAYMENT_TIMINGS = {"at_booking", "after_cancellation_period"}
 REFUND_MODES = {"full", "minus_cleaning_fee", "half", "none", "custom"}
+STORE_PRODUCT_IDS = {
+    "trail-shirt",
+    "trail-hat",
+    "trail-sticker-pack",
+    "vehicle-window-decal",
+}
 
 
 class DealBase(BaseModel):
@@ -699,6 +705,27 @@ class BusinessReviewRead(BusinessReviewCreate):
 
 class CheckoutSessionRead(BaseModel):
     checkout_url: str
+
+
+class StoreCheckoutItem(BaseModel):
+    product_id: str
+    name: str = Field(min_length=2, max_length=120)
+    variant: str = Field(default="", max_length=120)
+    dropship_sku: str = Field(default="", max_length=80)
+    unit_amount_cents: int = Field(ge=100, le=20000)
+    quantity: int = Field(ge=1, le=10)
+
+    @field_validator("product_id")
+    @classmethod
+    def validate_product_id(cls, value: str) -> str:
+        if value not in STORE_PRODUCT_IDS:
+            raise ValueError("Unknown store product")
+        return value
+
+
+class StoreCheckoutRequest(BaseModel):
+    items: list[StoreCheckoutItem] = Field(min_length=1, max_length=20)
+    customer_email: str = Field(default="", max_length=180)
 
 
 class MarketingLeadCreate(BaseModel):

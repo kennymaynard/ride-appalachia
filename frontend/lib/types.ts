@@ -510,3 +510,17 @@ export type BusinessReviewCreateInput = {
   rating: number;
   comment: string;
 };
+
+export type StoreCheckoutItemInput = {
+  product_id: string;
+  name: string;
+  variant: string;
+  dropship_sku: string;
+  unit_amount_cents: number;
+  quantity: number;
+};
+
+export type StoreCheckoutInput = {
+  items: StoreCheckoutItemInput[];
+  customer_email?: string;
+};

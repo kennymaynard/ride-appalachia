@@ -30,6 +30,7 @@ import type {
   RiderRideCard,
   RiderTrailProgress,
   RiderTrailProgressCreateInput,
+  StoreCheckoutInput,
   TrailConditionReport,
   TrailConditionReportCreateInput,
   TrailReview,
@@ -785,6 +786,23 @@ export async function createCheckout(
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Unable to create checkout");
+  }
+
+  const data = (await response.json()) as { checkout_url: string };
+  return data.checkout_url;
+}
+
+export async function createStoreCheckout(payload: StoreCheckoutInput): Promise<string> {
+  const response = await apiFetch("/api/store/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: timeoutSignal(10000),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to create store checkout");
   }
 
   const data = (await response.json()) as { checkout_url: string };

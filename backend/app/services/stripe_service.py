@@ -164,6 +164,73 @@ def create_booking_checkout_session(
     return session.url
 
 
+def create_store_checkout_session(
+    settings: Settings,
+    items: list[dict],
+    customer_email: str = "",
+) -> str:
+    success_url = f"{settings.frontend_url}/store?checkout=success&session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{settings.frontend_url}/store?checkout=cancelled"
+    order_summary = "; ".join(
+        [
+            (
+                f"{item.get('product_id', '')}:"
+                f"{item.get('variant', '')}:"
+                f"{item.get('quantity', 1)}:"
+                f"{item.get('dropship_sku', '')}"
+            )
+            for item in items
+        ]
+    )[:500]
+
+    if not settings.stripe_secret_key:
+        if settings.frontend_url.startswith("http://localhost"):
+            return success_url.replace("checkout=success", "checkout=stub")
+        raise RuntimeError("Stripe is not configured for store checkout")
+
+    stripe.api_key = settings.stripe_secret_key
+    line_items = []
+    for item in items:
+        line_items.append(
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": item["name"],
+                        "metadata": {
+                            "product_id": item["product_id"],
+                            "variant": item.get("variant", ""),
+                            "dropship_sku": item.get("dropship_sku", ""),
+                            "fulfillment": "print_on_demand",
+                        },
+                    },
+                    "unit_amount": item["unit_amount_cents"],
+                },
+                "quantity": item["quantity"],
+            }
+        )
+
+    session_params = {
+        "mode": "payment",
+        "allow_promotion_codes": True,
+        "line_items": line_items,
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "shipping_address_collection": {"allowed_countries": ["US"]},
+        "phone_number_collection": {"enabled": True},
+        "metadata": {
+            "order_type": "merch",
+            "fulfillment": "print_on_demand",
+            "items": order_summary,
+        },
+    }
+    if customer_email:
+        session_params["customer_email"] = customer_email
+
+    session = stripe.checkout.Session.create(**session_params)
+    return session.url
+
+
 def create_connected_account_transfer(
     settings: Settings,
     amount_cents: int,
