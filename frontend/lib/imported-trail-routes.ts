@@ -1,4 +1,5 @@
 import type { TrailCoordinate } from "./types";
+import { hatfieldMcCoyTrailRoutes } from "./hatfield-mccoy-routes";
 import { rushTrailRouteSegments } from "./rush-trail-routes";
 
 type ImportedTrailRoute = {
@@ -8,6 +9,7 @@ type ImportedTrailRoute = {
 };
 
 const importedTrailRoutes: ImportedTrailRoute[] = [
+  ...hatfieldMcCoyTrailRoutes,
   {
     areaSlug: "rush-ky",
     trailName: "Rush Off-Road",
