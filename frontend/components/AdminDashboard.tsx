@@ -79,6 +79,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
+  const [emailStatusType, setEmailStatusType] = useState<"success" | "error">("success");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [smsStatus, setSmsStatus] = useState("");
   const [smsPhone, setSmsPhone] = useState("");
@@ -180,10 +181,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   async function sendTestApprovalEmail() {
     setError("");
     setEmailStatus("");
+    setEmailStatusType("success");
     setSendingTestEmail(true);
 
     try {
       const result = await sendAdminTestEmail(adminPassword);
+      setEmailStatusType(result.sent ? "success" : "error");
       setEmailStatus(
         result.sent
           ? `Test email sent to ${result.to} from ${result.from}.`
@@ -350,6 +353,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     try {
       const updatedLead = await updateMarketingLeadStatus(leadId, status, adminPassword);
       setMarketingLeads((current) => current.filter((lead) => lead.id !== leadId));
+      setEmailStatusType(updatedLead.email_sent ? "success" : "error");
       setEmailStatus(
         updatedLead.email_sent
           ? `Lead marked ${status}. Email sent to ${updatedLead.email}.`
@@ -502,7 +506,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       </form>
 
       {error ? <p className="form-error">{error}</p> : null}
-      {emailStatus ? <p className="form-success">{emailStatus}</p> : null}
+      {emailStatus ? (
+        <p className={emailStatusType === "success" ? "form-success" : "form-error"}>
+          {emailStatus}
+        </p>
+      ) : null}
       {smsStatus ? <p className="form-success">{smsStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
@@ -517,8 +525,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
             onClick={async () => {
               setError("");
               setEmailStatus("");
+              setEmailStatusType("success");
               try {
                 const result = await processAdminBookingTransfers(adminPassword);
+                setEmailStatusType(result.failed || result.missing_connect_account ? "error" : "success");
                 setEmailStatus(
                   `Payout job ran. Due: ${result.due}. Processed: ${result.processed}. Missing Connect: ${result.missing_connect_account}. Failed: ${result.failed}.`,
                 );

@@ -20,6 +20,18 @@ def get_http_error_message(exc: HTTPError) -> str:
     return f"{exc.code} {exc.reason}{f': {body}' if body else ''}"
 
 
+def get_resend_error_message(action: str, exc: HTTPError, email_from: str) -> str:
+    detail = get_http_error_message(exc)
+    help_text = ""
+    if exc.code == 403 or "1010" in detail:
+        help_text = (
+            " Resend rejected the sending address. Verify the domain in Resend, "
+            "confirm the DNS records are active, and make sure EMAIL_FROM uses "
+            f"that verified sender. Current EMAIL_FROM: {email_from}."
+        )
+    return f"Unable to send {action}: {detail}.{help_text}"
+
+
 def send_business_login_email(to_email: str, business_name: str, access_url: str) -> EmailResult:
     settings = get_settings()
     if not settings.resend_api_key:
@@ -60,7 +72,7 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Login link sent to your email.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=f"Unable to send login email: {get_http_error_message(exc)}")
+        return EmailResult(sent=False, message=get_resend_error_message("login email", exc, settings.email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send login email: {exc}")
 
@@ -104,7 +116,7 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Lead notification sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=f"Unable to send lead notification: {get_http_error_message(exc)}")
+        return EmailResult(sent=False, message=get_resend_error_message("lead notification", exc, settings.email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send lead notification: {exc}")
 
@@ -167,7 +179,7 @@ def send_marketing_lead_status_email(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Lead status email sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=f"Unable to send lead status email: {get_http_error_message(exc)}")
+        return EmailResult(sent=False, message=get_resend_error_message("lead status email", exc, settings.email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send lead status email: {exc}")
 
@@ -229,7 +241,11 @@ def send_business_approval_notification(
     except HTTPError as exc:
         return EmailResult(
             sent=False,
-            message=f"Unable to send business approval notification: {get_http_error_message(exc)}",
+            message=get_resend_error_message(
+                "business approval notification",
+                exc,
+                settings.email_from,
+            ),
         )
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send business approval notification: {exc}")
@@ -286,7 +302,7 @@ def send_booking_cancellation_request_notification(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Cancellation request notification sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {get_http_error_message(exc)}")
+        return EmailResult(sent=False, message=get_resend_error_message("cancellation request notification", exc, settings.email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {exc}")
 
@@ -341,7 +357,7 @@ def send_booking_cancellation_decision_email(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Cancellation decision email sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=f"Unable to send cancellation decision email: {get_http_error_message(exc)}")
+        return EmailResult(sent=False, message=get_resend_error_message("cancellation decision email", exc, settings.email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send cancellation decision email: {exc}")
 
