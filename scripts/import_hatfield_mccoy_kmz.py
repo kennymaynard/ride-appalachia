@@ -4,8 +4,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
 import sys
 import zipfile
+import math
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -46,6 +48,172 @@ def read_kml(path: Path) -> bytes:
             preferred = next((name for name in kml_names if name.lower().endswith("doc.kml")), kml_names[0])
             return archive.read(preferred)
     return path.read_bytes()
+
+
+def read_zip_member(path: Path, suffix: str) -> bytes:
+    with zipfile.ZipFile(path) as archive:
+        names = [name for name in archive.namelist() if name.lower().endswith(suffix)]
+        if not names:
+            raise SystemExit(f"No {suffix} file found inside {path}")
+        return archive.read(names[0])
+
+
+def parse_dbf(dbf: bytes) -> list[dict[str, str]]:
+    record_count = struct.unpack("<I", dbf[4:8])[0]
+    header_length = struct.unpack("<H", dbf[8:10])[0]
+    record_length = struct.unpack("<H", dbf[10:12])[0]
+    fields: list[tuple[str, int]] = []
+    offset = 32
+    while dbf[offset] != 0x0D:
+        descriptor = dbf[offset : offset + 32]
+        name = descriptor[:11].split(b"\0", 1)[0].decode("ascii", "ignore")
+        length = descriptor[16]
+        fields.append((name, length))
+        offset += 32
+
+    records = []
+    for index in range(record_count):
+        start = header_length + index * record_length
+        record = dbf[start : start + record_length]
+        if not record or record[0:1] == b"*":
+            continue
+        position = 1
+        values = {}
+        for name, length in fields:
+            values[name] = record[position : position + length].decode("latin1", "ignore").strip()
+            position += length
+        records.append(values)
+    return records
+
+
+def utm17n_to_lat_lon(easting: float, northing: float) -> dict[str, float]:
+    # NAD83 UTM Zone 17N. NAD83 and WGS84 are close enough for web map display here.
+    semi_major = 6378137.0
+    flattening_inverse = 298.257222101
+    flattening = 1 / flattening_inverse
+    eccentricity_squared = flattening * (2 - flattening)
+    eccentricity_prime_squared = eccentricity_squared / (1 - eccentricity_squared)
+    scale = 0.9996
+    central_meridian = math.radians(-81.0)
+
+    x = easting - 500000.0
+    y = northing
+    meridional_arc = y / scale
+    mu = meridional_arc / (
+        semi_major
+        * (
+            1
+            - eccentricity_squared / 4
+            - 3 * eccentricity_squared**2 / 64
+            - 5 * eccentricity_squared**3 / 256
+        )
+    )
+    e1 = (1 - math.sqrt(1 - eccentricity_squared)) / (1 + math.sqrt(1 - eccentricity_squared))
+    footprint_latitude = (
+        mu
+        + (3 * e1 / 2 - 27 * e1**3 / 32) * math.sin(2 * mu)
+        + (21 * e1**2 / 16 - 55 * e1**4 / 32) * math.sin(4 * mu)
+        + (151 * e1**3 / 96) * math.sin(6 * mu)
+        + (1097 * e1**4 / 512) * math.sin(8 * mu)
+    )
+
+    sin_footprint = math.sin(footprint_latitude)
+    cos_footprint = math.cos(footprint_latitude)
+    tan_footprint = math.tan(footprint_latitude)
+    radius_curvature = semi_major / math.sqrt(1 - eccentricity_squared * sin_footprint**2)
+    radius_meridian = (
+        semi_major
+        * (1 - eccentricity_squared)
+        / (1 - eccentricity_squared * sin_footprint**2) ** 1.5
+    )
+    t = tan_footprint**2
+    c = eccentricity_prime_squared * cos_footprint**2
+    d = x / (radius_curvature * scale)
+
+    latitude = footprint_latitude - (
+        radius_curvature
+        * tan_footprint
+        / radius_meridian
+        * (
+            d**2 / 2
+            - (5 + 3 * t + 10 * c - 4 * c**2 - 9 * eccentricity_prime_squared) * d**4 / 24
+            + (
+                61
+                + 90 * t
+                + 298 * c
+                + 45 * t**2
+                - 252 * eccentricity_prime_squared
+                - 3 * c**2
+            )
+            * d**6
+            / 720
+        )
+    )
+    longitude = central_meridian + (
+        d
+        - (1 + 2 * t + c) * d**3 / 6
+        + (5 - 2 * c + 28 * t - 3 * c**2 + 8 * eccentricity_prime_squared + 24 * t**2)
+        * d**5
+        / 120
+    ) / cos_footprint
+
+    return {"latitude": round(math.degrees(latitude), 6), "longitude": round(math.degrees(longitude), 6)}
+
+
+def parse_shp_polyline_segments(shp: bytes) -> list[list[dict[str, float]]]:
+    segments: list[list[dict[str, float]]] = []
+    offset = 100
+    while offset + 8 <= len(shp):
+        _record_number, content_length_words = struct.unpack(">2i", shp[offset : offset + 8])
+        content_start = offset + 8
+        content_length = content_length_words * 2
+        content = shp[content_start : content_start + content_length]
+        offset = content_start + content_length
+        if len(content) < 44:
+            continue
+        shape_type = struct.unpack("<i", content[:4])[0]
+        if shape_type not in {3, 13, 23}:
+            continue
+        num_parts, num_points = struct.unpack("<2i", content[36:44])
+        parts_offset = 44
+        points_offset = parts_offset + num_parts * 4
+        parts = list(struct.unpack(f"<{num_parts}i", content[parts_offset:points_offset]))
+        parts.append(num_points)
+        points = [
+            struct.unpack("<2d", content[points_offset + point_index * 16 : points_offset + (point_index + 1) * 16])
+            for point_index in range(num_points)
+        ]
+        for part_index in range(num_parts):
+            start = parts[part_index]
+            end = parts[part_index + 1]
+            segment = [utm17n_to_lat_lon(easting, northing) for easting, northing in points[start:end]]
+            if len(segment) >= 2:
+                segments.append(segment)
+    return segments
+
+
+def extract_shapefile_routes(path: Path):
+    shp = read_zip_member(path, ".shp") if path.suffix.lower() == ".zip" else path.read_bytes()
+    dbf_path = path.with_suffix(".dbf")
+    dbf = read_zip_member(path, ".dbf") if path.suffix.lower() == ".zip" else dbf_path.read_bytes()
+    records = parse_dbf(dbf)
+    shape_segments = parse_shp_polyline_segments(shp)
+    grouped: dict[tuple[str, str], list[list[dict[str, float]]]] = {}
+    unmatched = 0
+
+    for record, segment in zip(records, shape_segments):
+        system = match_system(record.get("Trail_Syst", ""))
+        if not system:
+            unmatched += 1
+            continue
+        grouped.setdefault(system, []).append(segment)
+
+    routes = [
+        {"areaSlug": area_slug, "trailName": trail_name, "segments": segments}
+        for (area_slug, trail_name), segments in sorted(grouped.items())
+        if segments
+    ]
+    return routes, unmatched
 
 
 def child_text(element: ElementTree.Element, child_name: str) -> str:
@@ -157,7 +325,10 @@ def main() -> int:
         print(f"Missing source file: {args.source}", file=sys.stderr)
         return 1
 
-    routes, unmatched = extract_routes(read_kml(args.source))
+    if args.source.suffix.lower() == ".zip" or args.source.suffix.lower() == ".shp":
+        routes, unmatched = extract_shapefile_routes(args.source)
+    else:
+        routes, unmatched = extract_routes(read_kml(args.source))
     if not routes:
         print("No matching Hatfield-McCoy LineString routes found.", file=sys.stderr)
         return 1
