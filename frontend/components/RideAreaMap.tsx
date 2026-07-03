@@ -35,6 +35,7 @@ export type MapPoint = {
   latitude: number;
   longitude: number;
   href: string;
+  mapDataUrl?: string;
   lengthMiles?: number;
   photoStops: TrailPhotoStop[];
   routeLine: TrailCoordinate[];
@@ -149,6 +150,7 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
     latitude: trail.latitude ?? area.latitude,
     longitude: trail.longitude ?? area.longitude,
     href: trail.url,
+    mapDataUrl: trail.mapDataUrl,
     lengthMiles: trail.lengthMiles,
     photoStops: trail.photoStops ?? [],
     routeLine: routeSegments.flat(),
@@ -172,6 +174,47 @@ function getMapPoints(areas: RideArea[], reviews: TrailReview[], activeArea?: Ri
 
 function hasBusinessCoordinates(business: Business) {
   return typeof business.latitude === "number" && typeof business.longitude === "number";
+}
+
+function normalize(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findBusinessArea(business: Business, areas: RideArea[]) {
+  const businessText = normalize(
+    [business.location, business.description, business.name].join(" "),
+  );
+
+  return areas.find((area) => {
+    const areaTerms = [area.name, area.locationQuery, area.state, ...area.nearbyTowns]
+      .map(normalize)
+      .filter(Boolean);
+
+    return areaTerms.some((term) => businessText.includes(term));
+  });
+}
+
+function addBusinessCoordinateFallbacks(
+  businesses: Business[],
+  areas: RideArea[],
+  activeArea?: RideArea,
+): Business[] {
+  return businesses
+    .map((business, index) => {
+      if (hasBusinessCoordinates(business)) return business;
+
+      const fallbackArea = activeArea ?? findBusinessArea(business, areas);
+      if (!fallbackArea) return business;
+
+      const angle = ((business.id || index + 1) % 12) * ((Math.PI * 2) / 12);
+      const ring = 0.018 + ((business.id || index) % 4) * 0.006;
+
+      return {
+        ...business,
+        latitude: fallbackArea.latitude + Math.sin(angle) * ring,
+        longitude: fallbackArea.longitude + Math.cos(angle) * ring,
+      };
+    });
 }
 
 function getMapBounds(
@@ -253,7 +296,11 @@ export function RideAreaMap({
 }: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
   const mapPoints = getMapPoints(areas, reviews, activeArea);
-  const mapBusinesses = businesses.filter(hasBusinessCoordinates);
+  const mapBusinesses = addBusinessCoordinateFallbacks(
+    businesses,
+    activeArea ? [activeArea] : areas,
+    activeArea,
+  ).filter(hasBusinessCoordinates);
   const mapFeatures = (activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures));
   const mapConditionReports = getMapConditionReports(conditionReports, areas, activeArea);
   const mapRiderPhotos = reviews.filter((review) => review.photoUrl);

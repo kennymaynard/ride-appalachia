@@ -88,6 +88,11 @@ export default async function RideAreaDetailPage({ params }: Props) {
                         Passes / Rules
                       </a>
                     ) : null}
+                    {trail.mapDataUrl ? (
+                      <a href={trail.mapDataUrl} rel="noreferrer" target="_blank">
+                        Map Data
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               </article>
@@ -103,6 +108,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <RideAreaMap
             areas={rideAreas}
             activeSlug={area.slug}
+            businesses={fallbackListings}
             compact
             reviews={areaReviews}
             conditionReports={areaConditionReports}

@@ -31,7 +31,7 @@ export default async function RideAreasPage() {
       </section>
 
       <RideAreaFinder areas={rideAreas} listings={listings} />
-      <RideAreaMap areas={rideAreas} reviews={trailReviews} />
+      <RideAreaMap areas={rideAreas} businesses={listings} reviews={trailReviews} />
     </main>
   );
 }

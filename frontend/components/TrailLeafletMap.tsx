@@ -345,6 +345,7 @@ export function TrailLeafletMap({
     "lodging",
     "repairs",
     "rentals",
+    "services",
     "deals",
   ]);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([
@@ -689,6 +690,11 @@ export function TrailLeafletMap({
                 <a href={point.href} rel="noreferrer" target="_blank">
                   Open official map
                 </a>
+                {point.mapDataUrl ? (
+                  <a href={point.mapDataUrl} rel="noreferrer" target="_blank">
+                    Open map data
+                  </a>
+                ) : null}
                 <a href={`/ride-areas/${point.areaSlug}#trail-reviews`}>
                   Leave trail review
                 </a>
