@@ -12,6 +12,14 @@ type PlannerItem = {
   category?: Exclude<Category, "deals">;
 };
 
+type PlannerPreset = {
+  id: string;
+  label: string;
+  detail: string;
+  selected: string[];
+  radiusMiles: number;
+};
+
 type Coordinates = {
   latitude: number;
   longitude: number;
@@ -142,6 +150,7 @@ const knownTravelCities: Array<Coordinates & { names: string[] }> = [
   { names: ["pikeville", "pikeville ky"], latitude: 37.4793, longitude: -82.5188 },
   { names: ["paintsville", "paintsville ky"], latitude: 37.8145, longitude: -82.8071 },
   { names: ["williamson", "williamson wv"], latitude: 37.6743, longitude: -82.2774 },
+  { names: ["royal blue", "royal blue tn"], latitude: 36.4331, longitude: -84.3094 },
   { names: ["pioneer", "pioneer tn"], latitude: 36.4331, longitude: -84.3094 },
   { names: ["huntsville", "huntsville tn"], latitude: 36.4098, longitude: -84.4908 },
   { names: ["oneida", "oneida tn"], latitude: 36.4981, longitude: -84.5127 },
@@ -152,6 +161,56 @@ const defaultSelected = ["trails", "sleep", "eat", "fuel", "family"];
 const storageKey = "ride-appalachia-trip-planner";
 const offlinePackKey = "ride-appalachia-offline-trip-pack";
 const planSelectionKey = "ride-appalachia-trip-planner-selections";
+
+const destinationChips = ["Rush KY", "Harlan KY", "Matewan WV", "Royal Blue TN", "Pikeville KY"];
+
+const plannerPresets: PlannerPreset[] = [
+  {
+    id: "day",
+    label: "Day Ride",
+    detail: "Trails, fuel, food, and a wash bay.",
+    selected: ["trails", "eat", "fuel", "wash"],
+    radiusMiles: 50,
+  },
+  {
+    id: "weekend",
+    label: "Weekend Trip",
+    detail: "Lodging, meals, fuel, trail rules, and nature stops.",
+    selected: ["trails", "sleep", "eat", "fuel", "family"],
+    radiusMiles: 75,
+  },
+  {
+    id: "family",
+    label: "Family Trip",
+    detail: "Easy planning with parks, food, lodging, and backup stops.",
+    selected: ["trails", "sleep", "eat", "fuel", "family", "services"],
+    radiusMiles: 75,
+  },
+  {
+    id: "backup",
+    label: "Breakdown Ready",
+    detail: "Repair, fuel, service, wash, and local support.",
+    selected: ["trails", "fuel", "wash", "repair", "services"],
+    radiusMiles: 100,
+  },
+  {
+    id: "first-time",
+    label: "First Time Here",
+    detail: "Rules, lodging, food, rentals, fuel, and backup help.",
+    selected: ["trails", "sleep", "eat", "fuel", "rent", "repair", "services"],
+    radiusMiles: 75,
+  },
+];
+
+type PlannerSection = "trails" | "stops" | "outdoors" | "maps" | "summary";
+
+const defaultOpenSections: Record<PlannerSection, boolean> = {
+  trails: true,
+  stops: true,
+  outdoors: true,
+  maps: false,
+  summary: true,
+};
 
 type PlanSelections = {
   trails: string[];
@@ -300,6 +359,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [copyStatus, setCopyStatus] = useState("");
   const [directions, setDirections] = useState("");
   const [offlineStatus, setOfflineStatus] = useState("");
+  const [openSections, setOpenSections] = useState(defaultOpenSections);
   const [planSelections, setPlanSelections] = useState<PlanSelections>({
     trails: [],
     stops: [],
@@ -417,9 +477,46 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const planTrails = plannedTrails.length ? plannedTrails : nearbyTrails.slice(0, 5);
   const planStops = plannedStops.length ? plannedStops : nearbyStops.slice(0, 8);
   const planOutdoors = plannedOutdoors.length ? plannedOutdoors : nearbyOutdoors.slice(0, 5);
+  const visibleTrails = useMemo(
+    () =>
+      [...nearbyTrails].sort((a, b) => {
+        const aPlanned = planSelections.trails.includes(getTrailKey(a));
+        const bPlanned = planSelections.trails.includes(getTrailKey(b));
+        if (aPlanned !== bPlanned) return aPlanned ? -1 : 1;
+        return (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0);
+      }),
+    [nearbyTrails, planSelections.trails],
+  );
+  const visibleStops = useMemo(
+    () =>
+      [...nearbyStops].sort((a, b) => {
+        const aPlanned = planSelections.stops.includes(a.id);
+        const bPlanned = planSelections.stops.includes(b.id);
+        if (aPlanned !== bPlanned) return aPlanned ? -1 : 1;
+        return (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999);
+      }),
+    [nearbyStops, planSelections.stops],
+  );
+  const visibleOutdoors = useMemo(
+    () =>
+      [...nearbyOutdoors].sort((a, b) => {
+        const aPlanned = planSelections.outdoors.includes(getOutdoorKey(a));
+        const bPlanned = planSelections.outdoors.includes(getOutdoorKey(b));
+        if (aPlanned !== bPlanned) return aPlanned ? -1 : 1;
+        return (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0);
+      }),
+    [nearbyOutdoors, planSelections.outdoors],
+  );
   const mapLinks = useMemo(
     () => getNeedMapLinks(selected, locationFilter),
     [locationFilter, selected],
+  );
+  const manualPickCount = plannedTrails.length + plannedStops.length + plannedOutdoors.length;
+  const activePreset = plannerPresets.find(
+    (preset) =>
+      preset.radiusMiles === radiusMiles &&
+      preset.selected.length === selected.length &&
+      preset.selected.every((id) => selected.includes(id)),
   );
 
   const tripSummary = useMemo(() => {
@@ -519,11 +616,26 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     );
   }
 
+  function applyPreset(preset: PlannerPreset) {
+    setCopyStatus("");
+    setSelected(preset.selected);
+    setRadiusMiles(preset.radiusMiles);
+  }
+
+  function togglePlannerSection(section: PlannerSection) {
+    setOpenSections((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  }
+
   function startOver() {
     setSelected(defaultSelected);
     setLocationFilter(initialLocation);
     setRadiusMiles(50);
     setCopyStatus("");
+    setOfflineStatus("");
+    setOpenSections(defaultOpenSections);
     setPlanSelections({ trails: [], stops: [], outdoors: [] });
     writeStoredValue(storageKey, JSON.stringify(defaultSelected));
     writeStoredValue(planSelectionKey, JSON.stringify({ trails: [], stops: [], outdoors: [] }));
@@ -642,7 +754,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         <div>
           <p className="eyebrow">Start here</p>
           <h2>Where are you riding?</h2>
-          <p>Enter the town, pick a mile range, and check what you need.</p>
+          <p>Pick a destination, choose a trip style, then add trails and stops into one saved ride plan.</p>
         </div>
         <label>
           Destination
@@ -665,13 +777,45 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
             <option value={150}>150 miles</option>
           </select>
         </label>
+        <div className="planner-chip-panel">
+          <span>Popular destinations</span>
+          <div className="planner-chip-row">
+            {destinationChips.map((destination) => (
+              <button
+                className={normalize(locationFilter) === normalize(destination) ? "is-active" : ""}
+                key={destination}
+                type="button"
+                onClick={() => setLocationFilter(destination)}
+              >
+                {destination}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="planner-main-grid">
         <section className="planner-card">
           <div className="section-heading">
             <p>Step 2</p>
-            <h2>Pick what you need.</h2>
+            <h2>Pick a trip style.</h2>
+          </div>
+          <div className="planner-preset-grid">
+            {plannerPresets.map((preset) => (
+              <button
+                className={activePreset?.id === preset.id ? "planner-preset is-active" : "planner-preset"}
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset)}
+              >
+                <strong>{preset.label}</strong>
+                <span>{preset.detail}</span>
+              </button>
+            ))}
+          </div>
+          <div className="section-heading compact">
+            <p>Fine tune</p>
+            <h2>Adjust your checklist.</h2>
           </div>
           <div className="planner-options clean">
             {plannerItems.map((item) => (
@@ -698,13 +842,23 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         <aside className="planner-card planner-roadmap-card">
           <div className="section-heading">
             <p>Your plan</p>
-            <h2>{plannedTrails.length + plannedStops.length ? "Saved picks." : "Start adding picks."}</h2>
+            <h2>{manualPickCount ? "Saved picks." : "Smart starter plan."}</h2>
           </div>
           <div className="planner-pick-summary">
-            <span>{plannedTrails.length || "Auto"} trail picks</span>
-            <span>{plannedStops.length || "Auto"} local stops</span>
-            <span>{plannedOutdoors.length || "Auto"} outdoor stops</span>
+            <span>{plannedTrails.length || planTrails.length} trail picks</span>
+            <span>{plannedStops.length || planStops.length} local stops</span>
+            <span>{plannedOutdoors.length || planOutdoors.length} outdoor stops</span>
             <span>{mapLinks.length} map searches</span>
+          </div>
+          <div className="planner-live-preview">
+            <div>
+              <strong>{locationFilter || "Any area"}</strong>
+              <span>{radiusMiles} mile search range</span>
+            </div>
+            <div>
+              <strong>{activePreset?.label ?? "Custom trip"}</strong>
+              <span>{selectedItems.length} checklist items</span>
+            </div>
           </div>
           <ol className="roadmap-list">
             <li>
@@ -748,168 +902,255 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       </div>
 
       <section className="planner-card">
-        <div className="section-heading">
-          <p>Step 3</p>
-          <h2>Choose trails near {locationFilter || "your trip"}.</h2>
+        <div className="planner-section-heading">
+          <div className="section-heading">
+            <p>Step 3</p>
+            <h2>Choose trails near {locationFilter || "your trip"}.</h2>
+          </div>
+          <button type="button" onClick={() => togglePlannerSection("trails")}>
+            {openSections.trails ? "Hide" : `Show ${nearbyTrails.length}`}
+          </button>
         </div>
-        <div className="planner-trail-grid">
-          {nearbyTrails.map((trail) => {
-            const trailKey = getTrailKey(trail);
-            const isPlanned = planSelections.trails.includes(trailKey);
-
-            return (
-            <article className={isPlanned ? "is-planned" : ""} key={trailKey}>
-              <span>{trail.area.name} • {trail.activity ?? "OHV"}</span>
-              <h3>{trail.name}</h3>
-              <p>
-                {trail.access}
-                {trail.distanceMiles !== undefined ? ` • ${Math.round(trail.distanceMiles)} miles` : ""}
-              </p>
-              <div className="trail-actions">
-                <button type="button" onClick={() => toggleTrailPlan(trail)}>
-                  {isPlanned ? "Added" : "Add trail"}
-                </button>
-                <a href={trail.url} rel="noreferrer" target="_blank">
-                  {trail.activity === "Hiking" ? "Hiking Info" : "Trail Map"}
-                </a>
-                {trail.passUrl ? (
-                  <a href={trail.passUrl} rel="noreferrer" target="_blank">
-                    Passes / Rules
-                  </a>
-                ) : null}
-              </div>
-            </article>
-            );
-          })}
-          {!nearbyTrails.length ? (
-            <p className="empty-state">No trail matches yet. Try a nearby town or larger range.</p>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="planner-card">
-        <div className="section-heading">
-          <p>Step 4</p>
-          <h2>Pick lodging, food, fuel, and backup stops.</h2>
-        </div>
-        {nearbyStops.length ? (
-          <div className="planner-match-grid">
-            {nearbyStops.map((business) => {
-              const activeDeal = business.deals.find((deal) => deal.is_active);
-              const isPlanned = planSelections.stops.includes(business.id);
+        {openSections.trails ? (
+          <div className="planner-trail-grid">
+            {visibleTrails.map((trail) => {
+              const trailKey = getTrailKey(trail);
+              const isPlanned = planSelections.trails.includes(trailKey);
 
               return (
-                <article className={isPlanned ? "planner-match is-planned" : "planner-match"} key={business.id}>
-                  <div>
-                    <span>{business.category}</span>
-                    <h3>{business.name}</h3>
-                    <p>
-                      {business.location}
-                      {business.distanceMiles !== undefined ? ` • ${Math.round(business.distanceMiles)} miles` : ""}
-                    </p>
-                    {activeDeal ? <strong>{activeDeal.title}</strong> : null}
-                  </div>
-                  <div>
-                    <button type="button" onClick={() => toggleStopPlan(business.id)}>
-                      {isPlanned ? "Added" : "Add"}
+                <article className={isPlanned ? "is-planned" : ""} key={trailKey}>
+                  <span>{isPlanned ? "In plan" : trail.area.name} | {trail.activity ?? "OHV"}</span>
+                  <h3>{trail.name}</h3>
+                  <p>
+                    {trail.access}
+                    {trail.distanceMiles !== undefined ? ` | ${Math.round(trail.distanceMiles)} miles` : ""}
+                  </p>
+                  <div className="trail-actions">
+                    <button type="button" onClick={() => toggleTrailPlan(trail)}>
+                      {isPlanned ? "In plan" : "Add to plan"}
                     </button>
-                    <TrackedAction
-                      businessId={business.id}
-                      href={`/business/${business.slug}`}
-                      kind="link"
-                    >
-                      View
-                    </TrackedAction>
-                    <TrackedAction businessId={business.id} href={`tel:${business.phone}`}>
-                      Call
-                    </TrackedAction>
+                    <a href={trail.url} rel="noreferrer" target="_blank">
+                      {trail.activity === "Hiking" ? "Hiking info" : "Trail map"}
+                    </a>
+                    {trail.passUrl ? (
+                      <a href={trail.passUrl} rel="noreferrer" target="_blank">
+                        Passes / rules
+                      </a>
+                    ) : null}
                   </div>
                 </article>
               );
             })}
+            {!nearbyTrails.length ? (
+              <div className="empty-state planner-empty-action">
+                <strong>No trail matches within {radiusMiles} miles.</strong>
+                <span>Try a popular destination chip or widen the range.</span>
+                <button type="button" onClick={() => setRadiusMiles(100)}>
+                  Try 100 miles
+                </button>
+              </div>
+            ) : null}
           </div>
-        ) : (
-          <p className="empty-state">Check more items or try a different destination.</p>
-        )}
+        ) : null}
       </section>
 
-      {mapLinks.length ? (
-        <section className="planner-card">
+      <section className="planner-card">
+        <div className="planner-section-heading">
           <div className="section-heading">
-            <p>Step 5</p>
-            <h2>Add parks, campgrounds, waterfalls, and photo stops.</h2>
+            <p>Step 4</p>
+            <h2>Pick lodging, food, fuel, and backup stops.</h2>
           </div>
-          {nearbyOutdoors.length ? (
-            <div className="planner-outdoor-grid">
-              {nearbyOutdoors.map((stop) => {
-                const outdoorKey = getOutdoorKey(stop);
-                const isPlanned = planSelections.outdoors.includes(outdoorKey);
+          <button type="button" onClick={() => togglePlannerSection("stops")}>
+            {openSections.stops ? "Hide" : `Show ${nearbyStops.length}`}
+          </button>
+        </div>
+        {openSections.stops ? (
+          nearbyStops.length ? (
+            <div className="planner-match-grid">
+              {visibleStops.map((business) => {
+                const activeDeal = business.deals.find((deal) => deal.is_active);
+                const isPlanned = planSelections.stops.includes(business.id);
 
                 return (
-                  <article className={isPlanned ? "is-planned" : ""} key={outdoorKey}>
-                    <div className="planner-photo-prompt">
-                      <strong>Rider photo needed</strong>
-                      <small>Add one after your stop.</small>
+                  <article className={isPlanned ? "planner-match is-planned" : "planner-match"} key={business.id}>
+                    <div>
+                      <span>{isPlanned ? "In plan" : business.category}</span>
+                      <h3>{business.name}</h3>
+                      <p>
+                        {business.location}
+                        {business.distanceMiles !== undefined ? ` | ${Math.round(business.distanceMiles)} miles` : ""}
+                      </p>
+                      {activeDeal ? <strong>{activeDeal.title}</strong> : null}
                     </div>
-                    <span>{stop.area.name} • {getOutdoorKindLabel(stop.kind)}</span>
-                    <h3>{stop.name}</h3>
-                    <p>
-                      {stop.description}
-                      {stop.distanceMiles !== undefined ? ` • ${Math.round(stop.distanceMiles)} miles` : ""}
-                    </p>
-                    <small>{stop.access}</small>
-                    <div className="trail-actions">
-                      <button type="button" onClick={() => toggleOutdoorPlan(stop)}>
-                        {isPlanned ? "Added" : "Add stop"}
+                    <div>
+                      <button type="button" onClick={() => toggleStopPlan(business.id)}>
+                        {isPlanned ? "In plan" : "Add to plan"}
                       </button>
-                      <a href={stop.url} rel="noreferrer" target="_blank">
-                        Open Map
-                      </a>
-                      <a href={`/ride-areas/${stop.area.slug}#trail-reviews`}>
-                        Add Photo
-                      </a>
+                      <TrackedAction
+                        businessId={business.id}
+                        href={`/business/${business.slug}`}
+                        kind="link"
+                      >
+                        View listing
+                      </TrackedAction>
+                      <TrackedAction businessId={business.id} href={`tel:${business.phone}`}>
+                        Call business
+                      </TrackedAction>
                     </div>
                   </article>
                 );
               })}
             </div>
           ) : (
-            <p className="empty-state">Pick Parks and nature or try a wider range.</p>
-          )}
+            <div className="empty-state planner-empty-action">
+              <strong>No matching local stops within {radiusMiles} miles.</strong>
+              <span>Add more checklist items, try a nearby town, or widen the search.</span>
+              <button type="button" onClick={() => setRadiusMiles(100)}>
+                Try 100 miles
+              </button>
+            </div>
+          )
+        ) : null}
+      </section>
+
+      {selected.includes("family") ? (
+        <section className="planner-card">
+          <div className="planner-section-heading">
+            <div className="section-heading">
+              <p>Step 5</p>
+              <h2>Add parks, campgrounds, waterfalls, and photo stops.</h2>
+            </div>
+            <button type="button" onClick={() => togglePlannerSection("outdoors")}>
+              {openSections.outdoors ? "Hide" : `Show ${nearbyOutdoors.length}`}
+            </button>
+          </div>
+          {openSections.outdoors ? (
+            nearbyOutdoors.length ? (
+              <div className="planner-outdoor-grid">
+                {visibleOutdoors.map((stop) => {
+                  const outdoorKey = getOutdoorKey(stop);
+                  const isPlanned = planSelections.outdoors.includes(outdoorKey);
+
+                  return (
+                    <article className={isPlanned ? "is-planned" : ""} key={outdoorKey}>
+                      <div className="planner-photo-prompt">
+                        <strong>Rider photo needed</strong>
+                        <small>Add one after your stop.</small>
+                      </div>
+                      <span>{isPlanned ? "In plan" : stop.area.name} | {getOutdoorKindLabel(stop.kind)}</span>
+                      <h3>{stop.name}</h3>
+                      <p>
+                        {stop.description}
+                        {stop.distanceMiles !== undefined ? ` | ${Math.round(stop.distanceMiles)} miles` : ""}
+                      </p>
+                      <small>{stop.access}</small>
+                      <div className="trail-actions">
+                        <button type="button" onClick={() => toggleOutdoorPlan(stop)}>
+                          {isPlanned ? "In plan" : "Add to plan"}
+                        </button>
+                        <a href={stop.url} rel="noreferrer" target="_blank">
+                          Open map
+                        </a>
+                        <a href={`/ride-areas/${stop.area.slug}#trail-reviews`}>
+                          Add photo
+                        </a>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-state planner-empty-action">
+                <strong>No outdoor stops within {radiusMiles} miles.</strong>
+                <span>Try a destination chip or widen the search range.</span>
+                <button type="button" onClick={() => setRadiusMiles(100)}>
+                  Try 100 miles
+                </button>
+              </div>
+            )
+          ) : null}
         </section>
       ) : null}
 
       {mapLinks.length ? (
         <section className="planner-card">
-          <div className="section-heading">
-            <p>Step 6</p>
-            <h2>Open quick map searches.</h2>
+          <div className="planner-section-heading">
+            <div className="section-heading">
+              <p>Step 6</p>
+              <h2>Open quick map searches.</h2>
+            </div>
+            <button type="button" onClick={() => togglePlannerSection("maps")}>
+              {openSections.maps ? "Hide" : `Show ${mapLinks.length}`}
+            </button>
           </div>
-          <div className="planner-map-link-grid">
-            {mapLinks.map((link) => (
-              <a href={link.url} key={link.label} rel="noreferrer" target="_blank">
-                {link.label}
-              </a>
-            ))}
-          </div>
+          {openSections.maps ? (
+            <div className="planner-map-link-grid">
+              {mapLinks.map((link) => (
+                <a href={link.url} key={link.label} rel="noreferrer" target="_blank">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
       <section className="planner-card planner-summary">
-        <div className="section-heading">
-          <p>Final step</p>
-          <h2>Downloadable weekend plan.</h2>
+        <div className="planner-section-heading">
+          <div className="section-heading">
+            <p>Final step</p>
+            <h2>Trip plan preview.</h2>
+          </div>
+          <button type="button" onClick={() => togglePlannerSection("summary")}>
+            {openSections.summary ? "Hide" : "Show plan"}
+          </button>
         </div>
-        <label className="planner-directions">
-          Build your own directions
-          <textarea
-            placeholder="Example: Meet at cabin at 8:00. Fuel in Matewan. Park trailers at the main lot. Take the easier loop first, lunch at..."
-            value={directions}
-            onChange={(event) => setDirections(event.target.value)}
-          />
-        </label>
-        <pre>{tripSummary}</pre>
+        {openSections.summary ? (
+          <>
+            <div className="planner-preview-grid">
+              <article>
+                <span>Destination</span>
+                <strong>{locationFilter || "Any area"}</strong>
+                <p>{radiusMiles} mile search range</p>
+              </article>
+              <article>
+                <span>Trail picks</span>
+                <strong>{planTrails.length}</strong>
+                <p>{plannedTrails.length ? "Chosen by you" : "Smart starter picks"}</p>
+              </article>
+              <article>
+                <span>Local stops</span>
+                <strong>{planStops.length}</strong>
+                <p>{plannedStops.length ? "Chosen by you" : "Filtered from your checklist"}</p>
+              </article>
+              <article>
+                <span>Outdoor stops</span>
+                <strong>{planOutdoors.length}</strong>
+                <p>{plannedOutdoors.length ? "Chosen by you" : "Optional scenic stops"}</p>
+              </article>
+            </div>
+            <label className="planner-directions">
+              Build your own directions
+              <textarea
+                placeholder="Example: Meet at cabin at 8:00. Fuel in Matewan. Park trailers at the main lot. Take the easier loop first, lunch at..."
+                value={directions}
+                onChange={(event) => setDirections(event.target.value)}
+              />
+            </label>
+            <pre>{tripSummary}</pre>
+          </>
+        ) : null}
       </section>
+
+      <div className="planner-mobile-bar">
+        <span>{planTrails.length} trails | {planStops.length} stops | {planOutdoors.length} outdoor</span>
+        <button type="button" onClick={copyTripPlan}>
+          Copy
+        </button>
+        <button type="button" onClick={saveOfflinePack}>
+          Save
+        </button>
+      </div>
     </section>
   );
 }

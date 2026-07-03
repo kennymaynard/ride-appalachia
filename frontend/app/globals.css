@@ -4908,18 +4908,104 @@ button.tier-card.is-selected {
   padding: 0.8rem;
 }
 
+.planner-chip-panel {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.55rem;
+}
+
+.planner-chip-panel > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-chip-row,
+.planner-preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.planner-chip-row button,
+.planner-section-heading > button {
+  min-height: 2.35rem;
+  border: 1px solid rgba(242, 106, 27, 0.46);
+  border-radius: 999px;
+  background: rgba(242, 106, 27, 0.1);
+  color: var(--orange-soft);
+  padding: 0 0.85rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.planner-chip-row button.is-active,
+.planner-section-heading > button:hover {
+  background: var(--orange);
+  color: #160801;
+}
+
 .planner-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.72fr);
   gap: 1rem;
+  align-items: start;
 }
 
 .planner-options.clean {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.planner-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.planner-preset {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  min-height: 7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  padding: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.planner-preset strong {
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-preset span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.planner-preset.is-active {
+  border-color: rgba(242, 106, 27, 0.78);
+  background: rgba(242, 106, 27, 0.14);
+}
+
+.section-heading.compact {
+  margin-top: 0.4rem;
+}
+
 .planner-roadmap-card {
   align-content: start;
+  position: sticky;
+  top: 1rem;
 }
 
 .planner-pick-summary,
@@ -4941,8 +5027,51 @@ button.tier-card.is-selected {
   text-transform: uppercase;
 }
 
+.planner-live-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+.planner-live-preview div,
+.planner-preview-grid article {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.75rem;
+}
+
+.planner-live-preview strong,
+.planner-preview-grid strong {
+  display: block;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.planner-live-preview span,
+.planner-preview-grid span,
+.planner-preview-grid p {
+  display: block;
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
 .planner-map-link-grid {
   margin-bottom: 0;
+}
+
+.planner-section-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .planner-trail-grid,
@@ -4950,6 +5079,52 @@ button.tier-card.is-selected {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.planner-empty-action {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  grid-column: 1 / -1;
+}
+
+.planner-empty-action strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.planner-empty-action span {
+  color: var(--muted);
+}
+
+.planner-empty-action button,
+.planner-mobile-bar button {
+  min-height: 2.35rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 0.85rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.planner-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.planner-preview-grid strong {
+  font-size: clamp(1.2rem, 2vw, 1.7rem);
+}
+
+.planner-mobile-bar {
+  display: none;
 }
 
 .planner-trail-grid article,
@@ -6981,6 +7156,7 @@ button.tier-card.is-selected {
     grid-template-columns: 1fr 1fr;
   }
 
+  .planner-trail-grid,
   .planner-outdoor-grid,
   .outdoor-stop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7021,8 +7197,14 @@ button.tier-card.is-selected {
   .business-growth-panel,
   .planner-setup,
   .planner-main-grid,
-  .planner-options.clean {
+  .planner-options.clean,
+  .planner-preset-grid,
+  .planner-preview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .planner-roadmap-card {
+    position: static;
   }
 
   .success-shell {
@@ -7113,6 +7295,7 @@ button.tier-card.is-selected {
   .trail-pack-preview-grid,
   .planner-trail-grid,
   .planner-outdoor-grid,
+  .planner-live-preview,
   .outdoor-stop-grid,
   .offline-pack-grid,
   .offline-pack-list,
@@ -7129,6 +7312,47 @@ button.tier-card.is-selected {
   .detail-hero,
   .detail-copy dl {
     grid-template-columns: 1fr;
+  }
+
+  .planner-redesign {
+    padding-bottom: 4.5rem;
+  }
+
+  .planner-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planner-section-heading > button {
+    width: fit-content;
+  }
+
+  .planner-mobile-bar {
+    position: fixed;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    left: 0.8rem;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    border: 1px solid rgba(242, 106, 27, 0.5);
+    border-radius: 0.6rem;
+    background: rgba(10, 10, 10, 0.96);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.46);
+    padding: 0.65rem;
+  }
+
+  .planner-mobile-bar span {
+    min-width: 0;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 950;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .marketplace-filter-row {
@@ -8897,12 +9121,18 @@ button.tier-card.is-selected {
 
   .topbar,
   .page-hero,
+  .planner-setup,
   .planner-checklist,
+  .planner-main-grid,
+  .planner-card:not(.planner-summary),
+  .planner-mobile-bar,
+  .planner-section-heading > button,
   .planner-tools,
   .planner-results {
     display: none;
   }
 
+  .planner-redesign,
   .planner-shell,
   .planner-board,
   .planner-summary {
