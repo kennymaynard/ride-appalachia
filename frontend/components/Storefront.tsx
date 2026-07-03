@@ -276,7 +276,7 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
             <span>Subtotal</span>
             <strong>{formatMoney(subtotalCents)}</strong>
           </div>
-          <p className="store-note">Shipping and taxes are calculated in Stripe checkout.</p>
+          <p className="store-note">Standard shipping is added and the shipping address is collected in Stripe checkout.</p>
           <button
             className="store-checkout-button"
             type="button"

@@ -217,6 +217,19 @@ def create_store_checkout_session(
         "success_url": success_url,
         "cancel_url": cancel_url,
         "shipping_address_collection": {"allowed_countries": ["US"]},
+        "shipping_options": [
+            {
+                "shipping_rate_data": {
+                    "type": "fixed_amount",
+                    "fixed_amount": {"amount": 500, "currency": "usd"},
+                    "display_name": "Standard merch shipping",
+                    "delivery_estimate": {
+                        "minimum": {"unit": "business_day", "value": 5},
+                        "maximum": {"unit": "business_day", "value": 10},
+                    },
+                }
+            }
+        ],
         "phone_number_collection": {"enabled": True},
         "metadata": {
             "order_type": "merch",
