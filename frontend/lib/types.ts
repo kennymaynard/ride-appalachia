@@ -146,6 +146,15 @@ export type AdminEmailTestResult = {
   message: string;
   to: string;
   from: string;
+  payload?: {
+    from: string;
+    to: string[];
+    subject: string;
+    text?: string;
+    html?: string;
+  };
+  response_status?: number | null;
+  response_body?: string;
   resend_key?: {
     length: number;
     starts: string;

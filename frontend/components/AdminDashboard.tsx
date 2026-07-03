@@ -17,6 +17,7 @@ import {
   moderateTrailTalkPost,
   moderateTrailReview,
   processAdminBookingTransfers,
+  sendAdminDirectTestEmail,
   sendAdminTestEmail,
   sendAdminTestSms,
   setBusinessFeatured,
@@ -82,6 +83,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [emailDiagnostic, setEmailDiagnostic] = useState("");
   const [emailStatusType, setEmailStatusType] = useState<"success" | "error">("success");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [sendingDirectTestEmail, setSendingDirectTestEmail] = useState(false);
   const [smsStatus, setSmsStatus] = useState("");
   const [smsPhone, setSmsPhone] = useState("");
   const [smsAudience, setSmsAudience] = useState<"rider" | "business">("rider");
@@ -195,8 +197,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           : `Test email failed: ${result.message}. To: ${result.to}. From: ${result.from}.`,
       );
       if (result.resend_key) {
-        setEmailDiagnostic(
+        const details = [
+          result.payload ? `Payload: ${JSON.stringify(result.payload)}.` : "",
           `Resend key: length ${result.resend_key.length}, starts ${result.resend_key.starts}, ends ${result.resend_key.ends}, sha256 ${result.resend_key.sha256}, trimmed spaces ${result.resend_key.has_spaces ? "yes" : "no"}.`,
+        ].filter(Boolean);
+        setEmailDiagnostic(
+          details.join(" "),
         );
       }
     } catch (caughtError) {
@@ -207,6 +213,42 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setSendingTestEmail(false);
+    }
+  }
+
+  async function sendDirectResendTestEmail() {
+    setError("");
+    setEmailStatus("");
+    setEmailDiagnostic("");
+    setEmailStatusType("success");
+    setSendingDirectTestEmail(true);
+
+    try {
+      const result = await sendAdminDirectTestEmail(adminPassword);
+      setEmailStatusType(result.sent ? "success" : "error");
+      setEmailStatus(
+        result.sent
+          ? `Direct Resend test sent to ${result.to} from ${result.from}.`
+          : `Direct Resend test failed: ${result.message}. To: ${result.to}. From: ${result.from}.`,
+      );
+
+      const details = [
+        result.payload ? `Payload: ${JSON.stringify(result.payload)}.` : "",
+        result.response_status ? `Resend status: ${result.response_status}.` : "",
+        result.response_body ? `Resend body: ${result.response_body}.` : "",
+        result.resend_key
+          ? `Resend key: length ${result.resend_key.length}, starts ${result.resend_key.starts}, ends ${result.resend_key.ends}, sha256 ${result.resend_key.sha256}, trimmed spaces ${result.resend_key.has_spaces ? "yes" : "no"}.`
+          : "",
+      ].filter(Boolean);
+      setEmailDiagnostic(details.join(" "));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to send direct test email.",
+      );
+    } finally {
+      setSendingDirectTestEmail(false);
     }
   }
 
@@ -489,6 +531,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       <div className="admin-email-tools">
         <button type="button" disabled={sendingTestEmail} onClick={sendTestApprovalEmail}>
           {sendingTestEmail ? "Sending..." : "Send Test Approval Email"}
+        </button>
+        <button type="button" disabled={sendingDirectTestEmail} onClick={sendDirectResendTestEmail}>
+          {sendingDirectTestEmail ? "Sending..." : "Send Direct Resend Test"}
         </button>
         <span>Uses the same Resend settings as new business approval emails.</span>
       </div>

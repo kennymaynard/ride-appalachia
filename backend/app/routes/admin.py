@@ -22,10 +22,12 @@ from app.schemas import (
     MarketingLeadStatusUpdate,
 )
 from app.services.email_service import (
+    build_business_approval_notification_payload,
     clean_email_setting,
     get_resend_key_diagnostic,
     send_business_approval_notification,
     send_marketing_lead_status_email,
+    send_resend_direct_test_email,
 )
 from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
@@ -44,17 +46,28 @@ def require_admin(x_admin_password: str = Header(default="")) -> None:
 
 
 @router.post("/test-email")
-def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str | int | dict[str, str | int | bool]]:
+def send_test_email(_: None = Depends(require_admin)) -> dict[str, object]:
     settings = get_settings()
     email_from = clean_email_setting(settings.email_from)
     lead_notify_email = clean_email_setting(settings.lead_notify_email)
+    admin_url = f"{settings.frontend_url}/admin"
+    payload = build_business_approval_notification_payload(
+        email_from,
+        lead_notify_email,
+        "Test Business Approval Email",
+        lead_notify_email,
+        "test",
+        "test",
+        "Admin email verification",
+        admin_url,
+    )
     result = send_business_approval_notification(
         "Test Business Approval Email",
         lead_notify_email,
         "test",
         "test",
         "Admin email verification",
-        f"{settings.frontend_url}/admin",
+        admin_url,
     )
 
     return {
@@ -62,6 +75,26 @@ def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str | 
         "message": result.message,
         "to": lead_notify_email or "Not configured",
         "from": email_from or "Not configured",
+        "payload": payload,
+        "resend_key": get_resend_key_diagnostic(settings.resend_api_key),
+    }
+
+
+@router.post("/test-email/direct")
+def send_direct_test_email(_: None = Depends(require_admin)) -> dict[str, object]:
+    settings = get_settings()
+    result = send_resend_direct_test_email()
+    payload_to = result.payload.get("to", [])
+    to_label = ", ".join(payload_to) if isinstance(payload_to, list) else str(payload_to)
+
+    return {
+        "sent": result.sent,
+        "message": result.message,
+        "to": to_label or "Not configured",
+        "from": str(result.payload.get("from") or "Not configured"),
+        "payload": result.payload,
+        "response_status": result.response_status,
+        "response_body": result.response_body,
         "resend_key": get_resend_key_diagnostic(settings.resend_api_key),
     }
 

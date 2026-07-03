@@ -920,6 +920,22 @@ export async function sendAdminTestEmail(
   return response.json();
 }
 
+export async function sendAdminDirectTestEmail(
+  adminPassword?: string,
+): Promise<AdminEmailTestResult> {
+  const response = await fetch(`${getApiUrl()}/api/admin/test-email/direct`, {
+    method: "POST",
+    headers: getAdminHeaders(adminPassword),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to send direct test email");
+  }
+
+  return response.json();
+}
+
 export async function sendAdminTestSms(
   phone: string,
   audience: "rider" | "business",

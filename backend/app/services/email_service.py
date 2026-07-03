@@ -13,6 +13,15 @@ class EmailResult:
     message: str
 
 
+@dataclass
+class ResendDirectTestResult:
+    sent: bool
+    message: str
+    payload: dict[str, str | list[str]]
+    response_status: int | None = None
+    response_body: str = ""
+
+
 def get_http_error_message(exc: HTTPError) -> str:
     try:
         body = exc.read().decode("utf-8")
@@ -40,6 +49,14 @@ def get_resend_key_diagnostic(api_key: str) -> dict[str, str | int | bool]:
     }
 
 
+def get_resend_headers(resend_api_key: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json",
+        "User-Agent": "appalachia-offroad-email-diagnostic/1.0",
+    }
+
+
 def get_resend_error_message(action: str, exc: HTTPError, email_from: str) -> str:
     detail = get_http_error_message(exc)
     help_text = ""
@@ -50,6 +67,99 @@ def get_resend_error_message(action: str, exc: HTTPError, email_from: str) -> st
             f"that verified sender. Current EMAIL_FROM: {email_from}."
         )
     return f"Unable to send {action}: {detail}.{help_text}"
+
+
+def send_resend_direct_test_email() -> ResendDirectTestResult:
+    settings = get_settings()
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    lead_notify_email = clean_email_setting(settings.lead_notify_email)
+    payload: dict[str, str | list[str]] = {
+        "from": email_from,
+        "to": [lead_notify_email],
+        "subject": "Render direct test",
+        "text": "Render direct test",
+    }
+    if not resend_api_key or not email_from or not lead_notify_email:
+        return ResendDirectTestResult(
+            sent=False,
+            message="Direct Resend test is not configured.",
+            payload=payload,
+        )
+
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=get_resend_headers(resend_api_key),
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            response_body = response.read().decode("utf-8")
+            return ResendDirectTestResult(
+                sent=200 <= response.status < 300,
+                message="Direct Resend test email sent.",
+                payload=payload,
+                response_status=response.status,
+                response_body=response_body,
+            )
+    except HTTPError as exc:
+        try:
+            response_body = exc.read().decode("utf-8")
+        except Exception:
+            response_body = ""
+        return ResendDirectTestResult(
+            sent=False,
+            message=get_resend_error_message("direct Resend test email", exc, email_from),
+            payload=payload,
+            response_status=exc.code,
+            response_body=response_body,
+        )
+    except (URLError, TimeoutError) as exc:
+        return ResendDirectTestResult(
+            sent=False,
+            message=f"Unable to send direct Resend test email: {exc}",
+            payload=payload,
+        )
+
+
+def build_business_approval_notification_payload(
+    email_from: str,
+    lead_notify_email: str,
+    business_name: str,
+    owner_email: str,
+    category: str,
+    tier: str,
+    location: str,
+    admin_url: str,
+) -> dict[str, str | list[str]]:
+    subject = "New business pending approval"
+    return {
+        "from": email_from,
+        "to": [lead_notify_email],
+        "subject": f"Appalachia Offroad: {subject}",
+        "html": (
+            f"<h1>{subject}</h1>"
+            f"<p><strong>Business:</strong> {business_name}</p>"
+            f"<p><strong>Owner email:</strong> {owner_email or 'Not provided'}</p>"
+            f"<p><strong>Category:</strong> {category}</p>"
+            f"<p><strong>Tier:</strong> {tier}</p>"
+            f"<p><strong>Location:</strong> {location}</p>"
+            f'<p><a href="{admin_url}">Open Admin Approval Queue</a></p>'
+        ),
+        "text": "\n".join(
+            [
+                subject,
+                f"Business: {business_name}",
+                f"Owner email: {owner_email or 'Not provided'}",
+                f"Category: {category}",
+                f"Tier: {tier}",
+                f"Location: {location}",
+                f"Admin: {admin_url}",
+            ],
+        ),
+    }
 
 
 def send_business_login_email(to_email: str, business_name: str, access_url: str) -> EmailResult:
@@ -82,10 +192,7 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
@@ -129,10 +236,7 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
@@ -194,10 +298,7 @@ def send_marketing_lead_status_email(
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
@@ -228,39 +329,20 @@ def send_business_approval_notification(
     if not resend_api_key or not lead_notify_email:
         return EmailResult(sent=False, message="Business approval notification is not configured.")
 
-    subject = "New business pending approval"
-    payload = {
-        "from": email_from,
-        "to": [lead_notify_email],
-        "subject": f"Appalachia Offroad: {subject}",
-        "html": (
-            f"<h1>{subject}</h1>"
-            f"<p><strong>Business:</strong> {business_name}</p>"
-            f"<p><strong>Owner email:</strong> {owner_email or 'Not provided'}</p>"
-            f"<p><strong>Category:</strong> {category}</p>"
-            f"<p><strong>Tier:</strong> {tier}</p>"
-            f"<p><strong>Location:</strong> {location}</p>"
-            f'<p><a href="{admin_url}">Open Admin Approval Queue</a></p>'
-        ),
-        "text": "\n".join(
-            [
-                subject,
-                f"Business: {business_name}",
-                f"Owner email: {owner_email or 'Not provided'}",
-                f"Category: {category}",
-                f"Tier: {tier}",
-                f"Location: {location}",
-                f"Admin: {admin_url}",
-            ],
-        ),
-    }
+    payload = build_business_approval_notification_payload(
+        email_from,
+        lead_notify_email,
+        business_name,
+        owner_email,
+        category,
+        tier,
+        location,
+        admin_url,
+    )
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
@@ -322,10 +404,7 @@ def send_booking_cancellation_request_notification(
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
@@ -379,10 +458,7 @@ def send_booking_cancellation_decision_email(
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=get_resend_headers(resend_api_key),
         method="POST",
     )
 
