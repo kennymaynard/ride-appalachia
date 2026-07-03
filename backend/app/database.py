@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_from_phone: str = ""
+    printify_api_token: str = ""
+    printify_shop_id: str = ""
+    printify_auto_submit_orders: bool = False
+    printify_send_shipping_notification: bool = False
 
 
 @lru_cache

@@ -20,6 +20,14 @@ function cartKey(productId: string, variant: string) {
   return `${productId}::${variant}`;
 }
 
+function dropshipSku(baseSku: string, variant: string) {
+  const cleanVariant = variant
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toUpperCase();
+  return `${baseSku}-${cleanVariant}`;
+}
+
 function ProductVisual({ product }: { product: StoreProduct }) {
   return (
     <div className={`store-product-visual is-${product.visual}`} aria-hidden="true">
@@ -143,10 +151,7 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
           product_id: item.product.id,
           name: item.product.name,
           variant: item.variant,
-          dropship_sku: `${item.product.dropshipSku}-${item.variant
-            .replace(/\s+/g, "-")
-            .replace(/[^A-Z0-9-]/gi, "")
-            .toUpperCase()}`,
+          dropship_sku: dropshipSku(item.product.dropshipSku, item.variant),
           unit_amount_cents: item.product.priceCents,
           quantity: item.quantity,
         })),

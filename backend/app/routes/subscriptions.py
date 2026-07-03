@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import Settings, get_db, get_settings
 from app.models import Booking, BookingPayment, BookingTransfer, Business, Campaign
 from app.schemas import CheckoutSessionRead, StripeWebhookPayload, SubscriptionRequest
+from app.services.printify_service import submit_store_order_from_stripe_session
 from app.services.stripe_service import construct_webhook_event, create_checkout_session
 
 router = APIRouter(tags=["subscriptions"])
@@ -213,6 +214,11 @@ async def stripe_webhook(
                     )
                     db.add(transfer)
             db.commit()
+            return {"received": True}
+
+        if metadata.get("order_type") == "merch":
+            printify_result = submit_store_order_from_stripe_session(data_object, settings)
+            print(f"Store order Printify status: {printify_result.message}")
             return {"received": True}
 
         business_id = resolve_business_id(
