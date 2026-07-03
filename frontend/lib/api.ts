@@ -23,6 +23,8 @@ import type {
   LodgingServiceRequestCreateInput,
   MarketingLead,
   MarketingLeadCreateInput,
+  PlannerShareInput,
+  PlannerShareResult,
   BusinessReviewCreateInput,
   Rider,
   RiderRideCard,
@@ -193,6 +195,22 @@ export async function getListing(slug: string): Promise<Business | null> {
   } catch {
     return sampleBusinesses.find((business) => business.slug === slug) || null;
   }
+}
+
+export async function shareTripPlan(payload: PlannerShareInput): Promise<PlannerShareResult> {
+  const response = await apiFetch("/api/planner/share", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: timeoutSignal(10000),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to send trip plan");
+  }
+
+  return response.json();
 }
 
 export async function getBusiness(businessId: number): Promise<Business | null> {

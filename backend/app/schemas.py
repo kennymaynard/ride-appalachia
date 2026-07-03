@@ -742,6 +742,20 @@ class MarketingLeadStatusUpdate(BaseModel):
         return value
 
 
+class PlannerShareRequest(BaseModel):
+    destination: str = "Any area"
+    plan: str = Field(min_length=10, max_length=12000)
+    email: str = Field(default="", max_length=180)
+    phone: str = Field(default="", max_length=40)
+
+
+class PlannerShareResponse(BaseModel):
+    email_sent: bool = False
+    email_message: str = ""
+    sms_sent: bool = False
+    sms_message: str = ""
+
+
 class AdminSmsTestRequest(BaseModel):
     phone: str = Field(min_length=7, max_length=40)
     audience: str = "rider"

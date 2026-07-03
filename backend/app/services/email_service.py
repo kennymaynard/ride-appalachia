@@ -1,5 +1,6 @@
 import json
 import hashlib
+from html import escape
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -122,6 +123,49 @@ def send_resend_direct_test_email() -> ResendDirectTestResult:
             message=f"Unable to send direct Resend test email: {exc}",
             payload=payload,
         )
+
+
+def send_trip_plan_email(to_email: str, destination: str, plan_text: str) -> EmailResult:
+    settings = get_settings()
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    clean_to_email = clean_email_setting(to_email)
+    clean_destination = destination.strip() or "your ride"
+    clean_plan = plan_text.strip()
+    if not resend_api_key or not clean_to_email:
+        return EmailResult(sent=False, message="Trip plan email is not configured.")
+    if not clean_plan:
+        return EmailResult(sent=False, message="Trip plan is empty.")
+
+    payload = {
+        "from": email_from,
+        "to": [clean_to_email],
+        "subject": f"Your Appalachia Offroad trip plan for {clean_destination}",
+        "html": (
+            "<h1>Your Appalachia Offroad trip plan</h1>"
+            f"<p>Destination: <strong>{escape(clean_destination)}</strong></p>"
+            "<p>Save this before you lose service, and verify trail rules before riding.</p>"
+            f"<pre style=\"white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.5\">{escape(clean_plan)}</pre>"
+        ),
+        "text": clean_plan,
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=get_resend_headers(resend_api_key),
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Trip plan emailed.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=get_resend_error_message("trip plan email", exc, email_from))
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send trip plan email: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send trip plan email.")
 
 
 def build_business_approval_notification_payload(

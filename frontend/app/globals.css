@@ -5123,6 +5123,126 @@ button.tier-card.is-selected {
   font-size: clamp(1.2rem, 2vw, 1.7rem);
 }
 
+.planner-delivery-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(242, 106, 27, 0.4);
+  border-radius: 0.6rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.15), rgba(93, 148, 186, 0.08)),
+    rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.planner-delivery-card h3 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  font-weight: 950;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.planner-delivery-card p:not(.eyebrow) {
+  max-width: 54rem;
+  margin: 0.55rem 0 0;
+  color: var(--soft);
+  line-height: 1.4;
+}
+
+.planner-delivery-stats {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 12rem;
+}
+
+.planner-delivery-stats span {
+  border: 1px solid rgba(242, 106, 27, 0.34);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--orange-soft);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.planner-share-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.9rem;
+}
+
+.planner-share-panel label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-share-panel input {
+  width: 100%;
+  min-height: 2.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.42rem;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 0 0.75rem;
+}
+
+.planner-share-panel button {
+  min-height: 2.65rem;
+  border: 1px solid rgba(242, 106, 27, 0.68);
+  border-radius: 0.42rem;
+  background: var(--orange);
+  color: #160801;
+  padding: 0 1rem;
+  font: inherit;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.planner-share-panel button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.planner-share-panel p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.planner-text-details {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.85rem;
+}
+
+.planner-text-details summary {
+  color: var(--orange-soft);
+  cursor: pointer;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.planner-text-details pre {
+  margin-top: 0.85rem;
+}
+
 .planner-mobile-bar {
   display: none;
 }
@@ -7197,6 +7317,8 @@ button.tier-card.is-selected {
   .business-growth-panel,
   .planner-setup,
   .planner-main-grid,
+  .planner-delivery-card,
+  .planner-share-panel,
   .planner-options.clean,
   .planner-preset-grid,
   .planner-preview-grid {
@@ -7325,6 +7447,10 @@ button.tier-card.is-selected {
 
   .planner-section-heading > button {
     width: fit-content;
+  }
+
+  .planner-delivery-stats {
+    min-width: 0;
   }
 
   .planner-mobile-bar {

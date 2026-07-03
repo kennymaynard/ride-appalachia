@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { shareTripPlan } from "../lib/api";
 import type { Business, Category, OutdoorStop, RideArea, TrailInfo } from "../lib/types";
 import { TrackedAction } from "./TrackedAction";
 
@@ -359,6 +360,11 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   const [copyStatus, setCopyStatus] = useState("");
   const [directions, setDirections] = useState("");
   const [offlineStatus, setOfflineStatus] = useState("");
+  const [shareEmail, setShareEmail] = useState("");
+  const [sharePhone, setSharePhone] = useState("");
+  const [shareStatus, setShareStatus] = useState("");
+  const [shareStatusType, setShareStatusType] = useState<"success" | "error">("success");
+  const [isSharingPlan, setIsSharingPlan] = useState(false);
   const [openSections, setOpenSections] = useState(defaultOpenSections);
   const [planSelections, setPlanSelections] = useState<PlanSelections>({
     trails: [],
@@ -678,6 +684,38 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       setCopyStatus("Trip plan copied.");
     } catch {
       setCopyStatus("Copy was blocked. Use print instead.");
+    }
+  }
+
+  async function sendTripPlan() {
+    setShareStatus("");
+    setShareStatusType("success");
+    if (!shareEmail.trim() && !sharePhone.trim()) {
+      setShareStatusType("error");
+      setShareStatus("Enter an email or phone number first.");
+      return;
+    }
+
+    setIsSharingPlan(true);
+    try {
+      const result = await shareTripPlan({
+        destination: locationFilter || "Any area",
+        plan: tripSummary,
+        email: shareEmail,
+        phone: sharePhone,
+      });
+      const messages = [
+        shareEmail.trim() ? result.email_message : "",
+        sharePhone.trim() ? result.sms_message : "",
+      ].filter(Boolean);
+      const sent = result.email_sent || result.sms_sent;
+      setShareStatusType(sent ? "success" : "error");
+      setShareStatus(messages.join(" ") || (sent ? "Trip plan sent." : "Unable to send trip plan."));
+    } catch (caughtError) {
+      setShareStatusType("error");
+      setShareStatus(caughtError instanceof Error ? caughtError.message : "Unable to send trip plan.");
+    } finally {
+      setIsSharingPlan(false);
     }
   }
 
@@ -1099,7 +1137,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         <div className="planner-section-heading">
           <div className="section-heading">
             <p>Final step</p>
-            <h2>Trip plan preview.</h2>
+            <h2>Send this plan to yourself.</h2>
           </div>
           <button type="button" onClick={() => togglePlannerSection("summary")}>
             {openSections.summary ? "Hide" : "Show plan"}
@@ -1107,27 +1145,20 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         </div>
         {openSections.summary ? (
           <>
-            <div className="planner-preview-grid">
-              <article>
-                <span>Destination</span>
-                <strong>{locationFilter || "Any area"}</strong>
-                <p>{radiusMiles} mile search range</p>
-              </article>
-              <article>
-                <span>Trail picks</span>
-                <strong>{planTrails.length}</strong>
-                <p>{plannedTrails.length ? "Chosen by you" : "Smart starter picks"}</p>
-              </article>
-              <article>
-                <span>Local stops</span>
-                <strong>{planStops.length}</strong>
-                <p>{plannedStops.length ? "Chosen by you" : "Filtered from your checklist"}</p>
-              </article>
-              <article>
-                <span>Outdoor stops</span>
-                <strong>{planOutdoors.length}</strong>
-                <p>{plannedOutdoors.length ? "Chosen by you" : "Optional scenic stops"}</p>
-              </article>
+            <div className="planner-delivery-card">
+              <div>
+                <p className="eyebrow">Ready before service drops</p>
+                <h3>{locationFilter || "Appalachia"} ride plan</h3>
+                <p>
+                  {planTrails.length} trails, {planStops.length} local stops, {planOutdoors.length} outdoor stops,
+                  and {selectedItems.length} checklist items inside a shareable plan.
+                </p>
+              </div>
+              <div className="planner-delivery-stats">
+                <span>{radiusMiles} mi range</span>
+                <span>{activePreset?.label ?? "Custom trip"}</span>
+                <span>{mapLinks.length} map searches</span>
+              </div>
             </div>
             <label className="planner-directions">
               Build your own directions
@@ -1137,7 +1168,40 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
                 onChange={(event) => setDirections(event.target.value)}
               />
             </label>
-            <pre>{tripSummary}</pre>
+            <div className="planner-share-panel">
+              <label>
+                Email plan
+                <input
+                  inputMode="email"
+                  placeholder="you@example.com"
+                  type="email"
+                  value={shareEmail}
+                  onChange={(event) => setShareEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                Text plan
+                <input
+                  inputMode="tel"
+                  placeholder="(606) 555-0199"
+                  type="tel"
+                  value={sharePhone}
+                  onChange={(event) => setSharePhone(event.target.value)}
+                />
+              </label>
+              <button type="button" disabled={isSharingPlan} onClick={sendTripPlan}>
+                {isSharingPlan ? "Sending..." : "Send my plan"}
+              </button>
+              {shareStatus ? (
+                <p className={shareStatusType === "success" ? "form-success" : "form-error"}>
+                  {shareStatus}
+                </p>
+              ) : null}
+            </div>
+            <details className="planner-text-details">
+              <summary>View full text plan</summary>
+              <pre>{tripSummary}</pre>
+            </details>
           </>
         ) : null}
       </section>

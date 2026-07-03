@@ -135,6 +135,20 @@ export type MarketingLead = {
 
 export type MarketingLeadCreateInput = Omit<MarketingLead, "id" | "status">;
 
+export type PlannerShareInput = {
+  destination: string;
+  plan: string;
+  email?: string;
+  phone?: string;
+};
+
+export type PlannerShareResult = {
+  email_sent: boolean;
+  email_message: string;
+  sms_sent: boolean;
+  sms_message: string;
+};
+
 export type AdminSmsTestResult = {
   sent: boolean;
   message: string;
