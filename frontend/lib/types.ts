@@ -146,6 +146,13 @@ export type AdminEmailTestResult = {
   message: string;
   to: string;
   from: string;
+  resend_key?: {
+    length: number;
+    starts: string;
+    ends: string;
+    sha256: string;
+    has_spaces: boolean;
+  };
 };
 
 export type AdminAnalytics = {

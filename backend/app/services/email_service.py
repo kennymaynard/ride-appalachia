@@ -1,4 +1,5 @@
 import json
+import hashlib
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -20,6 +21,25 @@ def get_http_error_message(exc: HTTPError) -> str:
     return f"{exc.code} {exc.reason}{f': {body}' if body else ''}"
 
 
+def clean_email_setting(value: str) -> str:
+    return value.strip()
+
+
+def clean_secret_setting(value: str) -> str:
+    return value.strip()
+
+
+def get_resend_key_diagnostic(api_key: str) -> dict[str, str | int | bool]:
+    clean_key = clean_secret_setting(api_key)
+    return {
+        "length": len(clean_key),
+        "starts": clean_key[:8],
+        "ends": clean_key[-8:] if clean_key else "",
+        "sha256": hashlib.sha256(clean_key.encode()).hexdigest(),
+        "has_spaces": clean_key != api_key,
+    }
+
+
 def get_resend_error_message(action: str, exc: HTTPError, email_from: str) -> str:
     detail = get_http_error_message(exc)
     help_text = ""
@@ -34,14 +54,16 @@ def get_resend_error_message(action: str, exc: HTTPError, email_from: str) -> st
 
 def send_business_login_email(to_email: str, business_name: str, access_url: str) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    if not resend_api_key:
         return EmailResult(
             sent=False,
             message="Email is not configured. Development access link returned.",
         )
 
     payload = {
-        "from": settings.email_from,
+        "from": email_from,
         "to": [to_email],
         "subject": f"Open your {business_name} Appalachia Offroad dashboard",
         "html": (
@@ -61,7 +83,7 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -72,7 +94,7 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Login link sent to your email.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=get_resend_error_message("login email", exc, settings.email_from))
+        return EmailResult(sent=False, message=get_resend_error_message("login email", exc, email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send login email: {exc}")
 
@@ -81,7 +103,10 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
 
 def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key or not settings.lead_notify_email:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    lead_notify_email = clean_email_setting(settings.lead_notify_email)
+    if not resend_api_key or not lead_notify_email:
         return EmailResult(sent=False, message="Lead notification email is not configured.")
 
     rows = "".join(
@@ -91,8 +116,8 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
     )
     subject = "New business lead" if lead_type == "business_availability" else "New launch access signup"
     payload = {
-        "from": settings.email_from,
-        "to": [settings.lead_notify_email],
+        "from": email_from,
+        "to": [lead_notify_email],
         "subject": f"Appalachia Offroad: {subject}",
         "html": (
             f"<h1>{subject}</h1>"
@@ -105,7 +130,7 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -116,7 +141,7 @@ def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) 
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Lead notification sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=get_resend_error_message("lead notification", exc, settings.email_from))
+        return EmailResult(sent=False, message=get_resend_error_message("lead notification", exc, email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send lead notification: {exc}")
 
@@ -130,7 +155,9 @@ def send_marketing_lead_status_email(
     business_name: str = "",
 ) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key or not to_email:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    if not resend_api_key or not to_email:
         return EmailResult(sent=False, message="Lead status email is not configured.")
 
     display_name = business_name.strip() or "there"
@@ -154,7 +181,7 @@ def send_marketing_lead_status_email(
     }
     subject_text, body_text = status_messages.get(status, status_messages["contacted"])
     payload = {
-        "from": settings.email_from,
+        "from": email_from,
         "to": [to_email],
         "subject": f"Appalachia Offroad: {subject_text}",
         "html": (
@@ -168,7 +195,7 @@ def send_marketing_lead_status_email(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -179,7 +206,7 @@ def send_marketing_lead_status_email(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Lead status email sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=get_resend_error_message("lead status email", exc, settings.email_from))
+        return EmailResult(sent=False, message=get_resend_error_message("lead status email", exc, email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send lead status email: {exc}")
 
@@ -195,13 +222,16 @@ def send_business_approval_notification(
     admin_url: str,
 ) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key or not settings.lead_notify_email:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    lead_notify_email = clean_email_setting(settings.lead_notify_email)
+    if not resend_api_key or not lead_notify_email:
         return EmailResult(sent=False, message="Business approval notification is not configured.")
 
     subject = "New business pending approval"
     payload = {
-        "from": settings.email_from,
-        "to": [settings.lead_notify_email],
+        "from": email_from,
+        "to": [lead_notify_email],
         "subject": f"Appalachia Offroad: {subject}",
         "html": (
             f"<h1>{subject}</h1>"
@@ -228,7 +258,7 @@ def send_business_approval_notification(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -244,7 +274,7 @@ def send_business_approval_notification(
             message=get_resend_error_message(
                 "business approval notification",
                 exc,
-                settings.email_from,
+                email_from,
             ),
         )
     except (URLError, TimeoutError) as exc:
@@ -262,12 +292,14 @@ def send_booking_cancellation_request_notification(
     dashboard_url: str,
 ) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key or not to_email:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    if not resend_api_key or not to_email:
         return EmailResult(sent=False, message="Booking cancellation notification is not configured.")
 
     subject = f"Cancellation request for booking #{booking_id}"
     payload = {
-        "from": settings.email_from,
+        "from": email_from,
         "to": [to_email],
         "subject": f"Appalachia Offroad: {subject}",
         "html": (
@@ -291,7 +323,7 @@ def send_booking_cancellation_request_notification(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -302,7 +334,7 @@ def send_booking_cancellation_request_notification(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Cancellation request notification sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=get_resend_error_message("cancellation request notification", exc, settings.email_from))
+        return EmailResult(sent=False, message=get_resend_error_message("cancellation request notification", exc, email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {exc}")
 
@@ -318,13 +350,15 @@ def send_booking_cancellation_decision_email(
     booking_url: str,
 ) -> EmailResult:
     settings = get_settings()
-    if not settings.resend_api_key or not to_email:
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    if not resend_api_key or not to_email:
         return EmailResult(sent=False, message="Booking cancellation decision email is not configured.")
 
     decision = "approved" if approved else "declined"
     subject = f"Your booking cancellation was {decision}"
     payload = {
-        "from": settings.email_from,
+        "from": email_from,
         "to": [to_email],
         "subject": f"Appalachia Offroad: {subject}",
         "html": (
@@ -346,7 +380,7 @@ def send_booking_cancellation_decision_email(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -357,7 +391,7 @@ def send_booking_cancellation_decision_email(
             if 200 <= response.status < 300:
                 return EmailResult(sent=True, message="Cancellation decision email sent.")
     except HTTPError as exc:
-        return EmailResult(sent=False, message=get_resend_error_message("cancellation decision email", exc, settings.email_from))
+        return EmailResult(sent=False, message=get_resend_error_message("cancellation decision email", exc, email_from))
     except (URLError, TimeoutError) as exc:
         return EmailResult(sent=False, message=f"Unable to send cancellation decision email: {exc}")
 

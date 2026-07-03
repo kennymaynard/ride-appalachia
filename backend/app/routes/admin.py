@@ -21,7 +21,12 @@ from app.schemas import (
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
 )
-from app.services.email_service import send_business_approval_notification, send_marketing_lead_status_email
+from app.services.email_service import (
+    clean_email_setting,
+    get_resend_key_diagnostic,
+    send_business_approval_notification,
+    send_marketing_lead_status_email,
+)
 from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
@@ -39,11 +44,13 @@ def require_admin(x_admin_password: str = Header(default="")) -> None:
 
 
 @router.post("/test-email")
-def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str]:
+def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str | int | dict[str, str | int | bool]]:
     settings = get_settings()
+    email_from = clean_email_setting(settings.email_from)
+    lead_notify_email = clean_email_setting(settings.lead_notify_email)
     result = send_business_approval_notification(
         "Test Business Approval Email",
-        settings.lead_notify_email,
+        lead_notify_email,
         "test",
         "test",
         "Admin email verification",
@@ -53,8 +60,9 @@ def send_test_email(_: None = Depends(require_admin)) -> dict[str, bool | str]:
     return {
         "sent": result.sent,
         "message": result.message,
-        "to": settings.lead_notify_email or "Not configured",
-        "from": settings.email_from or "Not configured",
+        "to": lead_notify_email or "Not configured",
+        "from": email_from or "Not configured",
+        "resend_key": get_resend_key_diagnostic(settings.resend_api_key),
     }
 
 

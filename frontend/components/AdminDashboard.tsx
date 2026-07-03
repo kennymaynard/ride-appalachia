@@ -79,6 +79,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
+  const [emailDiagnostic, setEmailDiagnostic] = useState("");
   const [emailStatusType, setEmailStatusType] = useState<"success" | "error">("success");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [smsStatus, setSmsStatus] = useState("");
@@ -181,6 +182,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   async function sendTestApprovalEmail() {
     setError("");
     setEmailStatus("");
+    setEmailDiagnostic("");
     setEmailStatusType("success");
     setSendingTestEmail(true);
 
@@ -192,6 +194,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           ? `Test email sent to ${result.to} from ${result.from}.`
           : `Test email failed: ${result.message}. To: ${result.to}. From: ${result.from}.`,
       );
+      if (result.resend_key) {
+        setEmailDiagnostic(
+          `Resend key: length ${result.resend_key.length}, starts ${result.resend_key.starts}, ends ${result.resend_key.ends}, sha256 ${result.resend_key.sha256}, trimmed spaces ${result.resend_key.has_spaces ? "yes" : "no"}.`,
+        );
+      }
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -511,6 +518,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           {emailStatus}
         </p>
       ) : null}
+      {emailDiagnostic ? <p className="form-success">{emailDiagnostic}</p> : null}
       {smsStatus ? <p className="form-success">{smsStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
