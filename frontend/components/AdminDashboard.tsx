@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   approveBusiness,
+  deleteAdminBusiness,
   geocodeLocation,
   getAdminAnalytics,
   getAdminBusinesses,
@@ -17,6 +18,7 @@ import {
   moderateTrailTalkPost,
   moderateTrailReview,
   processAdminBookingTransfers,
+  restoreAdminBusiness,
   sendAdminDirectTestEmail,
   sendAdminTestEmail,
   sendAdminTestSms,
@@ -42,6 +44,7 @@ type Props = {
 };
 
 function statusLabel(business: Business) {
+  if (business.is_deleted) return "Deleted";
   if (business.listing_status !== "approved") {
     return business.listing_status.replaceAll("_", " ");
   }
@@ -77,6 +80,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [workingId, setWorkingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<BusinessUpdateInput>({});
+  const [showDeletedBusinesses, setShowDeletedBusinesses] = useState(false);
   const [error, setError] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
@@ -91,9 +95,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
 
   const stats = useMemo(
     () => ({
-      pending: businesses.filter((business) => !business.is_approved).length,
-      approved: businesses.filter((business) => business.is_approved).length,
-      needsChanges: businesses.filter((business) => business.listing_status === "needs_changes").length,
+      pending: businesses.filter((business) => !business.is_deleted && !business.is_approved).length,
+      approved: businesses.filter((business) => !business.is_deleted && business.is_approved).length,
+      needsChanges: businesses.filter((business) => !business.is_deleted && business.listing_status === "needs_changes").length,
+      deleted: businesses.filter((business) => business.is_deleted).length,
     }),
     [businesses],
   );
@@ -106,12 +111,21 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     );
   }
 
+  function removeBusiness(businessId: number) {
+    setBusinesses((current) => current.filter((business) => business.id !== businessId));
+  }
+
+  async function reloadAdminBusinesses(includeDeleted = showDeletedBusinesses) {
+    const loadedBusinesses = await getAdminBusinesses(adminPassword, includeDeleted);
+    setBusinesses(loadedBusinesses);
+  }
+
   async function unlockAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setIsLoading(true);
     try {
-      const loadedBusinesses = await getAdminBusinesses(adminPassword);
+      const loadedBusinesses = await getAdminBusinesses(adminPassword, showDeletedBusinesses);
       const loadedReviews = await getAdminTrailReviews(adminPassword);
       const loadedConditionReports = await getAdminTrailConditionReports(adminPassword);
       const loadedTrailTalkPosts = await getAdminTrailTalkPosts(adminPassword);
@@ -178,6 +192,71 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setWorkingId(null);
+    }
+  }
+
+  async function deleteRejectedBusiness(business: Business) {
+    const canDelete = !business.is_approved && ["rejected", "unpublished"].includes(business.listing_status);
+    if (!canDelete) {
+      setError("Only rejected or unpublished businesses can be deleted.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Move ${business.name} to deleted businesses? You can show deleted businesses and restore it later.`,
+    );
+    if (!confirmed) return;
+
+    setError("");
+    setWorkingId(business.id);
+    try {
+      const deletedBusiness = await deleteAdminBusiness(business.id, adminPassword);
+      if (showDeletedBusinesses) {
+        replaceBusiness(deletedBusiness);
+      } else {
+        removeBusiness(business.id);
+      }
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to delete business.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function restoreDeletedBusiness(business: Business) {
+    setError("");
+    setWorkingId(business.id);
+    try {
+      replaceBusiness(await restoreAdminBusiness(business.id, adminPassword));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to restore business.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function toggleDeletedBusinesses(checked: boolean) {
+    setShowDeletedBusinesses(checked);
+    if (!isUnlocked) return;
+    setError("");
+    setIsLoading(true);
+    try {
+      await reloadAdminBusinesses(checked);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to reload businesses.",
+      );
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -462,6 +541,12 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <strong>{stats.needsChanges}</strong>
           <span>Needs Changes</span>
         </article>
+        {showDeletedBusinesses ? (
+          <article>
+            <strong>{stats.deleted}</strong>
+            <span>Deleted</span>
+          </article>
+        ) : null}
         <article>
           <strong>
             {pendingReviews.length +
@@ -566,6 +651,18 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       {emailDiagnostic ? <p className="form-success">{emailDiagnostic}</p> : null}
       {smsStatus ? <p className="form-success">{smsStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
+
+      <div className="admin-email-tools">
+        <label className="admin-toggle-row">
+          <input
+            type="checkbox"
+            checked={showDeletedBusinesses}
+            onChange={(event) => toggleDeletedBusinesses(event.target.checked)}
+          />
+          Show deleted businesses
+        </label>
+        <span>Deleted businesses stay hidden from riders unless restored and approved again.</span>
+      </div>
 
       <div className="admin-review-queue">
         <div className="section-heading">
@@ -1101,6 +1198,16 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
             </div>
             )}
             <div className="admin-actions">
+              {business.is_deleted ? (
+                <button
+                  type="button"
+                  disabled={workingId === business.id}
+                  onClick={() => restoreDeletedBusiness(business)}
+                >
+                  Restore
+                </button>
+              ) : (
+                <>
               <button
                 type="button"
                 disabled={workingId === business.id}
@@ -1176,6 +1283,17 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
               >
                 {business.is_featured ? "Unfeature" : "Mark Featured"}
               </button>
+              {!business.is_approved && ["rejected", "unpublished"].includes(business.listing_status) ? (
+                <button
+                  type="button"
+                  disabled={workingId === business.id}
+                  onClick={() => deleteRejectedBusiness(business)}
+                >
+                  Delete
+                </button>
+              ) : null}
+                </>
+              )}
             </div>
           </article>
         ))}

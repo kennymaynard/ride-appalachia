@@ -101,6 +101,8 @@ class Business(Base):
     stripe_connect_onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     view_clicks: Mapped[int] = mapped_column(Integer, default=0)
     action_clicks: Mapped[int] = mapped_column(Integer, default=0)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     deals: Mapped[list["Deal"]] = relationship(back_populates="business", cascade="all, delete-orphan")

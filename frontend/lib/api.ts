@@ -910,8 +910,11 @@ function getAdminHeaders(adminPassword?: string): Record<string, string> {
   return trimmedPassword ? { "x-admin-password": trimmedPassword } : {};
 }
 
-export async function getAdminBusinesses(adminPassword?: string): Promise<Business[]> {
-  const response = await fetch(`${getApiUrl()}/api/admin/businesses`, {
+export async function getAdminBusinesses(adminPassword?: string, includeDeleted = false): Promise<Business[]> {
+  const params = new URLSearchParams();
+  if (includeDeleted) params.set("include_deleted", "true");
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await fetch(`${getApiUrl()}/api/admin/businesses${query}`, {
     cache: "no-store",
     headers: getAdminHeaders(adminPassword),
   });
@@ -1214,6 +1217,40 @@ export async function moderateBusiness(
 
   if (!response.ok) {
     throw new Error("Unable to moderate business");
+  }
+
+  return response.json();
+}
+
+export async function deleteAdminBusiness(
+  businessId: number,
+  adminPassword?: string,
+): Promise<Business> {
+  const response = await fetch(`${getApiUrl()}/api/admin/businesses/${businessId}`, {
+    method: "DELETE",
+    headers: getAdminHeaders(adminPassword),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to delete business");
+  }
+
+  return response.json();
+}
+
+export async function restoreAdminBusiness(
+  businessId: number,
+  adminPassword?: string,
+): Promise<Business> {
+  const response = await fetch(`${getApiUrl()}/api/admin/businesses/${businessId}/restore`, {
+    method: "POST",
+    headers: getAdminHeaders(adminPassword),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to restore business");
   }
 
   return response.json();

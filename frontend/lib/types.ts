@@ -218,6 +218,8 @@ export type Business = {
   stripe_connect_onboarding_complete: boolean;
   is_approved: boolean;
   is_featured: boolean;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
   view_clicks: number;
   action_clicks: number;
   deals: Deal[];

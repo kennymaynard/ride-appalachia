@@ -1,3 +1,4 @@
+from datetime import datetime
 import secrets
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -148,22 +149,26 @@ def list_booking_transfers(
 @router.get("/businesses", response_model=list[BusinessDashboardRead])
 def list_businesses(
     _: None = Depends(require_admin),
+    include_deleted: bool = False,
     db: Session = Depends(get_db),
 ) -> list[Business]:
-    return (
+    query = (
         db.query(Business)
         .options(
             selectinload(Business.deals),
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
         )
-        .order_by(
-            (Business.listing_status == "pending").desc(),
-            (Business.listing_status == "needs_changes").desc(),
-            Business.created_at.desc(),
-        )
-        .all()
     )
+    if not include_deleted:
+        query = query.filter(Business.is_deleted.is_(False))
+
+    return query.order_by(
+        Business.is_deleted.asc(),
+        (Business.listing_status == "pending").desc(),
+        (Business.listing_status == "needs_changes").desc(),
+        Business.created_at.desc(),
+    ).all()
 
 
 @router.get("/analytics", response_model=AdminAnalyticsRead)
@@ -194,7 +199,7 @@ def get_admin_analytics(
 
     return AdminAnalyticsRead(
         rider_count=db.query(Rider).count(),
-        business_count=db.query(Business).count(),
+        business_count=db.query(Business).filter(Business.is_deleted.is_(False)).count(),
         page_visits=db.query(PageVisit).count(),
         rider_locations=[
             AdminAnalyticsLocation(
@@ -389,6 +394,53 @@ def moderate_business(
     if payload.listing_status in {"rejected", "unpublished"}:
         business.is_featured = False
 
+    db.commit()
+    db.refresh(business)
+    return business
+
+
+@router.delete("/businesses/{business_id}", response_model=BusinessRead)
+def delete_business(
+    business_id: int,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> Business:
+    business = db.get(Business, business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    if business.is_approved or business.listing_status not in {"rejected", "unpublished"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Only rejected or unpublished businesses can be deleted.",
+        )
+
+    business.is_deleted = True
+    business.deleted_at = datetime.utcnow()
+    business.is_approved = False
+    business.is_featured = False
+    business.listing_status = "unpublished"
+    business.admin_notes = "Deleted by admin."
+    db.commit()
+    db.refresh(business)
+    return business
+
+
+@router.post("/businesses/{business_id}/restore", response_model=BusinessRead)
+def restore_business(
+    business_id: int,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> Business:
+    business = db.get(Business, business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    business.is_deleted = False
+    business.deleted_at = None
+    business.is_approved = False
+    business.is_featured = False
+    business.listing_status = "pending"
+    business.admin_notes = "Restored by admin. Review before approval."
     db.commit()
     db.refresh(business)
     return business

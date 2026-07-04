@@ -19,7 +19,7 @@ def list_marketplace(
     query = (
         db.query(Business)
         .options(selectinload(Business.deals), selectinload(Business.campaigns))
-        .filter(Business.is_approved.is_(True), Business.listing_status == "approved")
+        .filter(Business.is_approved.is_(True), Business.listing_status == "approved", Business.is_deleted.is_(False))
     )
 
     if category and category != "all":
@@ -60,7 +60,7 @@ def get_listing(slug: str, db: Session = Depends(get_db)) -> Business:
     business = (
         db.query(Business)
         .options(selectinload(Business.deals), selectinload(Business.campaigns))
-        .filter(Business.slug == slug, Business.is_approved.is_(True))
+        .filter(Business.slug == slug, Business.is_approved.is_(True), Business.is_deleted.is_(False))
         .first()
     )
     if not business:
@@ -75,7 +75,7 @@ def get_listing(slug: str, db: Session = Depends(get_db)) -> Business:
 @router.post("/listings/{business_id}/action-click")
 def track_action_click(business_id: int, db: Session = Depends(get_db)) -> dict[str, int]:
     business = db.get(Business, business_id)
-    if not business:
+    if not business or business.is_deleted:
         raise HTTPException(status_code=404, detail="Business not found")
 
     business.action_clicks += 1

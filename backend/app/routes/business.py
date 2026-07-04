@@ -68,7 +68,7 @@ def require_business_access(
     db: Session = Depends(get_db),
 ) -> Business:
     business = db.get(Business, business_id)
-    if not business:
+    if not business or business.is_deleted:
         raise HTTPException(status_code=404, detail="Business not found")
     if not business.owner_access_token or x_business_token != business.owner_access_token:
         raise HTTPException(status_code=401, detail="Business access token required")
@@ -172,7 +172,7 @@ def get_business_by_access_token(
             selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
             selectinload(Business.bookings),
         )
-        .filter(Business.owner_access_token == owner_access_token)
+        .filter(Business.owner_access_token == owner_access_token, Business.is_deleted.is_(False))
         .first()
     )
     if not business:
@@ -194,9 +194,11 @@ def get_business(
             selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
             selectinload(Business.bookings),
         )
-        .filter(Business.id == business.id)
+        .filter(Business.id == business.id, Business.is_deleted.is_(False))
         .first()
     )
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
     return business
 
 

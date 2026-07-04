@@ -487,6 +487,8 @@ class BusinessRead(BusinessBase):
     admin_notes: str = ""
     is_approved: bool
     is_featured: bool
+    is_deleted: bool = False
+    deleted_at: Optional[datetime] = None
     subscription_status: str = "incomplete"
     stripe_customer_id: str = ""
     stripe_subscription_id: str = ""

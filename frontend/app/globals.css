@@ -6978,6 +6978,21 @@ button.tier-card.is-selected {
   font-weight: 850;
 }
 
+.admin-toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.admin-toggle-row input {
+  width: 1.1rem;
+  min-height: 1.1rem;
+  accent-color: var(--orange);
+}
+
 .admin-analytics-card {
   margin-top: 1rem;
 }
