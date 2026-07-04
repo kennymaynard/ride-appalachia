@@ -35,7 +35,7 @@ from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
 from app.services.photos import normalize_photo_url
-from app.services.printify_service import list_printify_store_products
+from app.services.printify_service import list_curated_store_products
 from app.services.sms_service import send_marketing_lead_status_sms, send_sms
 
 router = APIRouter(tags=["admin"])
@@ -139,7 +139,7 @@ def preview_printify_products(
             message="Printify API token or shop ID is not configured.",
         )
     try:
-        products = list_printify_store_products(settings)
+        products = list_curated_store_products(settings)
     except Exception as exc:
         return PrintifyProductSyncRead(
             configured=True,
@@ -152,7 +152,7 @@ def preview_printify_products(
         configured=True,
         count=len(products),
         products=products,
-        message=f"Loaded {len(products)} Printify product{'' if len(products) == 1 else 's'}.",
+        message=f"Loaded {len(products)} curated store product{'' if len(products) == 1 else 's'}.",
     )
 
 

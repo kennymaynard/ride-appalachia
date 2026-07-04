@@ -9,6 +9,117 @@ from app.schemas import StoreProductRead
 
 PRINTIFY_API_BASE = "https://api.printify.com/v1"
 
+APPROVED_STORE_PRICES = {
+    "shirt": 2600,
+    "case": 1800,
+    "tank": 2200,
+    "tumbler": 2800,
+    "hat": 2800,
+    "flag": 1500,
+}
+
+CURATED_STORE_PRODUCTS = {
+    "trail-shirt": {
+        "name": "Appalachia Offroad Shirt",
+        "category": "Shirts",
+        "description": "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
+        "badge": "Rider gear",
+        "visual": "shirt",
+        "price_key": "shirt",
+        "order": 0,
+        "image_urls": [
+            "/images/store/appalachia-offroad-shirt-lifestyle.png",
+            "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+        ],
+    },
+    "appalachia-ride-hard-shirt": {
+        "name": "Appalachia Ride Hard Shirt",
+        "category": "Shirts",
+        "description": "Black trail tee with Appalachia Offroad artwork and Ride Hard Plan Less back print.",
+        "badge": "Rider gear",
+        "visual": "shirt",
+        "price_key": "shirt",
+        "order": 1,
+        "image_urls": [
+            "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+            "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+        ],
+    },
+    "ride-hard-plan-less-shirt": {
+        "name": "Ride Hard Plan Less Shirt",
+        "category": "Shirts",
+        "description": "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
+        "badge": "Rider gear",
+        "visual": "shirt",
+        "price_key": "shirt",
+        "order": 2,
+        "image_urls": [
+            "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+            "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+        ],
+    },
+    "hero-verified-shirt": {
+        "name": "Hero Verified Shirt",
+        "category": "Shirts",
+        "description": "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+        "badge": "Hero verified",
+        "visual": "shirt",
+        "price_key": "shirt",
+        "order": 3,
+        "image_urls": ["/images/store/hero-verified-shirt-lifestyle.png"],
+    },
+    "appalachia-offroad-tank-top": {
+        "name": "Appalachia Offroad Tank",
+        "category": "Tank tops",
+        "description": "Lightweight tank top with Appalachia Offroad mountain trail artwork.",
+        "badge": "Trail gear",
+        "visual": "shirt",
+        "price_key": "tank",
+        "order": 4,
+        "image_urls": [],
+    },
+    "appalachia-offroad-phone-case": {
+        "name": "Appalachia Phone Case",
+        "category": "Phone cases",
+        "description": "Protective phone case with Appalachia Offroad mountain and ATV artwork.",
+        "badge": "Phone case",
+        "visual": "case",
+        "price_key": "case",
+        "order": 5,
+        "image_urls": [],
+    },
+    "appalachia-offroad-tumbler": {
+        "name": "Appalachia Tumbler",
+        "category": "Tumblers",
+        "description": "20 oz insulated tumbler with Appalachia Offroad trail artwork.",
+        "badge": "Drinkware",
+        "visual": "tumbler",
+        "price_key": "tumbler",
+        "order": 6,
+        "image_urls": [],
+    },
+    "trail-hat": {
+        "name": "Appalachia Hat",
+        "category": "Hats",
+        "description": "Trail-ready Appalachia Offroad hat with an adjustable fit.",
+        "badge": "Trail ready",
+        "visual": "hat",
+        "price_key": "hat",
+        "order": 7,
+        "image_urls": [],
+    },
+    "appalachia-offroad-garden-flag": {
+        "name": "Appalachia Garden Flag",
+        "category": "Garden flags",
+        "description": "Outdoor garden flag with Appalachia Offroad mountain and ATV artwork.",
+        "badge": "Flag",
+        "visual": "flag",
+        "price_key": "flag",
+        "order": 8,
+        "image_urls": [],
+    },
+}
+
 
 @dataclass
 class PrintifyOrderResult:
@@ -64,6 +175,39 @@ def _strip_html(value: str) -> str:
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
     return slug or "product"
+
+
+def _normalized(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
+
+
+def _curated_store_key(product: StoreProductRead) -> str:
+    title = _normalized(product.name)
+    if "sticker" in title:
+        return ""
+    if "hero verified" in title and any(word in title for word in ["phone", "case", "tumbler", "cup", "flag", "banner"]):
+        return ""
+    if "phone" in title or "case" in title:
+        return "appalachia-offroad-phone-case"
+    if "tank" in title:
+        return "appalachia-offroad-tank-top"
+    if "tumbler" in title or "travel cup" in title:
+        return "appalachia-offroad-tumbler"
+    if "hat" in title or "cap" in title:
+        return "trail-hat"
+    if "flag" in title or "banner" in title:
+        return "appalachia-offroad-garden-flag"
+    if "appalachia offroad t shirt ride hard plan less graphic" in title:
+        return "appalachia-ride-hard-shirt"
+    if "ride hard plan less t shirt" in title:
+        return "ride-hard-plan-less-shirt"
+    if "appalachia offroad logo t shirt hero" in title or "hero overland" in title:
+        return "hero-verified-shirt"
+    if "hero" in title or "verified" in title:
+        return "hero-verified-shirt"
+    if "shirt" in title or "tee" in title:
+        return "trail-shirt"
+    return ""
 
 
 def _visual_for_product(title: str, tags: list[str]) -> str:
@@ -196,6 +340,50 @@ def list_printify_store_products(settings: Settings) -> list[StoreProductRead]:
         page += 1
 
     return products
+
+
+def list_curated_store_products(settings: Settings) -> list[StoreProductRead]:
+    products = list_printify_store_products(settings)
+    curated: dict[str, StoreProductRead] = {}
+
+    for product in products:
+        key = _curated_store_key(product)
+        if not key or key in curated:
+            continue
+
+        meta = CURATED_STORE_PRODUCTS[key]
+        image_urls = [str(image_url) for image_url in meta["image_urls"]]
+        fallback_images = [image_url for image_url in [product.imageUrl, *product.imageUrls] if image_url]
+        merged_images = [
+            *image_urls,
+            *[image_url for image_url in fallback_images if image_url not in image_urls],
+        ]
+        price_key = str(meta["price_key"])
+
+        curated[key] = StoreProductRead(
+            id=key,
+            name=str(meta["name"]),
+            category=str(meta["category"]),
+            description=str(meta["description"]),
+            priceCents=APPROVED_STORE_PRICES.get(price_key, product.priceCents),
+            dropshipSku=product.dropshipSku,
+            fulfillment=product.fulfillment,
+            variants=product.variants,
+            variantSkus=product.variantSkus,
+            badge=str(meta["badge"]),
+            visual=str(meta["visual"]),
+            imageUrl=merged_images[0] if merged_images else product.imageUrl,
+            imageUrls=merged_images[1:],
+            source=product.source,
+        )
+
+    return [
+        product
+        for _, product in sorted(
+            curated.items(),
+            key=lambda item: int(CURATED_STORE_PRODUCTS[item[0]]["order"]),
+        )
+    ]
 
 
 def _split_name(name: str) -> tuple[str, str]:

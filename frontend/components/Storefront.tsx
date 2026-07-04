@@ -70,6 +70,28 @@ function productKind(product: StoreProduct): keyof typeof approvedPrices | null 
 }
 
 function approvedImages(product: StoreProduct) {
+  if (product.id === "trail-shirt") {
+    return [
+      "/images/store/appalachia-offroad-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
+  if (product.id === "appalachia-ride-hard-shirt") {
+    return [
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+      "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+    ];
+  }
+  if (product.id === "ride-hard-plan-less-shirt") {
+    return [
+      "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
+  if (product.id === "hero-verified-shirt") {
+    return ["/images/store/hero-verified-shirt-lifestyle.png"];
+  }
+
   if (productKind(product) !== "shirt") {
     return product.imageUrls || [];
   }
@@ -128,6 +150,42 @@ type DisplayMeta = {
 function displayMeta(product: StoreProduct): DisplayMeta {
   const text = normalizeText(product.name);
   const kind = productKind(product);
+
+  if (product.id === "trail-shirt") {
+    return {
+      key: "trail-shirt",
+      name: "Appalachia Offroad Shirt",
+      description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
+      order: 0,
+    };
+  }
+
+  if (product.id === "appalachia-ride-hard-shirt") {
+    return {
+      key: "appalachia-ride-hard-shirt",
+      name: "Appalachia Ride Hard Shirt",
+      description: "Black trail tee with Appalachia Offroad artwork and Ride Hard Plan Less back print.",
+      order: 1,
+    };
+  }
+
+  if (product.id === "ride-hard-plan-less-shirt") {
+    return {
+      key: "ride-hard-plan-less-shirt",
+      name: "Ride Hard Plan Less Shirt",
+      description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
+      order: 2,
+    };
+  }
+
+  if (product.id === "hero-verified-shirt") {
+    return {
+      key: "hero-verified-shirt",
+      name: "Hero Verified Shirt",
+      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+      order: 3,
+    };
+  }
 
   if (kind === null) {
     return {

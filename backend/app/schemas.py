@@ -32,6 +32,7 @@ PAYMENT_TIMINGS = {"at_booking", "after_cancellation_period"}
 REFUND_MODES = {"full", "minus_cleaning_fee", "half", "none", "custom"}
 STORE_PRODUCT_IDS = {
     "trail-shirt",
+    "appalachia-ride-hard-shirt",
     "ride-hard-plan-less-shirt",
     "hero-verified-shirt",
     "appalachia-offroad-tank-top",
