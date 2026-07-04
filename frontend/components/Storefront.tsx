@@ -18,7 +18,7 @@ type CartItem = {
   quantity: number;
 };
 
-const DESCRIPTION_PREVIEW_LENGTH = 210;
+const DESCRIPTION_PREVIEW_LENGTH = 120;
 
 const approvedPrices = {
   shirt: 2600,
@@ -96,18 +96,175 @@ function approvedImages(product: StoreProduct) {
   return product.imageUrls || [];
 }
 
+type DisplayMeta = {
+  key: string;
+  name: string;
+  description: string;
+  order: number;
+  hidden?: boolean;
+};
+
+function displayMeta(product: StoreProduct): DisplayMeta {
+  const text = normalizeText(product.name);
+  const kind = productKind(product);
+
+  if (kind === null) {
+    return {
+      key: `hidden-${product.id}`,
+      name: product.name,
+      description: product.description,
+      order: 99,
+      hidden: true,
+    };
+  }
+
+  if (text.includes("sticker")) {
+    return {
+      key: `hidden-${product.id}`,
+      name: product.name,
+      description: product.description,
+      order: 99,
+      hidden: true,
+    };
+  }
+
+  if (kind === "tumbler" && text.includes("hero verified")) {
+    return {
+      key: `hidden-${product.id}`,
+      name: product.name,
+      description: product.description,
+      order: 99,
+      hidden: true,
+    };
+  }
+
+  if (text.includes("appalachia offroad t shirt ride hard plan less graphic")) {
+    return {
+      key: "ride-hard-plan-less-shirt",
+      name: "Ride Hard Plan Less Shirt",
+      description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
+      order: 1,
+    };
+  }
+
+  if (text.includes("ride hard plan less t shirt")) {
+    return {
+      key: "ride-hard-plan-less-shirt",
+      name: "Ride Hard Plan Less Shirt",
+      description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
+      order: 1,
+    };
+  }
+
+  if (text.includes("appalachia offroad logo t shirt hero")) {
+    return {
+      key: "hero-verified-shirt",
+      name: "Hero Verified Shirt",
+      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+      order: 2,
+    };
+  }
+
+  if (kind === "shirt" && (text.includes("ride hard") || text.includes("plan less"))) {
+    return {
+      key: "ride-hard-plan-less-shirt",
+      name: "Ride Hard Plan Less Shirt",
+      description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
+      order: 1,
+    };
+  }
+
+  if (kind === "shirt" && (text.includes("hero") || text.includes("verified"))) {
+    return {
+      key: "hero-verified-shirt",
+      name: "Hero Verified Shirt",
+      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+      order: 2,
+    };
+  }
+
+  if (kind === "shirt") {
+    return {
+      key: "appalachia-offroad-shirt",
+      name: "Appalachia Offroad Shirt",
+      description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
+      order: 0,
+    };
+  }
+
+  if (kind === "tank") {
+    return {
+      key: "appalachia-offroad-tank",
+      name: "Appalachia Offroad Tank",
+      description: "Lightweight tank top with Appalachia Offroad mountain trail artwork.",
+      order: 3,
+    };
+  }
+
+  if (kind === "case") {
+    return {
+      key: "appalachia-offroad-phone-case",
+      name: "Appalachia Phone Case",
+      description: "Protective phone case with Appalachia Offroad mountain and ATV artwork.",
+      order: 4,
+    };
+  }
+
+  if (kind === "tumbler") {
+    return {
+      key: "appalachia-offroad-tumbler",
+      name: "Appalachia Tumbler",
+      description: "20 oz insulated tumbler with Appalachia Offroad trail artwork.",
+      order: 5,
+    };
+  }
+
+  if (kind === "hat") {
+    return {
+      key: "appalachia-offroad-hat",
+      name: "Appalachia Hat",
+      description: "Trail-ready Appalachia Offroad hat with an adjustable fit.",
+      order: 6,
+    };
+  }
+
+  return {
+    key: "appalachia-offroad-garden-flag",
+    name: "Appalachia Garden Flag",
+    description: "Outdoor garden flag with Appalachia Offroad mountain and ATV artwork.",
+    order: 7,
+  };
+}
+
 function applyStoreOverrides(product: StoreProduct): StoreProduct {
   const kind = productKind(product);
+  const meta = displayMeta(product);
   const localImages = approvedImages(product);
   const fallbackImages = [product.imageUrl, ...(product.imageUrls || [])].filter(Boolean) as string[];
   const imageUrls = [...localImages, ...fallbackImages.filter((imageUrl) => !localImages.includes(imageUrl))];
 
   return {
     ...product,
+    name: meta.name,
+    description: meta.description,
     priceCents: kind ? approvedPrices[kind] : product.priceCents,
     imageUrl: imageUrls[0] || product.imageUrl,
     imageUrls: imageUrls.slice(1),
   };
+}
+
+function curatedStoreProducts(products: StoreProduct[]) {
+  const seen = new Set<string>();
+
+  return products
+    .map((product) => ({ product, meta: displayMeta(product) }))
+    .filter(({ meta }) => {
+      if (meta.hidden || seen.has(meta.key)) return false;
+      seen.add(meta.key);
+      return true;
+    })
+    .sort((a, b) => a.meta.order - b.meta.order)
+    .map(({ product }) => applyStoreOverrides(product));
 }
 
 function ProductVisual({ product }: { product: StoreProduct }) {
@@ -165,7 +322,7 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
     getStoreProducts()
       .then((loadedProducts) => {
         if (!isMounted || !loadedProducts.length) return;
-        const nextProducts = loadedProducts.map(applyStoreOverrides);
+        const nextProducts = curatedStoreProducts(loadedProducts);
         setStoreProducts(nextProducts);
         setSelectedVariants(
           Object.fromEntries(nextProducts.map((product) => [product.id, product.variants[0] || ""])),
