@@ -32,9 +32,13 @@ PAYMENT_TIMINGS = {"at_booking", "after_cancellation_period"}
 REFUND_MODES = {"full", "minus_cleaning_fee", "half", "none", "custom"}
 STORE_PRODUCT_IDS = {
     "trail-shirt",
+    "ride-hard-plan-less-shirt",
+    "hero-verified-shirt",
+    "appalachia-offroad-tank-top",
+    "appalachia-offroad-phone-case",
+    "appalachia-offroad-tumbler",
     "trail-hat",
-    "trail-sticker-pack",
-    "vehicle-window-decal",
+    "appalachia-offroad-garden-flag",
 }
 
 
@@ -743,6 +747,7 @@ class StoreProductRead(BaseModel):
     badge: str = "Printify"
     visual: str = "shirt"
     imageUrl: str = ""
+    imageUrls: list[str] = []
     source: str = "printify"
 
 

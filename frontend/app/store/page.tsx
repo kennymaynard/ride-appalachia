@@ -3,7 +3,7 @@ import { storeProducts } from "../../lib/store-products";
 
 export const metadata = {
   title: "Store | Appalachia Offroad",
-  description: "Shop Appalachia Offroad shirts, hats, trail stickers, and vehicle window decals.",
+  description: "Shop Appalachia Offroad shirts, tank tops, phone cases, tumblers, hats, and garden flags.",
 };
 
 export default function StorePage() {
