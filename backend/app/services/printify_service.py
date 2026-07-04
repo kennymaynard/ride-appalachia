@@ -17,6 +17,10 @@ class PrintifyOrderResult:
     order_id: str = ""
 
 
+class PrintifyApiError(RuntimeError):
+    pass
+
+
 def _printify_headers(settings: Settings) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {settings.printify_api_token}",
@@ -43,8 +47,12 @@ def _get_printify(settings: Settings, path: str) -> dict:
         headers=_printify_headers(settings),
         method="GET",
     )
-    with urlopen(request, timeout=15) as response:
-        body = response.read().decode("utf-8")
+    try:
+        with urlopen(request, timeout=15) as response:
+            body = response.read().decode("utf-8")
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise PrintifyApiError(f"Printify API returned {exc.code}: {detail[:500]}") from exc
     return json.loads(body) if body else {}
 
 
@@ -163,20 +171,28 @@ def list_printify_store_products(settings: Settings) -> list[StoreProductRead]:
         raise RuntimeError("Printify API token or shop ID is not configured.")
 
     products: list[StoreProductRead] = []
-    page = 1
-    while page <= 10:
-        response = _get_printify(settings, f"/shops/{settings.printify_shop_id}/products.json?page={page}&limit=100")
-        data = response.get("data") if isinstance(response, dict) else []
-        if not isinstance(data, list) or not data:
+    response = _get_printify(settings, f"/shops/{settings.printify_shop_id}/products.json")
+    data = response.get("data") if isinstance(response, dict) else []
+    if not isinstance(data, list):
+        return products
+
+    for product in data:
+        transformed = _transform_printify_product(product)
+        if transformed:
+            products.append(transformed)
+
+    current_page = int(response.get("current_page") or 1)
+    last_page = int(response.get("last_page") or current_page)
+    page = current_page + 1
+    while page <= min(last_page, 10):
+        page_response = _get_printify(settings, f"/shops/{settings.printify_shop_id}/products.json?page={page}")
+        page_data = page_response.get("data") if isinstance(page_response, dict) else []
+        if not isinstance(page_data, list) or not page_data:
             break
-        for product in data:
+        for product in page_data:
             transformed = _transform_printify_product(product)
             if transformed:
                 products.append(transformed)
-
-        last_page = int(response.get("last_page") or page)
-        if page >= last_page:
-            break
         page += 1
 
     return products
