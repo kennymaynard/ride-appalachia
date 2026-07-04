@@ -1,31 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createStoreCheckout } from "../lib/api";
 import type { StoreProduct } from "../lib/store-products";
-
-type CartItem = {
-  productId: StoreProduct["id"];
-  variant: string;
-  quantity: number;
-};
-
-type CheckoutState = "idle" | "loading" | "success" | "cancelled" | "error";
 
 function formatMoney(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
-}
-
-function cartKey(productId: string, variant: string) {
-  return `${productId}::${variant}`;
-}
-
-function dropshipSku(baseSku: string, variant: string) {
-  const cleanVariant = variant
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toUpperCase();
-  return `${baseSku}-${cleanVariant}`;
 }
 
 function ProductVisual({ product }: { product: StoreProduct }) {
@@ -61,122 +39,20 @@ function ProductVisual({ product }: { product: StoreProduct }) {
 }
 
 export function Storefront({ products }: { products: StoreProduct[] }) {
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>(
-    Object.fromEntries(products.map((product) => [product.id, product.variants[0] || ""])),
-  );
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [checkoutState, setCheckoutState] = useState<CheckoutState>("idle");
-  const [checkoutMessage, setCheckoutMessage] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const checkout = params.get("checkout");
-    if (checkout === "success" || checkout === "stub") {
-      setCheckoutState("success");
-      setCheckoutMessage("Order started. Check your inbox for the Stripe receipt and shipping details.");
-    }
-    if (checkout === "cancelled") {
-      setCheckoutState("cancelled");
-      setCheckoutMessage("Checkout was cancelled. Your cart is still here.");
-    }
-  }, []);
-
-  const productById = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
-
-  const cartLines = cart
-    .map((item) => {
-      const product = productById.get(item.productId);
-      return product ? { ...item, product } : null;
-    })
-    .filter(Boolean) as Array<CartItem & { product: StoreProduct }>;
-
-  const subtotalCents = cartLines.reduce(
-    (total, item) => total + item.product.priceCents * item.quantity,
-    0,
-  );
-
-  function addToCart(product: StoreProduct) {
-    const variant = selectedVariants[product.id] || product.variants[0] || "";
-    const key = cartKey(product.id, variant);
-    setCart((current) => {
-      const existing = current.find((item) => cartKey(item.productId, item.variant) === key);
-      if (existing) {
-        return current.map((item) =>
-          cartKey(item.productId, item.variant) === key
-            ? { ...item, quantity: Math.min(item.quantity + 1, 10) }
-            : item,
-        );
-      }
-      return [...current, { productId: product.id, variant, quantity: 1 }];
-    });
-    setCheckoutState("idle");
-    setCheckoutMessage("");
-  }
-
-  function updateQuantity(productId: StoreProduct["id"], variant: string, quantity: number) {
-    setCart((current) =>
-      current
-        .map((item) =>
-          item.productId === productId && item.variant === variant
-            ? { ...item, quantity: Math.max(1, Math.min(quantity, 10)) }
-            : item,
-        )
-        .filter((item) => item.quantity > 0),
-    );
-  }
-
-  function removeItem(productId: StoreProduct["id"], variant: string) {
-    setCart((current) =>
-      current.filter((item) => !(item.productId === productId && item.variant === variant)),
-    );
-  }
-
-  async function startCheckout() {
-    if (!cartLines.length) {
-      setCheckoutState("error");
-      setCheckoutMessage("Add at least one item before checkout.");
-      return;
-    }
-
-    setCheckoutState("loading");
-    setCheckoutMessage("");
-    try {
-      const checkoutUrl = await createStoreCheckout({
-        customer_email: customerEmail,
-        items: cartLines.map((item) => ({
-          product_id: item.product.id,
-          name: item.product.name,
-          variant: item.variant,
-          dropship_sku: dropshipSku(item.product.dropshipSku, item.variant),
-          unit_amount_cents: item.product.priceCents,
-          quantity: item.quantity,
-        })),
-      });
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      setCheckoutState("error");
-      setCheckoutMessage(error instanceof Error ? error.message : "Unable to start checkout.");
-    }
-  }
-
   return (
     <section className="store-shell" aria-label="Appalachia Offroad store">
       <div className="store-toolbar">
         <div>
           <p className="eyebrow">Rider store</p>
-          <h1>Trail gear, stickers, and window decals.</h1>
+          <h1>Appalachia Offroad store coming soon.</h1>
           <p>
-            Shirts, hats, trail stickers, and vehicle decals set up for print-on-demand
-            dropshipping through Stripe checkout.
+            Shirts, hats, trail stickers, and vehicle window decals are being prepared
+            for print-on-demand fulfillment. Checkout will open once every item is published.
           </p>
         </div>
-        <div className="store-toolbar-stat">
-          <span>Cart</span>
-          <strong>{cartLines.reduce((total, item) => total + item.quantity, 0)}</strong>
+        <div className="store-toolbar-stat is-coming-soon">
+          <span>Status</span>
+          <strong>Soon</strong>
         </div>
       </div>
 
@@ -195,16 +71,8 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
                 </div>
                 <p>{product.description}</p>
                 <label>
-                  <span>Variant</span>
-                  <select
-                    value={selectedVariants[product.id] || product.variants[0]}
-                    onChange={(event) =>
-                      setSelectedVariants((current) => ({
-                        ...current,
-                        [product.id]: event.target.value,
-                      }))
-                    }
-                  >
+                  <span>Planned variants</span>
+                  <select value={product.variants[0] || ""} disabled>
                     {product.variants.map((variant) => (
                       <option key={variant} value={variant}>
                         {variant}
@@ -214,8 +82,8 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
                 </label>
                 <div className="store-product-actions">
                   <small>{product.fulfillment}</small>
-                  <button type="button" onClick={() => addToCart(product)}>
-                    Add to cart
+                  <button type="button" disabled>
+                    Coming soon
                   </button>
                 </div>
               </div>
@@ -226,73 +94,27 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
         <aside className="store-cart" aria-label="Store cart">
           <div className="store-cart-heading">
             <div>
-              <span>Secure checkout</span>
-              <h2>Your gear</h2>
+              <span>Store launch</span>
+              <h2>Coming soon</h2>
             </div>
-            <strong>{formatMoney(subtotalCents)}</strong>
+            <strong>Printify</strong>
           </div>
-
-          {cartLines.length ? (
-            <div className="store-cart-list">
-              {cartLines.map((item) => (
-                <article className="store-cart-item" key={cartKey(item.productId, item.variant)}>
-                  <div>
-                    <strong>{item.product.name}</strong>
-                    <span>{item.variant}</span>
-                  </div>
-                  <div className="store-cart-controls">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.productId, item.variant, item.quantity - 1)}
-                      aria-label={`Decrease ${item.product.name}`}
-                    >
-                      -
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.productId, item.variant, item.quantity + 1)}
-                      aria-label={`Increase ${item.product.name}`}
-                    >
-                      +
-                    </button>
-                    <button type="button" onClick={() => removeItem(item.productId, item.variant)}>
-                      Remove
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="store-empty">Pick a shirt, hat, sticker pack, or window decal to start.</p>
-          )}
-
-          <label className="store-email">
-            <span>Email for receipt</span>
-            <input
-              type="email"
-              value={customerEmail}
-              onChange={(event) => setCustomerEmail(event.target.value)}
-              placeholder="rider@example.com"
-            />
-          </label>
-
+          <p className="store-empty">
+            We are finishing the product publishing step before opening checkout.
+            The first drop will include rider shirts, hats, trail stickers, and vehicle decals.
+          </p>
           <div className="store-cart-total">
-            <span>Subtotal</span>
-            <strong>{formatMoney(subtotalCents)}</strong>
+            <span>Launch items</span>
+            <strong>{products.length}</strong>
           </div>
-          <p className="store-note">Standard shipping is added and the shipping address is collected in Stripe checkout.</p>
+          <p className="store-note">Orders will use secure Stripe checkout and Printify fulfillment when the store opens.</p>
           <button
             className="store-checkout-button"
             type="button"
-            onClick={startCheckout}
-            disabled={checkoutState === "loading" || !cartLines.length}
+            disabled
           >
-            {checkoutState === "loading" ? "Starting checkout..." : "Checkout with Stripe"}
+            Checkout opening soon
           </button>
-          {checkoutMessage ? (
-            <p className={`store-message is-${checkoutState}`}>{checkoutMessage}</p>
-          ) : null}
         </aside>
       </div>
     </section>
