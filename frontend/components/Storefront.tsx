@@ -29,6 +29,15 @@ const approvedPrices = {
   flag: 1500,
 };
 
+const visualByKind: Record<keyof typeof approvedPrices, StoreProduct["visual"]> = {
+  shirt: "shirt",
+  case: "case",
+  tank: "shirt",
+  tumbler: "tumbler",
+  hat: "hat",
+  flag: "flag",
+};
+
 function formatMoney(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
 }
@@ -38,7 +47,19 @@ function normalizeText(value: string) {
 }
 
 function productKind(product: StoreProduct): keyof typeof approvedPrices | null {
+  const nameText = normalizeText(product.name);
   const text = normalizeText(`${product.name} ${product.category} ${product.badge} ${product.visual}`);
+
+  if (nameText.includes("sticker")) return null;
+  if (nameText.includes("phone") || nameText.includes("case")) return "case";
+  if (nameText.includes("tank")) return "tank";
+  if (nameText.includes("tumbler") || nameText.includes("travel cup") || nameText.includes("drinkware")) {
+    return "tumbler";
+  }
+  if (nameText.includes("hat") || nameText.includes("cap")) return "hat";
+  if (nameText.includes("flag") || nameText.includes("banner")) return "flag";
+  if (nameText.includes("shirt") || nameText.includes("tee") || nameText.includes("t shirt")) return "shirt";
+
   if (text.includes("phone") || text.includes("case")) return "case";
   if (text.includes("tank")) return "tank";
   if (text.includes("tumbler") || text.includes("drinkware")) return "tumbler";
@@ -140,8 +161,8 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (text.includes("appalachia offroad t shirt ride hard plan less graphic")) {
     return {
-      key: "ride-hard-plan-less-shirt",
-      name: "Ride Hard Plan Less Shirt",
+      key: product.id,
+      name: "Appalachia Ride Hard Tee",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1,
     };
@@ -149,25 +170,25 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (text.includes("ride hard plan less t shirt")) {
     return {
-      key: "ride-hard-plan-less-shirt",
+      key: product.id,
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
-      order: 1,
+      order: 1.1,
     };
   }
 
   if (kind === "shirt" && (text.includes("ride hard") || text.includes("plan less"))) {
     return {
-      key: "ride-hard-plan-less-shirt",
+      key: product.id,
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
-      order: 1,
+      order: 1.2,
     };
   }
 
   if (text.includes("appalachia offroad logo t shirt hero")) {
     return {
-      key: "hero-verified-shirt",
+      key: product.id,
       name: "Hero Verified Shirt",
       description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
       order: 2,
@@ -176,16 +197,34 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt" && (text.includes("hero") || text.includes("verified"))) {
     return {
-      key: "hero-verified-shirt",
+      key: product.id,
       name: "Hero Verified Shirt",
       description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
       order: 2,
     };
   }
 
+  if (kind === "shirt" && text.includes("mountain atv sunset")) {
+    return {
+      key: product.id,
+      name: "ATV Sunset Shirt",
+      description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
+      order: 0.2,
+    };
+  }
+
+  if (kind === "shirt" && text.includes("mountain sunset")) {
+    return {
+      key: product.id,
+      name: "Mountain Sunset Shirt",
+      description: "Black Appalachia Offroad tee with mountain sunset trail artwork.",
+      order: 0.1,
+    };
+  }
+
   if (kind === "shirt") {
     return {
-      key: "appalachia-offroad-shirt",
+      key: product.id,
       name: "Appalachia Offroad Shirt",
       description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
       order: 0,
@@ -248,6 +287,7 @@ function applyStoreOverrides(product: StoreProduct): StoreProduct {
     name: meta.name,
     description: meta.description,
     priceCents: kind ? approvedPrices[kind] : product.priceCents,
+    visual: kind ? visualByKind[kind] : product.visual,
     imageUrl: imageUrls[0] || product.imageUrl,
     imageUrls: imageUrls.slice(1),
   };
