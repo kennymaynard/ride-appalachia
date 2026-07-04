@@ -128,6 +128,16 @@ function displayMeta(product: StoreProduct): DisplayMeta {
     };
   }
 
+  if (text.includes("hero") || text.includes("verified")) {
+    return {
+      key: `hidden-${product.id}`,
+      name: product.name,
+      description: product.description,
+      order: 99,
+      hidden: true,
+    };
+  }
+
   if (kind === "tumbler" && text.includes("hero verified")) {
     return {
       key: `hidden-${product.id}`,
@@ -156,30 +166,12 @@ function displayMeta(product: StoreProduct): DisplayMeta {
     };
   }
 
-  if (text.includes("appalachia offroad logo t shirt hero")) {
-    return {
-      key: "hero-verified-shirt",
-      name: "Hero Verified Shirt",
-      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
-      order: 2,
-    };
-  }
-
   if (kind === "shirt" && (text.includes("ride hard") || text.includes("plan less"))) {
     return {
       key: "ride-hard-plan-less-shirt",
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1,
-    };
-  }
-
-  if (kind === "shirt" && (text.includes("hero") || text.includes("verified"))) {
-    return {
-      key: "hero-verified-shirt",
-      name: "Hero Verified Shirt",
-      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
-      order: 2,
     };
   }
 
