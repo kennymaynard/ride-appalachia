@@ -49,7 +49,35 @@ function productKind(product: StoreProduct): keyof typeof approvedPrices | null 
 }
 
 function approvedImages(product: StoreProduct) {
+  if (productKind(product) !== "shirt") {
+    return product.imageUrls || [];
+  }
+
   const text = normalizeText(product.name);
+  if (text.includes("appalachia offroad t shirt ride hard plan less graphic")) {
+    return [
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+      "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+    ];
+  }
+  if (text.includes("ride hard plan less t shirt")) {
+    return [
+      "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
+  if (text.includes("appalachia offroad logo t shirt hero")) {
+    return ["/images/store/hero-verified-shirt-lifestyle.png"];
+  }
+  if (
+    text.includes("appalachia off road t shirt mountain sunset") ||
+    text.includes("appalachia offroad t shirt mountain atv sunset")
+  ) {
+    return [
+      "/images/store/appalachia-offroad-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
   if (text.includes("hero")) {
     return ["/images/store/hero-verified-shirt-lifestyle.png"];
   }
@@ -59,7 +87,7 @@ function approvedImages(product: StoreProduct) {
       "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
     ];
   }
-  if ((text.includes("appalachia") || text.includes("appalachian")) && productKind(product) === "shirt") {
+  if (text.includes("appalachia") || text.includes("appalachian")) {
     return [
       "/images/store/appalachia-offroad-shirt-lifestyle.png",
       "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
