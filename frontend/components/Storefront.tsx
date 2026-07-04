@@ -161,8 +161,8 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (text.includes("appalachia offroad t shirt ride hard plan less graphic")) {
     return {
-      key: product.id,
-      name: "Appalachia Ride Hard Tee",
+      key: "appalachia-ride-hard-shirt",
+      name: "Appalachia Ride Hard Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1,
     };
@@ -170,7 +170,7 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (text.includes("ride hard plan less t shirt")) {
     return {
-      key: product.id,
+      key: "ride-hard-plan-less-shirt",
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1.1,
@@ -179,7 +179,7 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt" && (text.includes("ride hard") || text.includes("plan less"))) {
     return {
-      key: product.id,
+      key: "ride-hard-plan-less-shirt",
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1.2,
@@ -188,7 +188,7 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (text.includes("appalachia offroad logo t shirt hero")) {
     return {
-      key: product.id,
+      key: "hero-verified-shirt",
       name: "Hero Verified Shirt",
       description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
       order: 2,
@@ -197,7 +197,7 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt" && (text.includes("hero") || text.includes("verified"))) {
     return {
-      key: product.id,
+      key: "hero-verified-shirt",
       name: "Hero Verified Shirt",
       description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
       order: 2,
@@ -206,8 +206,8 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt" && text.includes("mountain atv sunset")) {
     return {
-      key: product.id,
-      name: "ATV Sunset Shirt",
+      key: "appalachia-offroad-shirt",
+      name: "Appalachia Offroad Shirt",
       description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
       order: 0.2,
     };
@@ -215,8 +215,8 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt" && text.includes("mountain sunset")) {
     return {
-      key: product.id,
-      name: "Mountain Sunset Shirt",
+      key: "appalachia-offroad-shirt",
+      name: "Appalachia Offroad Shirt",
       description: "Black Appalachia Offroad tee with mountain sunset trail artwork.",
       order: 0.1,
     };
@@ -224,7 +224,7 @@ function displayMeta(product: StoreProduct): DisplayMeta {
 
   if (kind === "shirt") {
     return {
-      key: product.id,
+      key: "appalachia-offroad-shirt",
       name: "Appalachia Offroad Shirt",
       description: "Black Appalachia Offroad tee with mountain, ATV, and sunset trail artwork.",
       order: 0,
