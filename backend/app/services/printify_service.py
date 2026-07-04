@@ -68,21 +68,43 @@ def _parse_store_items(items_metadata: str) -> list[dict[str, str | int]]:
     return items
 
 
-def build_printify_order_payload(session: dict, settings: Settings) -> dict:
+def _parse_stripe_line_items(line_items: list[dict]) -> list[dict[str, str | int]]:
+    items = []
+    for index, line_item in enumerate(line_items):
+        price = line_item.get("price") or {}
+        product = price.get("product") or {}
+        product_metadata = product.get("metadata") if isinstance(product, dict) else {}
+        sku = (product_metadata or {}).get("dropship_sku") or ""
+        if not sku:
+            continue
+        items.append(
+            {
+                "sku": sku,
+                "quantity": max(1, min(int(line_item.get("quantity") or 1), 10)),
+                "external_id": f"{(product_metadata or {}).get('product_id') or 'store-item'}-{index + 1}",
+                "variant": (product_metadata or {}).get("variant") or "",
+            }
+        )
+    return items
+
+
+def build_printify_order_payload(session: dict, settings: Settings, line_items: list[dict] | None = None) -> dict:
     metadata = session.get("metadata") or {}
     shipping_details = session.get("shipping_details") or {}
     customer_details = session.get("customer_details") or {}
     address = shipping_details.get("address") or {}
     first_name, last_name = _split_name(shipping_details.get("name") or customer_details.get("name") or "")
-    line_items = [
-        {
-            "sku": str(item["sku"]),
-            "quantity": int(item["quantity"]),
-            "external_id": str(item["external_id"]),
-        }
-        for item in _parse_store_items(metadata.get("items") or "")
-    ]
-    if not line_items:
+    printify_line_items = _parse_stripe_line_items(line_items or [])
+    if not printify_line_items:
+        printify_line_items = [
+            {
+                "sku": str(item["sku"]),
+                "quantity": int(item["quantity"]),
+                "external_id": str(item["external_id"]),
+            }
+            for item in _parse_store_items(metadata.get("items") or "")
+        ]
+    if not printify_line_items:
         raise ValueError("No Printify SKUs were found on the Stripe store order.")
     if not address.get("line1") or not address.get("city") or not address.get("postal_code") or not address.get("country"):
         raise ValueError("Stripe store order is missing a complete shipping address.")
@@ -91,7 +113,7 @@ def build_printify_order_payload(session: dict, settings: Settings) -> dict:
     return {
         "external_id": session_id,
         "label": session_id[-8:] if session_id else "AO-store",
-        "line_items": line_items,
+        "line_items": printify_line_items,
         "shipping_method": 1,
         "send_shipping_notification": settings.printify_send_shipping_notification,
         "address_to": {
@@ -109,7 +131,11 @@ def build_printify_order_payload(session: dict, settings: Settings) -> dict:
     }
 
 
-def submit_store_order_from_stripe_session(session: dict, settings: Settings) -> PrintifyOrderResult:
+def submit_store_order_from_stripe_session(
+    session: dict,
+    settings: Settings,
+    line_items: list[dict] | None = None,
+) -> PrintifyOrderResult:
     metadata = session.get("metadata") or {}
     if metadata.get("order_type") != "merch":
         return PrintifyOrderResult(submitted=False, message="Not a merch order.")
@@ -119,7 +145,7 @@ def submit_store_order_from_stripe_session(session: dict, settings: Settings) ->
         return PrintifyOrderResult(submitted=False, message="Printify API token or shop ID is not configured.")
 
     try:
-        payload = build_printify_order_payload(session, settings)
+        payload = build_printify_order_payload(session, settings, line_items)
         response = _post_printify(settings, f"/shops/{settings.printify_shop_id}/orders.json", payload)
     except ValueError as exc:
         return PrintifyOrderResult(submitted=False, message=str(exc))

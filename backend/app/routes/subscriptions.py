@@ -217,7 +217,17 @@ async def stripe_webhook(
             return {"received": True}
 
         if metadata.get("order_type") == "merch":
-            printify_result = submit_store_order_from_stripe_session(data_object, settings)
+            stripe.api_key = settings.stripe_secret_key
+            stripe_line_items = stripe.checkout.Session.list_line_items(
+                data_object.get("id") or "",
+                expand=["data.price.product"],
+                limit=100,
+            )
+            printify_result = submit_store_order_from_stripe_session(
+                data_object,
+                settings,
+                list(stripe_line_items.get("data") or []),
+            )
             print(f"Store order Printify status: {printify_result.message}")
             return {"received": True}
 
