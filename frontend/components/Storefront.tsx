@@ -20,8 +20,66 @@ type CartItem = {
 
 const DESCRIPTION_PREVIEW_LENGTH = 210;
 
+const approvedPrices = {
+  shirt: 2600,
+  case: 1800,
+  tank: 2200,
+  tumbler: 2800,
+  hat: 2800,
+  flag: 1500,
+};
+
 function formatMoney(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
+}
+
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function productKind(product: StoreProduct): keyof typeof approvedPrices | null {
+  const text = normalizeText(`${product.name} ${product.category} ${product.badge} ${product.visual}`);
+  if (text.includes("phone") || text.includes("case")) return "case";
+  if (text.includes("tank")) return "tank";
+  if (text.includes("tumbler") || text.includes("drinkware")) return "tumbler";
+  if (text.includes("hat") || text.includes("cap")) return "hat";
+  if (text.includes("flag")) return "flag";
+  if (text.includes("shirt") || text.includes("tee")) return "shirt";
+  return null;
+}
+
+function approvedImages(product: StoreProduct) {
+  const text = normalizeText(product.name);
+  if (text.includes("hero")) {
+    return ["/images/store/hero-verified-shirt-lifestyle.png"];
+  }
+  if (text.includes("ride hard") || text.includes("plan less") || text.includes("rhpl")) {
+    return [
+      "/images/store/ride-hard-plan-less-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
+  if ((text.includes("appalachia") || text.includes("appalachian")) && productKind(product) === "shirt") {
+    return [
+      "/images/store/appalachia-offroad-shirt-lifestyle.png",
+      "/images/store/appalachia-offroad-ride-hard-shirt-grid.png",
+    ];
+  }
+  return product.imageUrls || [];
+}
+
+function applyStoreOverrides(product: StoreProduct): StoreProduct {
+  const kind = productKind(product);
+  const localImages = approvedImages(product);
+  const fallbackImages = [product.imageUrl, ...(product.imageUrls || [])].filter(Boolean) as string[];
+  const imageUrls = [...localImages, ...fallbackImages.filter((imageUrl) => !localImages.includes(imageUrl))];
+
+  return {
+    ...product,
+    priceCents: kind ? approvedPrices[kind] : product.priceCents,
+    imageUrl: imageUrls[0] || product.imageUrl,
+    imageUrls: imageUrls.slice(1),
+  };
 }
 
 function ProductVisual({ product }: { product: StoreProduct }) {
@@ -79,9 +137,10 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
     getStoreProducts()
       .then((loadedProducts) => {
         if (!isMounted || !loadedProducts.length) return;
-        setStoreProducts(loadedProducts);
+        const nextProducts = loadedProducts.map(applyStoreOverrides);
+        setStoreProducts(nextProducts);
         setSelectedVariants(
-          Object.fromEntries(loadedProducts.map((product) => [product.id, product.variants[0] || ""])),
+          Object.fromEntries(nextProducts.map((product) => [product.id, product.variants[0] || ""])),
         );
         setProductSource("printify");
       })
