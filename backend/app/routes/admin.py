@@ -21,6 +21,7 @@ from app.schemas import (
     LodgingServiceRequestStatusUpdate,
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
+    PrintifyProductSyncRead,
 )
 from app.services.email_service import (
     build_business_approval_notification_payload,
@@ -34,6 +35,7 @@ from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
 from app.services.photos import normalize_photo_url
+from app.services.printify_service import list_printify_store_products
 from app.services.sms_service import send_marketing_lead_status_sms, send_sms
 
 router = APIRouter(tags=["admin"])
@@ -122,6 +124,36 @@ def sync_all_booking_calendars(
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     return sync_active_calendars(db)
+
+
+@router.get("/store/printify-products", response_model=PrintifyProductSyncRead)
+def preview_printify_products(
+    _: None = Depends(require_admin),
+) -> PrintifyProductSyncRead:
+    settings = get_settings()
+    if not settings.printify_api_token or not settings.printify_shop_id:
+        return PrintifyProductSyncRead(
+            configured=False,
+            count=0,
+            products=[],
+            message="Printify API token or shop ID is not configured.",
+        )
+    try:
+        products = list_printify_store_products(settings)
+    except Exception as exc:
+        return PrintifyProductSyncRead(
+            configured=True,
+            count=0,
+            products=[],
+            message=f"Unable to load Printify products: {exc}",
+        )
+
+    return PrintifyProductSyncRead(
+        configured=True,
+        count=len(products),
+        products=products,
+        message=f"Loaded {len(products)} Printify product{'' if len(products) == 1 else 's'}.",
+    )
 
 
 @router.post("/booking-transfers/process")

@@ -710,7 +710,7 @@ class CheckoutSessionRead(BaseModel):
 
 
 class StoreCheckoutItem(BaseModel):
-    product_id: str
+    product_id: str = Field(min_length=2, max_length=180)
     name: str = Field(min_length=2, max_length=120)
     variant: str = Field(default="", max_length=120)
     dropship_sku: str = Field(default="", max_length=80)
@@ -720,7 +720,7 @@ class StoreCheckoutItem(BaseModel):
     @field_validator("product_id")
     @classmethod
     def validate_product_id(cls, value: str) -> str:
-        if value not in STORE_PRODUCT_IDS:
+        if value not in STORE_PRODUCT_IDS and not value.startswith("printify-"):
             raise ValueError("Unknown store product")
         return value
 
@@ -728,6 +728,29 @@ class StoreCheckoutItem(BaseModel):
 class StoreCheckoutRequest(BaseModel):
     items: list[StoreCheckoutItem] = Field(min_length=1, max_length=20)
     customer_email: str = Field(default="", max_length=180)
+
+
+class StoreProductRead(BaseModel):
+    id: str
+    name: str
+    category: str = "Gear"
+    description: str = ""
+    priceCents: int = 0
+    dropshipSku: str = ""
+    fulfillment: str = "Printify fulfillment"
+    variants: list[str] = []
+    variantSkus: dict[str, str] = {}
+    badge: str = "Printify"
+    visual: str = "shirt"
+    imageUrl: str = ""
+    source: str = "printify"
+
+
+class PrintifyProductSyncRead(BaseModel):
+    configured: bool
+    count: int
+    products: list[StoreProductRead]
+    message: str = ""
 
 
 class MarketingLeadCreate(BaseModel):

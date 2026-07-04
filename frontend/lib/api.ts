@@ -1,4 +1,5 @@
 import { sampleBusinesses } from "./sample-data";
+import type { StoreProduct } from "./store-products";
 import type {
   AdminEmailTestResult,
   AdminAnalytics,
@@ -929,6 +930,32 @@ export async function getAdminBusinesses(adminPassword?: string, includeDeleted 
     throw new Error(`Unable to load admin businesses. API returned ${response.status}.`);
   }
 
+  return response.json();
+}
+
+export async function getStoreProducts(): Promise<StoreProduct[]> {
+  const response = await apiFetch("/api/store/products", {
+    cache: "no-store",
+    signal: timeoutSignal(10000),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to load store products");
+  }
+  return response.json();
+}
+
+export async function getAdminPrintifyProducts(
+  adminPassword?: string,
+): Promise<{ configured: boolean; count: number; products: StoreProduct[]; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/admin/store/printify-products`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to load Printify products");
+  }
   return response.json();
 }
 

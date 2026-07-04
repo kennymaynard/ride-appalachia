@@ -8,6 +8,7 @@ import {
   getAdminAnalytics,
   getAdminBusinesses,
   getAdminMarketingLeads,
+  getAdminPrintifyProducts,
   getAdminBookingTransfers,
   getAdminServiceRequests,
   getAdminTrailConditionReports,
@@ -88,6 +89,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [emailStatusType, setEmailStatusType] = useState<"success" | "error">("success");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [sendingDirectTestEmail, setSendingDirectTestEmail] = useState(false);
+  const [syncingPrintifyProducts, setSyncingPrintifyProducts] = useState(false);
   const [smsStatus, setSmsStatus] = useState("");
   const [smsPhone, setSmsPhone] = useState("");
   const [smsAudience, setSmsAudience] = useState<"rider" | "business">("rider");
@@ -328,6 +330,35 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       );
     } finally {
       setSendingDirectTestEmail(false);
+    }
+  }
+
+  async function syncPrintifyProducts() {
+    setError("");
+    setEmailStatus("");
+    setEmailDiagnostic("");
+    setEmailStatusType("success");
+    setSyncingPrintifyProducts(true);
+
+    try {
+      const result = await getAdminPrintifyProducts(adminPassword);
+      setEmailStatusType(result.configured && result.count > 0 ? "success" : "error");
+      setEmailStatus(result.message || `Loaded ${result.count} Printify products.`);
+      if (result.products.length) {
+        const preview = result.products
+          .slice(0, 4)
+          .map((product) => `${product.name} (${product.variants.length} variants)`)
+          .join("; ");
+        setEmailDiagnostic(`Printify preview: ${preview}${result.products.length > 4 ? "..." : ""}`);
+      }
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to sync Printify products.",
+      );
+    } finally {
+      setSyncingPrintifyProducts(false);
     }
   }
 
@@ -620,7 +651,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         <button type="button" disabled={sendingDirectTestEmail} onClick={sendDirectResendTestEmail}>
           {sendingDirectTestEmail ? "Sending..." : "Send Direct Resend Test"}
         </button>
-        <span>Uses the same Resend settings as new business approval emails.</span>
+        <button type="button" disabled={syncingPrintifyProducts} onClick={syncPrintifyProducts}>
+          {syncingPrintifyProducts ? "Syncing..." : "Sync Printify Products"}
+        </button>
+        <span>Test email delivery or confirm the backend can read your Printify catalog.</span>
       </div>
       <form className="admin-email-tools admin-sms-tools" onSubmit={sendTestSms}>
         <input

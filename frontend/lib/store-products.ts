@@ -1,5 +1,5 @@
 export type StoreProduct = {
-  id: "trail-shirt" | "trail-hat" | "trail-sticker-pack" | "vehicle-window-decal";
+  id: string;
   name: string;
   category: string;
   description: string;
@@ -7,8 +7,11 @@ export type StoreProduct = {
   dropshipSku: string;
   fulfillment: string;
   variants: string[];
+  variantSkus?: Record<string, string>;
   badge: string;
   visual: "shirt" | "hat" | "stickers" | "window";
+  imageUrl?: string;
+  source?: "static" | "printify";
 };
 
 export const storeProducts: StoreProduct[] = [

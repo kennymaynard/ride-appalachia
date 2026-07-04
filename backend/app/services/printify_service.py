@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 import json
+import re
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from app.database import Settings
+from app.schemas import StoreProductRead
 
 PRINTIFY_API_BASE = "https://api.printify.com/v1"
 
@@ -33,6 +35,151 @@ def _post_printify(settings: Settings, path: str, payload: dict) -> dict:
     with urlopen(request, timeout=15) as response:
         body = response.read().decode("utf-8")
     return json.loads(body) if body else {}
+
+
+def _get_printify(settings: Settings, path: str) -> dict:
+    request = Request(
+        f"{PRINTIFY_API_BASE}{path}",
+        headers=_printify_headers(settings),
+        method="GET",
+    )
+    with urlopen(request, timeout=15) as response:
+        body = response.read().decode("utf-8")
+    return json.loads(body) if body else {}
+
+
+def _strip_html(value: str) -> str:
+    stripped = re.sub(r"<[^>]+>", " ", value or "")
+    return re.sub(r"\s+", " ", stripped).strip()
+
+
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
+    return slug or "product"
+
+
+def _visual_for_product(title: str, tags: list[str]) -> str:
+    haystack = " ".join([title, *tags]).lower()
+    if "hat" in haystack or "cap" in haystack:
+        return "hat"
+    if "sticker" in haystack:
+        return "stickers"
+    if "decal" in haystack or "window" in haystack:
+        return "window"
+    return "shirt"
+
+
+def _category_for_product(title: str, tags: list[str]) -> str:
+    visual = _visual_for_product(title, tags)
+    if visual == "hat":
+        return "Hats"
+    if visual == "stickers":
+        return "Trail stickers"
+    if visual == "window":
+        return "Window stickers"
+    return "Shirts"
+
+
+def _badge_for_product(title: str, tags: list[str]) -> str:
+    visual = _visual_for_product(title, tags)
+    if visual == "hat":
+        return "Trail ready"
+    if visual == "stickers":
+        return "Sticker pack"
+    if visual == "window":
+        return "Vehicle decal"
+    return "Rider gear"
+
+
+def _image_for_product(product: dict) -> str:
+    images = product.get("images") or []
+    if not isinstance(images, list):
+        return ""
+    default_image = next((image for image in images if image.get("is_default")), None)
+    selected_image = default_image or (images[0] if images else {})
+    return str(selected_image.get("src") or "")
+
+
+def _variant_title(product: dict, variant: dict) -> str:
+    title = str(variant.get("title") or "").strip()
+    if title and title.lower() != "default title":
+        return title
+
+    option_values = variant.get("options") or []
+    option_groups = product.get("options") or []
+    labels: list[str] = []
+    if isinstance(option_values, list) and isinstance(option_groups, list):
+        for option_index, option_value in enumerate(option_values):
+            group = option_groups[option_index] if option_index < len(option_groups) else {}
+            values = group.get("values") if isinstance(group, dict) else []
+            if isinstance(values, list):
+                match = next((value for value in values if value.get("id") == option_value), None)
+                if match and match.get("title"):
+                    labels.append(str(match["title"]))
+                    continue
+            labels.append(str(option_value))
+    return " / ".join(labels) if labels else "Default"
+
+
+def _transform_printify_product(product: dict) -> StoreProductRead | None:
+    variants = [
+        variant
+        for variant in product.get("variants") or []
+        if variant.get("is_enabled", True) and variant.get("sku")
+    ]
+    if not variants:
+        return None
+
+    title = str(product.get("title") or "Printify product").strip()
+    tags = [str(tag) for tag in product.get("tags") or []]
+    variant_names = [_variant_title(product, variant) for variant in variants]
+    variant_skus = {
+        variant_name: str(variant.get("sku") or "")
+        for variant_name, variant in zip(variant_names, variants)
+        if variant.get("sku")
+    }
+    prices = [int(variant.get("price") or 0) for variant in variants if int(variant.get("price") or 0) > 0]
+    first_sku = next(iter(variant_skus.values()), "")
+
+    return StoreProductRead(
+        id=f"printify-{product.get('id') or _slug(title)}",
+        name=title,
+        category=_category_for_product(title, tags),
+        description=_strip_html(str(product.get("description") or "")),
+        priceCents=min(prices) if prices else 0,
+        dropshipSku=first_sku,
+        fulfillment="Printify print-on-demand",
+        variants=variant_names,
+        variantSkus=variant_skus,
+        badge=_badge_for_product(title, tags),
+        visual=_visual_for_product(title, tags),
+        imageUrl=_image_for_product(product),
+        source="printify",
+    )
+
+
+def list_printify_store_products(settings: Settings) -> list[StoreProductRead]:
+    if not settings.printify_api_token or not settings.printify_shop_id:
+        raise RuntimeError("Printify API token or shop ID is not configured.")
+
+    products: list[StoreProductRead] = []
+    page = 1
+    while page <= 10:
+        response = _get_printify(settings, f"/shops/{settings.printify_shop_id}/products.json?page={page}&limit=100")
+        data = response.get("data") if isinstance(response, dict) else []
+        if not isinstance(data, list) or not data:
+            break
+        for product in data:
+            transformed = _transform_printify_product(product)
+            if transformed:
+                products.append(transformed)
+
+        last_page = int(response.get("last_page") or page)
+        if page >= last_page:
+            break
+        page += 1
+
+    return products
 
 
 def _split_name(name: str) -> tuple[str, str]:

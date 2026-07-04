@@ -9339,6 +9339,12 @@ button.tier-card.is-selected {
     #101010;
 }
 
+.store-product-visual img {
+  width: 100%;
+  height: 15rem;
+  object-fit: cover;
+}
+
 .shirt-mock {
   position: relative;
   display: grid;

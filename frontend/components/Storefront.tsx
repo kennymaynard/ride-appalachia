@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { getStoreProducts } from "../lib/api";
 import type { StoreProduct } from "../lib/store-products";
 
 function formatMoney(cents: number) {
@@ -9,26 +11,29 @@ function formatMoney(cents: number) {
 function ProductVisual({ product }: { product: StoreProduct }) {
   return (
     <div className={`store-product-visual is-${product.visual}`} aria-hidden="true">
-      {product.visual === "shirt" ? (
+      {product.imageUrl ? (
+        <img src={product.imageUrl} alt="" loading="lazy" />
+      ) : null}
+      {!product.imageUrl && product.visual === "shirt" ? (
         <div className="shirt-mock">
           <span>AO</span>
           <strong>APPALACHIA OFFROAD</strong>
         </div>
       ) : null}
-      {product.visual === "hat" ? (
+      {!product.imageUrl && product.visual === "hat" ? (
         <div className="hat-mock">
           <span />
           <strong>AO</strong>
         </div>
       ) : null}
-      {product.visual === "stickers" ? (
+      {!product.imageUrl && product.visual === "stickers" ? (
         <div className="sticker-stack">
           <span>TRAIL</span>
           <span>RUSH</span>
           <span>WV</span>
         </div>
       ) : null}
-      {product.visual === "window" ? (
+      {!product.imageUrl && product.visual === "window" ? (
         <div className="window-decal-mock">
           <span>APPALACHIA</span>
           <strong>OFFROAD</strong>
@@ -39,6 +44,26 @@ function ProductVisual({ product }: { product: StoreProduct }) {
 }
 
 export function Storefront({ products }: { products: StoreProduct[] }) {
+  const [storeProducts, setStoreProducts] = useState(products);
+  const [productSource, setProductSource] = useState<"static" | "printify">("static");
+
+  useEffect(() => {
+    let isMounted = true;
+    getStoreProducts()
+      .then((loadedProducts) => {
+        if (!isMounted || !loadedProducts.length) return;
+        setStoreProducts(loadedProducts);
+        setProductSource("printify");
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setProductSource("static");
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="store-shell" aria-label="Appalachia Offroad store">
       <div className="store-toolbar">
@@ -52,13 +77,13 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
         </div>
         <div className="store-toolbar-stat is-coming-soon">
           <span>Status</span>
-          <strong>Soon</strong>
+          <strong>{productSource === "printify" ? "Synced" : "Soon"}</strong>
         </div>
       </div>
 
       <div className="store-layout">
         <div className="store-grid">
-          {products.map((product) => (
+          {storeProducts.map((product) => (
             <article className="store-product-card" key={product.id}>
               <ProductVisual product={product} />
               <div className="store-product-body">
@@ -102,10 +127,11 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
           <p className="store-empty">
             We are finishing the product publishing step before opening checkout.
             The first drop will include rider shirts, hats, trail stickers, and vehicle decals.
+            {productSource === "printify" ? " Product previews are synced from Printify." : ""}
           </p>
           <div className="store-cart-total">
             <span>Launch items</span>
-            <strong>{products.length}</strong>
+            <strong>{storeProducts.length}</strong>
           </div>
           <p className="store-note">Orders will use secure Stripe checkout and Printify fulfillment when the store opens.</p>
           <button
