@@ -128,16 +128,6 @@ function displayMeta(product: StoreProduct): DisplayMeta {
     };
   }
 
-  if (text.includes("hero") || text.includes("verified")) {
-    return {
-      key: `hidden-${product.id}`,
-      name: product.name,
-      description: product.description,
-      order: 99,
-      hidden: true,
-    };
-  }
-
   if (kind === "tumbler" && text.includes("hero verified")) {
     return {
       key: `hidden-${product.id}`,
@@ -172,6 +162,24 @@ function displayMeta(product: StoreProduct): DisplayMeta {
       name: "Ride Hard Plan Less Shirt",
       description: "Black trail tee with Ride Hard Plan Less artwork and Appalachia Offroad back print.",
       order: 1,
+    };
+  }
+
+  if (text.includes("appalachia offroad logo t shirt hero")) {
+    return {
+      key: "hero-verified-shirt",
+      name: "Hero Verified Shirt",
+      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+      order: 2,
+    };
+  }
+
+  if (kind === "shirt" && (text.includes("hero") || text.includes("verified"))) {
+    return {
+      key: "hero-verified-shirt",
+      name: "Hero Verified Shirt",
+      description: "Black tee with the Hero Verified badge and Appalachia Offroad back artwork.",
+      order: 2,
     };
   }
 
@@ -293,7 +301,7 @@ function ProductVisual({ product }: { product: StoreProduct }) {
 
 export function Storefront({ products }: { products: StoreProduct[] }) {
   const [storeProducts, setStoreProducts] = useState(products);
-  const [productSource, setProductSource] = useState<"static" | "printify">("static");
+  const [, setProductSource] = useState<"static" | "printify">("static");
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>(
     Object.fromEntries(products.map((product) => [product.id, product.variants[0] || ""])),
   );
@@ -470,22 +478,6 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
 
   return (
     <section className="store-shell" aria-label="Appalachia Offroad store">
-      <div className="store-toolbar">
-        <div>
-          <p className="eyebrow">Rider store</p>
-          <h1>Appalachia Offroad store is open.</h1>
-          <p>
-            Shirts, tank tops, phone cases, tumblers, hats, garden flags, and local
-            business gear are available through secure Stripe checkout and
-            print-on-demand fulfillment.
-          </p>
-        </div>
-        <div className="store-toolbar-stat">
-          <span>Status</span>
-          <strong>{productSource === "printify" ? "Synced" : "Open"}</strong>
-        </div>
-      </div>
-
       <div className="store-layout">
         <div className="store-grid">
           {storeProducts.map((product) => (
