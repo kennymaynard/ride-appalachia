@@ -9240,7 +9240,7 @@ button.tier-card.is-selected {
 }
 
 .store-page {
-  padding-top: 2rem;
+  padding-top: clamp(1.25rem, 3vw, 2.5rem);
 }
 
 .store-shell {
@@ -9333,7 +9333,7 @@ button.tier-card.is-selected {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 15rem;
+  min-height: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background:
     linear-gradient(135deg, rgba(242, 106, 0, 0.18), rgba(0, 0, 0, 0) 54%),
@@ -9343,8 +9343,9 @@ button.tier-card.is-selected {
 
 .store-product-visual img {
   width: 100%;
-  height: 15rem;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .store-product-thumbs {

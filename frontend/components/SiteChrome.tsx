@@ -61,12 +61,12 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               Create Listing
             </Link>
             <div className="audience-switch" aria-label="Switch app mode">
-              <Link href="/" className="audience-switch-link">
+              <a href="/" className="audience-switch-link">
                 Rider
-              </Link>
-              <Link href="/business" className="audience-switch-link is-active">
+              </a>
+              <a href="/business" className="audience-switch-link is-active">
                 Business
-              </Link>
+              </a>
             </div>
           </>
         ) : (
@@ -75,12 +75,12 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               Start Riding
             </Link>
             <div className="audience-switch" aria-label="Switch app mode">
-              <Link href="/" className="audience-switch-link is-active">
+              <a href="/" className="audience-switch-link is-active">
                 Rider
-              </Link>
-              <Link href="/business" className="audience-switch-link">
+              </a>
+              <a href="/business" className="audience-switch-link">
                 Business
-              </Link>
+              </a>
             </div>
           </>
         )}

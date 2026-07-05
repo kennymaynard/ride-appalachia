@@ -383,6 +383,8 @@ function ProductVisual({ product }: { product: StoreProduct }) {
       <img
         src={activeImages[0]}
         alt=""
+        width={1402}
+        height={1122}
         loading="lazy"
         onError={() => setActiveImages((current) => current.slice(1))}
       />
