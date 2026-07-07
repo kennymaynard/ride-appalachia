@@ -1,0 +1,2061 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="https://connect.tiktok-minis.com/game/sdk.js"></script>
+  <script>
+    if (window.TTMinis?.game?.init) {
+      window.TTMinis.game.init({
+        clientKey: "mgpfqrnu584896ld",
+      });
+    }
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="A fast vertical trail runner mini game with vehicle upgrades, levels, and shareable scores." />
+  <meta name="theme-color" content="#090907" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Trail Runner" />
+  <meta property="og:title" content="Appalachia Trail Runner" />
+  <meta property="og:description" content="Dodge hazards, collect coins, upgrade your ride, and climb rider levels." />
+  <meta property="og:type" content="website" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>Appalachia Trail Runner</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090907;
+      --panel: rgba(13, 12, 9, 0.82);
+      --line: rgba(255, 255, 255, 0.15);
+      --text: #fff8e8;
+      --muted: #d7c6a5;
+      --orange: #f26a1b;
+      --gold: #f6c344;
+      --green: #60c476;
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+      user-select: none;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(246, 195, 68, 0.24), transparent 26rem),
+        linear-gradient(180deg, #11170c, #090907 58%);
+    }
+
+    .shell {
+      position: relative;
+      width: min(100vw, 430px);
+      height: 100dvh;
+      min-height: 620px;
+      max-height: 932px;
+      overflow: hidden;
+      background: #0c0b08;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 2rem 6rem rgba(0, 0, 0, 0.5);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #17100a;
+    }
+
+    .hud {
+      pointer-events: none;
+      position: absolute;
+      top: max(0.85rem, env(safe-area-inset-top));
+      left: 0.85rem;
+      right: 0.85rem;
+      display: grid;
+      gap: 0.6rem;
+      z-index: 2;
+    }
+
+    .score-row,
+    .meter-row,
+    .level-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+    }
+
+    .score-pill,
+    .meter {
+      border: 1px solid var(--line);
+      border-radius: 0.55rem;
+      background: var(--panel);
+      box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(12px);
+    }
+
+    .score-pill {
+      flex: 1;
+      min-width: 0;
+      padding: 0.45rem 0.46rem;
+    }
+
+    .score-pill span {
+      display: block;
+      color: var(--muted);
+      font-size: clamp(0.48rem, 1.7vw, 0.62rem);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .score-pill strong {
+      display: block;
+      margin-top: 0.18rem;
+      overflow: hidden;
+      font-size: clamp(0.82rem, 3.5vw, 1.05rem);
+      font-weight: 950;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meter {
+      flex: 1;
+      min-width: 0;
+      padding: 0.42rem;
+    }
+
+    .level-row .meter {
+      flex: 1;
+    }
+
+    .meter span {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 950;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .bar {
+      height: 0.5rem;
+      margin-top: 0.35rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .bar-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 120ms linear;
+    }
+
+    #healthFill {
+      background: linear-gradient(90deg, #fb7185, var(--red));
+    }
+
+    #fuelFill {
+      background: linear-gradient(90deg, #86efac, var(--green));
+    }
+
+    #xpFill {
+      background: linear-gradient(90deg, #f6c344, #f26a1b);
+    }
+
+    .power-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+    }
+
+    .power-button {
+      pointer-events: auto;
+      min-height: 2.25rem;
+      border: 1px solid rgba(246, 195, 68, 0.36);
+      border-radius: 0.5rem;
+      background: rgba(246, 195, 68, 0.14);
+      color: var(--gold);
+      padding: 0.52rem 0.7rem;
+      font-size: 0.74rem;
+    }
+
+    .power-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .pause {
+      pointer-events: auto;
+      flex: 0 0 auto;
+      width: 2.7rem;
+      height: 2.7rem;
+      border: 1px solid var(--line);
+      border-radius: 0.55rem;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 950;
+      line-height: 1;
+      backdrop-filter: blur(12px);
+    }
+
+    .toast,
+    .countdown {
+      pointer-events: none;
+      position: absolute;
+      left: 50%;
+      z-index: 3;
+      transform: translateX(-50%);
+      text-align: center;
+      text-shadow: 0 0.3rem 1.2rem rgba(0, 0, 0, 0.65);
+    }
+
+    .toast {
+      top: 8.4rem;
+      min-width: 13rem;
+      color: var(--gold);
+      font-size: 1.2rem;
+      font-weight: 1000;
+      opacity: 0;
+      transition: opacity 160ms ease, transform 160ms ease;
+      text-transform: uppercase;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -0.35rem);
+    }
+
+    .countdown {
+      top: 43%;
+      display: none;
+      color: var(--text);
+      font-size: clamp(4rem, 24vw, 7rem);
+      font-weight: 1000;
+      letter-spacing: -0.08em;
+      line-height: 0.8;
+      text-transform: uppercase;
+    }
+
+    .countdown.show {
+      display: block;
+      animation: pop 420ms ease;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.72);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      padding: max(1.2rem, env(safe-area-inset-top)) 1.15rem max(1.2rem, env(safe-area-inset-bottom));
+      background:
+        linear-gradient(180deg, rgba(7, 6, 4, 0.36), rgba(7, 6, 4, 0.86)),
+        radial-gradient(circle at 50% 24%, rgba(242, 106, 27, 0.32), transparent 16rem);
+      text-align: center;
+    }
+
+    .card {
+      width: min(100%, 22rem);
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+      background: rgba(11, 10, 7, 0.88);
+      padding: 1.15rem;
+      box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(16px);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.55rem;
+      color: var(--orange);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.35rem, 12vw, 3.8rem);
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+      line-height: 0.85;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0.9rem 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+
+    .stats div {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.55rem 0.35rem;
+    }
+
+    .stats span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.58rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .stats strong {
+      display: block;
+      margin-top: 0.18rem;
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+
+    .actions {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 1rem;
+    }
+
+    button {
+      border: 0;
+      border-radius: 0.55rem;
+      background: var(--orange);
+      color: #1c0b02;
+      padding: 0.95rem 1rem;
+      font-size: 1rem;
+      font-weight: 1000;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    button.secondary,
+    .link-button.secondary {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+    }
+
+    .link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 0.55rem;
+      background: var(--orange);
+      color: #1c0b02;
+      padding: 0.95rem 1rem;
+      font-size: 1rem;
+      font-weight: 1000;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .bank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin-top: 0.8rem;
+      border: 1px solid rgba(246, 195, 68, 0.36);
+      border-radius: 999px;
+      background: rgba(246, 195, 68, 0.1);
+      color: var(--gold);
+      padding: 0.42rem 0.72rem;
+      font-size: 0.78rem;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .garage-list {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 1rem;
+      text-align: left;
+    }
+
+    .compact-list {
+      display: grid;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+      text-align: left;
+    }
+
+    .upgrade,
+    .compact-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.55rem;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.55rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.65rem;
+    }
+
+    .upgrade strong,
+    .upgrade span,
+    .compact-item strong,
+    .compact-item span {
+      display: block;
+    }
+
+    .upgrade strong,
+    .compact-item strong {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+
+    .upgrade span,
+    .compact-item span {
+      margin-top: 0.18rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.25;
+    }
+
+    .upgrade button {
+      min-width: 5.8rem;
+      padding: 0.72rem 0.62rem;
+      font-size: 0.75rem;
+    }
+
+    .upgrade button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .skin-swatch {
+      width: 2.45rem;
+      height: 2.45rem;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      border-radius: 0.45rem;
+      box-shadow: inset 0 0 0 0.25rem rgba(0, 0, 0, 0.18);
+    }
+
+    .claim {
+      margin-top: 0.8rem;
+    }
+
+    .bank-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+    }
+
+    .bank-row .bank {
+      width: 100%;
+      margin-top: 0;
+      padding-inline: 0.45rem;
+    }
+
+    .mini-link {
+      border-color: rgba(96, 196, 118, 0.34);
+      background: rgba(96, 196, 118, 0.1);
+      color: #b7f7c4;
+      text-decoration: none;
+    }
+
+    .ad-slot {
+      display: grid;
+      min-height: 5.7rem;
+      place-items: center;
+      margin-top: 0.85rem;
+      border: 1px dashed rgba(246, 195, 68, 0.5);
+      border-radius: 0.58rem;
+      background:
+        linear-gradient(135deg, rgba(246, 195, 68, 0.12), rgba(242, 106, 27, 0.08)),
+        rgba(0, 0, 0, 0.22);
+      color: rgba(255, 248, 232, 0.76);
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .ad-slot strong {
+      display: block;
+      color: var(--gold);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .ad-slot span {
+      display: block;
+      margin-top: 0.28rem;
+      font-size: 0.74rem;
+      line-height: 1.28;
+    }
+
+    .ad-count {
+      margin-top: 0.8rem;
+      color: var(--gold);
+      font-size: 3.2rem;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .help {
+      margin-top: 0.8rem;
+      color: rgba(255, 248, 232, 0.72);
+      font-size: 0.78rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-height: 670px) {
+      .shell {
+        min-height: 100dvh;
+      }
+
+      .card {
+        padding: 0.9rem;
+      }
+
+      p,
+      .help {
+        margin-top: 0.65rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" aria-label="Appalachia Trail Runner mini game">
+    <canvas id="game" width="430" height="760"></canvas>
+    <div class="toast" id="toastText" aria-live="polite"></div>
+    <div class="countdown" id="countdownText" aria-hidden="true"></div>
+
+    <section class="hud" aria-label="Game status">
+      <div class="score-row">
+        <div class="score-pill">
+          <span>Score</span>
+          <strong id="scoreText">0</strong>
+        </div>
+        <div class="score-pill">
+          <span>Coins</span>
+          <strong id="coinText">0</strong>
+        </div>
+        <div class="score-pill">
+          <span>Combo</span>
+          <strong id="comboText">x1</strong>
+        </div>
+        <div class="score-pill">
+          <span>Level</span>
+          <strong id="levelText">1</strong>
+        </div>
+        <button class="pause" id="pauseButton" type="button" aria-label="Pause game">II</button>
+      </div>
+      <div class="meter-row">
+        <div class="meter">
+          <span><b>Armor</b><b id="healthText">100%</b></span>
+          <div class="bar"><div class="bar-fill" id="healthFill"></div></div>
+        </div>
+        <div class="meter">
+          <span><b>Fuel</b><b id="fuelText">100%</b></span>
+          <div class="bar"><div class="bar-fill" id="fuelFill"></div></div>
+        </div>
+      </div>
+      <div class="level-row">
+        <div class="meter">
+          <span><b id="trailText">Trail 1: Warmup</b><b id="xpText">0 XP</b></span>
+          <div class="bar"><div class="bar-fill" id="xpFill"></div></div>
+        </div>
+      </div>
+      <div class="power-row">
+        <button class="power-button" id="clearBarriersButton" type="button">Clear 50% Barriers - 50 Coins</button>
+      </div>
+    </section>
+
+    <section class="overlay" id="startScreen">
+      <div class="card">
+        <p class="eyebrow">TikTok mini game</p>
+        <h1>Trail Runner</h1>
+        <p>Dodge rocks, mud, and logs. Grab coins, fuel, and repair kits before the mountain wins.</p>
+        <div class="stats" aria-label="How to play">
+          <div><span>Move</span><strong>Drag</strong></div>
+          <div><span>Dodge</span><strong>Hazards</strong></div>
+          <div><span>Level</span><strong id="startLevelText">1</strong></div>
+        </div>
+        <div class="bank">Garage coins: <strong id="bankTextStart">0</strong></div>
+        <div class="compact-list" id="missionPreview" aria-label="Daily missions"></div>
+        <div class="claim" id="appBonusWrap">
+          <a class="link-button" id="appBonusLink" href="https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=mini_game&utm_campaign=open_app_bonus" target="_blank" rel="noopener">Open App: Claim 25 Coins</a>
+        </div>
+        <div class="actions">
+          <button id="startButton" type="button">Start Run</button>
+          <a class="link-button secondary" href="https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=mini_game&utm_campaign=play_to_plan" target="_blank" rel="noopener">Plan a Real Ride</a>
+          <a class="link-button secondary" href="https://appalachiaoffroadapp.com/privacy" target="_blank" rel="noopener">Privacy</a>
+          <a class="link-button secondary" href="https://appalachiaoffroadapp.com/terms" target="_blank" rel="noopener">Terms</a>
+          <button class="secondary" id="garageButton" type="button">Upgrade Ride</button>
+          <button class="secondary" id="skinsButton" type="button">Vehicle Skins</button>
+          <button class="secondary" id="tutorialButton" type="button">How to Play</button>
+        </div>
+        <p class="help">Play the mini game, then map the real trails in the Appalachia Offroad app.</p>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="tutorialScreen">
+      <div class="card">
+        <p class="eyebrow">Quick tutorial</p>
+        <h1>Ride Smart</h1>
+        <div class="compact-list">
+          <div class="compact-item"><div><strong>Drag to steer</strong><span>Keep your thumb on the trail and slide around hazards.</span></div><span>1</span></div>
+          <div class="compact-item"><div><strong>Collect and upgrade</strong><span>Coins buy engine, armor, tank, magnet, and vehicle skins.</span></div><span>2</span></div>
+          <div class="compact-item"><div><strong>Use rewards wisely</strong><span>Watch one revive ad or double coins after a run.</span></div><span>3</span></div>
+        </div>
+        <div class="actions">
+          <button id="tutorialStartButton" type="button">Start Run</button>
+          <button class="secondary" id="closeTutorialButton" type="button">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="garageScreen">
+      <div class="card">
+        <p class="eyebrow">Garage</p>
+        <h1>Upgrade Ride</h1>
+        <div class="bank">Available coins: <strong id="bankTextGarage">0</strong></div>
+        <div class="garage-list" id="garageList" aria-label="Vehicle upgrades"></div>
+        <div class="actions">
+          <button id="closeGarageButton" type="button">Done</button>
+        </div>
+        <p class="help">Coins you collect stay in the garage after each run.</p>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="skinsScreen">
+      <div class="card">
+        <p class="eyebrow">Vehicle skins</p>
+        <h1>Paint Shop</h1>
+        <div class="bank">Garage coins: <strong id="bankTextSkins">0</strong></div>
+        <div class="compact-list" id="skinsList" aria-label="Vehicle skins"></div>
+        <div class="actions">
+          <button id="closeSkinsButton" type="button">Done</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="pauseScreen">
+      <div class="card">
+        <p class="eyebrow">Run paused</p>
+        <h1>Catch Breath</h1>
+        <p>The trail is still moving when you are ready.</p>
+        <div class="actions">
+          <button id="resumeButton" type="button">Resume</button>
+          <button class="secondary" id="restartFromPauseButton" type="button">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="gameOverScreen">
+      <div class="card">
+        <p class="eyebrow" id="gameOverReason">Trail ended</p>
+        <h1>Nice Run</h1>
+        <p id="finalScore">Score: 0</p>
+        <div class="stats" aria-label="Final run stats">
+          <div><span>Best</span><strong id="bestText">0</strong></div>
+          <div><span>Coins</span><strong id="finalCoins">0</strong></div>
+          <div><span>Level</span><strong id="finalLevel">1</strong></div>
+        </div>
+        <div class="bank">Run code: <strong id="runCodeText">TRAIL-000</strong></div>
+        <div class="ad-slot">
+          <div>
+            <strong>Rewarded ad space</strong>
+            <span id="adHintText">Connect this slot to TikTok or your ad network SDK.</span>
+          </div>
+        </div>
+        <div class="bank-row">
+          <div class="bank">Garage coins: <strong id="bankTextEnd">0</strong></div>
+          <a class="bank mini-link" id="realTrailLink" href="https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=mini_game&utm_campaign=compact_game_over_cta" target="_blank" rel="noopener">Open trail app</a>
+        </div>
+        <div class="actions">
+          <button id="reviveAdButton" type="button">Watch 15s Ad to Revive</button>
+          <button class="secondary" id="doubleCoinsButton" type="button">Watch Ad: 2x Coins</button>
+          <a class="link-button secondary" href="https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=mini_game&utm_campaign=game_over_cta" target="_blank" rel="noopener">Plan a Real Ride</a>
+          <button id="restartButton" type="button">Play Again</button>
+          <button class="secondary" id="garageFromEndButton" type="button">Upgrade Ride</button>
+          <button class="secondary" id="shareButton" type="button">Copy Score</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="adScreen">
+      <div class="card">
+        <p class="eyebrow">Rewarded ad</p>
+        <h1 id="adTitle">Ad Break</h1>
+        <div class="ad-slot">
+          <div>
+            <strong>Ad placeholder</strong>
+            <span id="adBody">This is where a 15 second rewarded video will run.</span>
+          </div>
+        </div>
+        <div class="ad-count" id="adCountdown">15</div>
+        <p class="help">For production, replace this timer with the TikTok/ad-network rewarded video callback.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const scoreText = document.getElementById("scoreText");
+    const coinText = document.getElementById("coinText");
+    const comboText = document.getElementById("comboText");
+    const levelText = document.getElementById("levelText");
+    const startLevelText = document.getElementById("startLevelText");
+    const finalLevel = document.getElementById("finalLevel");
+    const trailText = document.getElementById("trailText");
+    const xpText = document.getElementById("xpText");
+    const healthText = document.getElementById("healthText");
+    const fuelText = document.getElementById("fuelText");
+    const healthFill = document.getElementById("healthFill");
+    const fuelFill = document.getElementById("fuelFill");
+    const xpFill = document.getElementById("xpFill");
+    const clearBarriersButton = document.getElementById("clearBarriersButton");
+    const startScreen = document.getElementById("startScreen");
+    const tutorialScreen = document.getElementById("tutorialScreen");
+    const garageScreen = document.getElementById("garageScreen");
+    const skinsScreen = document.getElementById("skinsScreen");
+    const pauseScreen = document.getElementById("pauseScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const adScreen = document.getElementById("adScreen");
+    const finalScore = document.getElementById("finalScore");
+    const finalCoins = document.getElementById("finalCoins");
+    const bestText = document.getElementById("bestText");
+    const realTrailLink = document.getElementById("realTrailLink");
+    const runCodeText = document.getElementById("runCodeText");
+    const gameOverReason = document.getElementById("gameOverReason");
+    const pauseButton = document.getElementById("pauseButton");
+    const startButton = document.getElementById("startButton");
+    const resumeButton = document.getElementById("resumeButton");
+    const restartButton = document.getElementById("restartButton");
+    const restartFromPauseButton = document.getElementById("restartFromPauseButton");
+    const shareButton = document.getElementById("shareButton");
+    const reviveAdButton = document.getElementById("reviveAdButton");
+    const doubleCoinsButton = document.getElementById("doubleCoinsButton");
+    const adHintText = document.getElementById("adHintText");
+    const adTitle = document.getElementById("adTitle");
+    const adBody = document.getElementById("adBody");
+    const adCountdown = document.getElementById("adCountdown");
+    const garageButton = document.getElementById("garageButton");
+    const skinsButton = document.getElementById("skinsButton");
+    const tutorialButton = document.getElementById("tutorialButton");
+    const tutorialStartButton = document.getElementById("tutorialStartButton");
+    const closeTutorialButton = document.getElementById("closeTutorialButton");
+    const garageFromEndButton = document.getElementById("garageFromEndButton");
+    const closeGarageButton = document.getElementById("closeGarageButton");
+    const closeSkinsButton = document.getElementById("closeSkinsButton");
+    const garageList = document.getElementById("garageList");
+    const skinsList = document.getElementById("skinsList");
+    const missionPreview = document.getElementById("missionPreview");
+    const appBonusWrap = document.getElementById("appBonusWrap");
+    const appBonusLink = document.getElementById("appBonusLink");
+    const bankTextStart = document.getElementById("bankTextStart");
+    const bankTextGarage = document.getElementById("bankTextGarage");
+    const bankTextSkins = document.getElementById("bankTextSkins");
+    const bankTextEnd = document.getElementById("bankTextEnd");
+    const toastText = document.getElementById("toastText");
+    const countdownText = document.getElementById("countdownText");
+
+    const storageKey = "appalachiaTrailRunnerBest";
+    const coinBankKey = "appalachiaTrailRunnerCoins";
+    const upgradeKey = "appalachiaTrailRunnerUpgrades";
+    const xpKey = "appalachiaTrailRunnerXp";
+    const missionKey = "appalachiaTrailRunnerMissions";
+    const skinKey = "appalachiaTrailRunnerSkins";
+    const appBonusKey = "appalachiaTrailRunnerAppBonus";
+    const tutorialKey = "appalachiaTrailRunnerTutorialSeen";
+    const world = { w: 430, h: 760 };
+    const road = { left: 58, right: 372, center: 215 };
+    const keys = { left: false, right: false };
+    const trailLevels = [
+      { name: "Warmup", score: 0, color: "#704c2b", speed: 0, real: "Rush Off-Road", text: "Ready for the real thing? Browse Rush-area trails, food, fuel, and lodging." },
+      { name: "Rock Garden", score: 900, color: "#665240", speed: 0.45, real: "Royal Blue", text: "Rocky section cleared. Plan a Royal Blue weekend in the app." },
+      { name: "Mud Run", score: 2200, color: "#5a3a1f", speed: 0.9, real: "Hatfield-McCoy", text: "Mud survived. Find Hatfield-McCoy ride towns and stops." },
+      { name: "Ridge Climb", score: 4200, color: "#75603a", speed: 1.35, real: "Harlan County", text: "Ridge unlocked. Map Harlan County riding and nearby services." },
+      { name: "Night Rush", score: 6800, color: "#3d3b45", speed: 1.9, real: "Appalachia Trip Planner", text: "Night rush complete. Build a saved trip before service drops." },
+    ];
+    const skinCatalog = [
+      { id: "ember", name: "Trail Ember", cost: 0, top: "#ff8a2c", bottom: "#bd3f0b" },
+      { id: "coal", name: "Coal Black", cost: 18, top: "#4b5563", bottom: "#111827" },
+      { id: "ridge", name: "Ridge Blue", cost: 28, top: "#38bdf8", bottom: "#1d4ed8" },
+      { id: "mud", name: "Mud Camo", cost: 34, top: "#84cc16", bottom: "#3f6212" },
+      { id: "gold", name: "Gold Rush", cost: 45, top: "#facc15", bottom: "#c2410c" },
+    ];
+    const upgradeCatalog = [
+      { id: "engine", name: "Engine", detail: "Sharper steering for quick dodges.", baseCost: 8, max: 5 },
+      { id: "armor", name: "Armor", detail: "Start with a stronger machine.", baseCost: 10, max: 5 },
+      { id: "tank", name: "Fuel Tank", detail: "Ride longer before fuel runs dry.", baseCost: 10, max: 5 },
+      { id: "magnet", name: "Coin Magnet", detail: "Pull coins in from farther away.", baseCost: 12, max: 5 },
+    ];
+
+    let state = "idle";
+    let previousState = "idle";
+    let frame = 0;
+    let score = 0;
+    let coins = 0;
+    let bankCoins = Number(localStorage.getItem(coinBankKey) || 0);
+    let lifetimeXp = Number(localStorage.getItem(xpKey) || 0);
+    let runBanked = false;
+    let xpEarned = 0;
+    let currentTrailLevel = 1;
+    let nearMisses = 0;
+    let clearBarriersUsed = false;
+    let barrierClearTimer = 0;
+    let reviveUsed = false;
+    let doubleCoinsUsed = false;
+    let pendingAdReward = "";
+    let adInterval = 0;
+    let combo = 1;
+    let bestCombo = 1;
+    let speed = 4;
+    let health = 100;
+    let fuel = 100;
+    let roadOffset = 0;
+    let shake = 0;
+    let flash = 0;
+    let lastTime = 0;
+    let invincible = 0;
+    let boost = 0;
+    let toastTimer = 0;
+    let countdownTimer = 0;
+    let countdownValue = "";
+    let bestScore = Number(localStorage.getItem(storageKey) || 0);
+    let upgrades = loadUpgrades();
+    let missions = loadMissions();
+    let skinState = loadSkins();
+    let obstacles = [];
+    let rewards = [];
+    let particles = [];
+
+    const player = {
+      x: 215,
+      y: 626,
+      w: 54,
+      h: 88,
+      targetX: 215,
+      dragOffset: 0,
+      dragging: false,
+    };
+
+    function loadUpgrades() {
+      try {
+        return { engine: 0, armor: 0, tank: 0, magnet: 0, ...JSON.parse(localStorage.getItem(upgradeKey) || "{}") };
+      } catch {
+        return { engine: 0, armor: 0, tank: 0, magnet: 0 };
+      }
+    }
+
+    function todayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function defaultMissions() {
+      return {
+        date: todayKey(),
+        claimed: [],
+        items: [
+          { id: "coins10", label: "Collect 10 coins", stat: "coins", target: 10, reward: 8, progress: 0 },
+          { id: "trail3", label: "Reach Trail 3", stat: "trail", target: 3, reward: 10, progress: 0 },
+          { id: "near3", label: "Get 3 near misses", stat: "near", target: 3, reward: 12, progress: 0 },
+        ],
+      };
+    }
+
+    function loadMissions() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(missionKey) || "null");
+        if (parsed?.date === todayKey() && Array.isArray(parsed.items)) return parsed;
+      } catch {}
+      const fresh = defaultMissions();
+      localStorage.setItem(missionKey, JSON.stringify(fresh));
+      return fresh;
+    }
+
+    function saveMissions() {
+      localStorage.setItem(missionKey, JSON.stringify(missions));
+    }
+
+    function loadSkins() {
+      try {
+        return { owned: ["ember"], active: "ember", ...JSON.parse(localStorage.getItem(skinKey) || "{}") };
+      } catch {
+        return { owned: ["ember"], active: "ember" };
+      }
+    }
+
+    function saveSkins() {
+      localStorage.setItem(skinKey, JSON.stringify(skinState));
+    }
+
+    function activeSkin() {
+      return skinCatalog.find((skin) => skin.id === skinState.active) || skinCatalog[0];
+    }
+
+    function saveUpgrades() {
+      localStorage.setItem(upgradeKey, JSON.stringify(upgrades));
+    }
+
+    function upgradeCost(upgrade) {
+      const level = upgrades[upgrade.id] || 0;
+      return Math.round(upgrade.baseCost * Math.pow(1.75, level));
+    }
+
+    function maxHealth() {
+      return 100 + upgrades.armor * 18;
+    }
+
+    function maxFuel() {
+      return 100 + upgrades.tank * 18;
+    }
+
+    function handlingPower() {
+      return 8 + upgrades.engine * 0.9;
+    }
+
+    function collectionPadding(type) {
+      if (type !== "coin") return 0;
+      return upgrades.magnet * 18;
+    }
+
+    function xpForLevel(level) {
+      return Math.round(120 * Math.pow(level - 1, 1.55));
+    }
+
+    function levelInfo(totalXp) {
+      let level = 1;
+      while (totalXp >= xpForLevel(level + 1)) level += 1;
+      const current = xpForLevel(level);
+      const next = xpForLevel(level + 1);
+      return {
+        level,
+        current,
+        next,
+        progress: next === current ? 1 : (totalXp - current) / (next - current),
+      };
+    }
+
+    function runXp() {
+      return Math.floor(score / 70) + coins * 8 + bestCombo * 5 + currentTrailLevel * 12;
+    }
+
+    function trailLevelForScore(value) {
+      let index = 0;
+      trailLevels.forEach((level, levelIndex) => {
+        if (value >= level.score) index = levelIndex;
+      });
+      return index + 1;
+    }
+
+    function activeTrail() {
+      return trailLevels[currentTrailLevel - 1] || trailLevels[0];
+    }
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function rectsHit(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function playerBox() {
+      return {
+        x: player.x - player.w / 2 + 7,
+        y: player.y + 9,
+        w: player.w - 14,
+        h: player.h - 14,
+      };
+    }
+
+    function resetGame() {
+      state = "countdown";
+      frame = 0;
+      score = 0;
+      coins = 0;
+      runBanked = false;
+      xpEarned = 0;
+      currentTrailLevel = 1;
+      nearMisses = 0;
+      clearBarriersUsed = false;
+      barrierClearTimer = 0;
+      reviveUsed = false;
+      doubleCoinsUsed = false;
+      pendingAdReward = "";
+      window.clearInterval(adInterval);
+      combo = 1;
+      bestCombo = 1;
+      speed = 4;
+      health = maxHealth();
+      fuel = maxFuel();
+      roadOffset = 0;
+      shake = 0;
+      flash = 0;
+      invincible = 0;
+      boost = 0;
+      toastTimer = 0;
+      countdownTimer = 180;
+      countdownValue = "3";
+      obstacles = [];
+      rewards = [];
+      particles = [];
+      player.x = 215;
+      player.targetX = 215;
+      player.dragging = false;
+      hideAllScreens();
+      showCountdown("3");
+      updateHud();
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function hideAllScreens() {
+      startScreen.classList.add("hidden");
+      tutorialScreen.classList.add("hidden");
+      garageScreen.classList.add("hidden");
+      skinsScreen.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameOverScreen.classList.add("hidden");
+      adScreen.classList.add("hidden");
+    }
+
+    function pauseGame() {
+      if (state !== "running" && state !== "countdown") return;
+      state = "paused";
+      countdownText.classList.remove("show");
+      pauseScreen.classList.remove("hidden");
+    }
+
+    function resumeGame() {
+      if (state !== "paused") return;
+      state = "running";
+      pauseScreen.classList.add("hidden");
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function endGame(reason) {
+      if (state === "ended") return;
+      state = "ended";
+      countdownText.classList.remove("show");
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem(storageKey, String(bestScore));
+      }
+      gameOverReason.textContent = reason;
+      xpEarned = runXp();
+      finalScore.textContent = `Score: ${score.toLocaleString()} | +${xpEarned} XP pending`;
+      bestText.textContent = bestScore.toLocaleString();
+      finalCoins.textContent = String(coins);
+      finalLevel.textContent = String(levelInfo(lifetimeXp + xpEarned).level);
+      runCodeText.textContent = runCode();
+      updateTrailLink();
+      reviveAdButton.disabled = reviveUsed;
+      reviveAdButton.textContent = reviveUsed ? "Revive Used" : "Watch 15s Ad to Revive";
+      doubleCoinsButton.disabled = coins <= 0 || doubleCoinsUsed || runBanked;
+      doubleCoinsButton.textContent = coins <= 0 ? "No Coins to Double" : "Watch Ad: 2x Coins";
+      adHintText.textContent = reviveUsed
+        ? "Revive used. Double your race coins before playing again."
+        : "Use a rewarded ad for one revive or double coins after the race.";
+      updateGarageUi();
+      gameOverScreen.classList.remove("hidden");
+    }
+
+    function bankRun(multiplier = 1) {
+      if (runBanked) return;
+      const before = levelInfo(lifetimeXp);
+      xpEarned = runXp();
+      lifetimeXp += xpEarned;
+      const coinPayout = coins * multiplier;
+      bankCoins += coinPayout;
+      const missionBonus = completeMissions();
+      bankCoins += missionBonus;
+      const after = levelInfo(lifetimeXp);
+      if (after.level > before.level) {
+        const levelBonus = (after.level - before.level) * 10;
+        bankCoins += levelBonus;
+        showToast(`Level up +${levelBonus} coins`);
+      } else if (missionBonus > 0) {
+        showToast(`Missions +${missionBonus} coins`);
+      } else if (coinPayout > 0) {
+        showToast(`+${coinPayout} garage coins`);
+      }
+      runBanked = true;
+      localStorage.setItem(coinBankKey, String(bankCoins));
+      localStorage.setItem(xpKey, String(lifetimeXp));
+      finalScore.textContent = `Score: ${score.toLocaleString()} | +${xpEarned} XP`;
+      finalCoins.textContent = multiplier > 1 ? `${coins} x2` : String(coins);
+      finalLevel.textContent = String(levelInfo(lifetimeXp).level);
+      doubleCoinsButton.disabled = true;
+      doubleCoinsButton.textContent = multiplier > 1 ? "Coins Doubled" : "Coins Banked";
+      updateGarageUi();
+      updateHud();
+    }
+
+    function completeMissions() {
+      let bonus = 0;
+      missions.items = missions.items.map((mission) => {
+        const runValue = mission.stat === "coins" ? coins : mission.stat === "trail" ? currentTrailLevel : nearMisses;
+        const progress = Math.max(mission.progress || 0, runValue);
+        if (progress >= mission.target && !missions.claimed.includes(mission.id)) {
+          missions.claimed.push(mission.id);
+          bonus += mission.reward;
+        }
+        return { ...mission, progress };
+      });
+      saveMissions();
+      return bonus;
+    }
+
+    function showToast(text) {
+      toastText.textContent = text;
+      toastText.classList.add("show");
+      toastTimer = 58;
+    }
+
+    function showCountdown(text) {
+      countdownValue = text;
+      countdownText.textContent = text;
+      countdownText.classList.remove("show");
+      void countdownText.offsetWidth;
+      countdownText.classList.add("show");
+    }
+
+    function openGarage() {
+      previousState = state;
+      state = "garage";
+      countdownText.classList.remove("show");
+      startScreen.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameOverScreen.classList.add("hidden");
+      garageScreen.classList.remove("hidden");
+      updateGarageUi();
+    }
+
+    function openSkins() {
+      previousState = state;
+      state = "skins";
+      hideAllScreens();
+      skinsScreen.classList.remove("hidden");
+      updateGarageUi();
+    }
+
+    function closeSkins() {
+      skinsScreen.classList.add("hidden");
+      if (previousState === "ended") {
+        state = "ended";
+        gameOverScreen.classList.remove("hidden");
+      } else {
+        state = "idle";
+        startScreen.classList.remove("hidden");
+      }
+      updateGarageUi();
+      render();
+    }
+
+    function openTutorial() {
+      previousState = state;
+      state = "tutorial";
+      hideAllScreens();
+      tutorialScreen.classList.remove("hidden");
+    }
+
+    function closeTutorial() {
+      tutorialScreen.classList.add("hidden");
+      state = "idle";
+      startScreen.classList.remove("hidden");
+    }
+
+    function closeGarage() {
+      garageScreen.classList.add("hidden");
+      if (previousState === "ended") {
+        bankRun(1);
+        state = "ended";
+        gameOverScreen.classList.remove("hidden");
+      } else {
+        state = "idle";
+        startScreen.classList.remove("hidden");
+      }
+      updateGarageUi();
+    }
+
+    function buyOrEquipSkin(id) {
+      const skin = skinCatalog.find((item) => item.id === id);
+      if (!skin) return;
+      const owned = skinState.owned.includes(id);
+      if (!owned) {
+        if (bankCoins < skin.cost) {
+          showToast("Need more coins");
+          return;
+        }
+        bankCoins -= skin.cost;
+        skinState.owned.push(id);
+        localStorage.setItem(coinBankKey, String(bankCoins));
+      }
+      skinState.active = id;
+      saveSkins();
+      showToast(`${skin.name} equipped`);
+      updateGarageUi();
+      updateHud();
+      render();
+    }
+
+    function claimAppBonus() {
+      if (localStorage.getItem(appBonusKey) === "1") return;
+      bankCoins += 25;
+      localStorage.setItem(appBonusKey, "1");
+      localStorage.setItem(coinBankKey, String(bankCoins));
+      showToast("+25 app bonus");
+      updateGarageUi();
+      updateHud();
+    }
+
+    function clearBarriers() {
+      if (state !== "running" || clearBarriersUsed || bankCoins < 50) return;
+      clearBarriersUsed = true;
+      bankCoins -= 50;
+      localStorage.setItem(coinBankKey, String(bankCoins));
+      const sorted = [...obstacles].sort((a, b) => b.y - a.y);
+      const removeCount = Math.ceil(sorted.length / 2);
+      const removeSet = new Set(sorted.slice(0, removeCount));
+      obstacles = obstacles.filter((obstacle) => !removeSet.has(obstacle));
+      barrierClearTimer = 300;
+      score += 150;
+      showToast("Barriers cleared");
+      burst(player.x, player.y - 30, "#f6c344", 24);
+      updateGarageUi();
+      updateHud();
+    }
+
+    function runCode() {
+      const seed = `${score}-${coins}-${currentTrailLevel}-${bestCombo}`;
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) % 46656;
+      return `AO-${hash.toString(36).toUpperCase().padStart(3, "0")}`;
+    }
+
+    function watchRewardAd(reward) {
+      if (reward === "revive" && reviveUsed) return;
+      if (reward === "double" && (doubleCoinsUsed || runBanked || coins <= 0)) return;
+      showRewardedAd(reward, () => finishRewardAd());
+    }
+
+    function showRewardedAd(reward, onComplete) {
+      const sdk = window.TrailRunnerAdSDK || window.TikTokGameSDK;
+      if (sdk && typeof sdk.showRewardedAd === "function") {
+        sdk.showRewardedAd({
+          placement: reward === "revive" ? "revive_15s" : "double_coins_15s",
+          onComplete,
+          onError: () => showToast("Ad not ready"),
+        });
+        return;
+      }
+      pendingAdReward = reward;
+      let seconds = 15;
+      adTitle.textContent = reward === "revive" ? "Revive Ad" : "Double Coins Ad";
+      adBody.textContent = reward === "revive"
+        ? "Watch the full rewarded ad to repair your ride and continue this run."
+        : "Watch the full rewarded ad to double this race's coin payout.";
+      adCountdown.textContent = String(seconds);
+      gameOverScreen.classList.add("hidden");
+      adScreen.classList.remove("hidden");
+      window.clearInterval(adInterval);
+      adInterval = window.setInterval(() => {
+        seconds -= 1;
+        adCountdown.textContent = String(seconds);
+        if (seconds <= 0) onComplete();
+      }, 1000);
+    }
+
+    function finishRewardAd() {
+      window.clearInterval(adInterval);
+      adScreen.classList.add("hidden");
+      if (pendingAdReward === "revive") reviveRun();
+      if (pendingAdReward === "double") {
+        doubleCoinsUsed = true;
+        bankRun(2);
+        state = "ended";
+        gameOverScreen.classList.remove("hidden");
+      }
+      pendingAdReward = "";
+    }
+
+    function reviveRun() {
+      reviveUsed = true;
+      state = "running";
+      health = Math.max(health, maxHealth() * 0.45);
+      fuel = Math.max(fuel, maxFuel() * 0.35);
+      invincible = 180;
+      flash = 0;
+      shake = 0;
+      obstacles = obstacles.filter((obstacle) => obstacle.y < player.y - 120 || obstacle.y > player.y + 130);
+      rewards.push({
+        x: player.x,
+        y: player.y - 180,
+        r: 16,
+        type: "boost",
+        pulse: 0,
+      });
+      showToast("Revived");
+      updateHud();
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function buyUpgrade(id) {
+      const upgrade = upgradeCatalog.find((item) => item.id === id);
+      if (!upgrade) return;
+      const level = upgrades[id] || 0;
+      const cost = upgradeCost(upgrade);
+      if (level >= upgrade.max || bankCoins < cost) {
+        showToast(level >= upgrade.max ? "Maxed out" : "Need more coins");
+        return;
+      }
+      bankCoins -= cost;
+      upgrades[id] = level + 1;
+      localStorage.setItem(coinBankKey, String(bankCoins));
+      saveUpgrades();
+      showToast(`${upgrade.name} upgraded`);
+      updateGarageUi();
+      updateHud();
+    }
+
+    function updateGarageUi() {
+      bankTextStart.textContent = bankCoins.toLocaleString();
+      bankTextGarage.textContent = bankCoins.toLocaleString();
+      bankTextSkins.textContent = bankCoins.toLocaleString();
+      bankTextEnd.textContent = bankCoins.toLocaleString();
+      const appBonusClaimed = localStorage.getItem(appBonusKey) === "1";
+      appBonusWrap.classList.toggle("hidden", appBonusClaimed);
+      missionPreview.innerHTML = missions.items.map((mission) => {
+        const complete = missions.claimed.includes(mission.id);
+        const progress = Math.min(mission.target, mission.progress || 0);
+        return `
+          <div class="compact-item">
+            <div>
+              <strong>${complete ? "Done" : "Daily"}: ${mission.label}</strong>
+              <span>${progress}/${mission.target} - Reward ${mission.reward} coins</span>
+            </div>
+            <span>${complete ? "Paid" : "Go"}</span>
+          </div>
+        `;
+      }).join("");
+      garageList.innerHTML = upgradeCatalog.map((upgrade) => {
+        const level = upgrades[upgrade.id] || 0;
+        const maxed = level >= upgrade.max;
+        const cost = upgradeCost(upgrade);
+        const disabled = maxed || bankCoins < cost ? "disabled" : "";
+        const label = maxed ? "Max" : `${cost} coins`;
+        return `
+          <div class="upgrade">
+            <div>
+              <strong>${upgrade.name} Lv ${level}/${upgrade.max}</strong>
+              <span>${upgrade.detail}</span>
+            </div>
+            <button type="button" data-upgrade="${upgrade.id}" ${disabled}>${label}</button>
+          </div>
+        `;
+      }).join("");
+      skinsList.innerHTML = skinCatalog.map((skin) => {
+        const owned = skinState.owned.includes(skin.id);
+        const active = skinState.active === skin.id;
+        const disabled = !owned && bankCoins < skin.cost ? "disabled" : "";
+        const label = active ? "Active" : owned ? "Equip" : `${skin.cost} coins`;
+        return `
+          <div class="compact-item">
+            <div>
+              <strong>${skin.name}</strong>
+              <span>${owned ? "Owned" : "Unlock this vehicle paint."}</span>
+            </div>
+            <div class="skin-swatch" style="background: linear-gradient(180deg, ${skin.top}, ${skin.bottom})"></div>
+            <button type="button" data-skin="${skin.id}" ${disabled}>${label}</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateTrailLink() {
+      const trail = activeTrail();
+      realTrailLink.textContent = `Open: ${trail.real}`;
+      realTrailLink.href = `https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=mini_game&utm_campaign=compact_game_over_cta&trail=${encodeURIComponent(trail.real)}`;
+    }
+
+    function spawnObstacle() {
+      const roll = Math.random();
+      const type = roll < 0.44 ? "rock" : roll < 0.74 ? "mud" : "log";
+      const width = type === "log" ? rand(82, 118) : rand(42, 58);
+      const height = type === "mud" ? rand(34, 44) : rand(44, 58);
+      obstacles.push({
+        x: rand(road.left + width / 2 + 8, road.right - width / 2 - 8),
+        y: -height - 16,
+        w: width,
+        h: height,
+        type,
+        hit: false,
+        scored: false,
+        spin: rand(0, Math.PI * 2),
+      });
+    }
+
+    function spawnReward() {
+      const roll = Math.random();
+      const type = roll < 0.56 ? "coin" : roll < 0.77 ? "fuel" : roll < 0.93 ? "repair" : "boost";
+      rewards.push({
+        x: rand(road.left + 28, road.right - 28),
+        y: -38,
+        r: type === "coin" ? 14 : 16,
+        type,
+        pulse: rand(0, Math.PI * 2),
+      });
+    }
+
+    function burst(x, y, color, amount) {
+      for (let i = 0; i < amount; i++) {
+        particles.push({
+          x,
+          y,
+          vx: rand(-2.6, 2.6),
+          vy: rand(-3.4, 1.2),
+          life: rand(18, 34),
+          age: 0,
+          color,
+          size: rand(2, 5),
+        });
+      }
+    }
+
+    function updateCountdown(dt) {
+      countdownTimer -= dt;
+      const nextValue = countdownTimer > 120 ? "3" : countdownTimer > 60 ? "2" : countdownTimer > 0 ? "1" : "GO";
+      if (nextValue !== countdownValue) showCountdown(nextValue);
+      roadOffset = (roadOffset + 2.2 * dt) % 56;
+      render();
+      if (countdownTimer <= -22) {
+        countdownText.classList.remove("show");
+        state = "running";
+        lastTime = performance.now();
+      }
+    }
+
+    function update(dt) {
+      frame += 1;
+      const nextTrailLevel = trailLevelForScore(score);
+      if (nextTrailLevel !== currentTrailLevel) {
+        currentTrailLevel = nextTrailLevel;
+        showToast(`Trail ${currentTrailLevel}: ${activeTrail().name}`);
+        burst(player.x, player.y + 24, "#f6c344", 20);
+      }
+      const boostSpeed = boost > 0 ? 1.45 : 1;
+      roadOffset = (roadOffset + speed * 1.75 * boostSpeed * dt) % 56;
+      score += Math.max(1, Math.round(combo * boostSpeed * dt));
+      fuel -= (0.025 + speed * 0.0025) * dt;
+      speed = 3.65 + activeTrail().speed + Math.min(6.2, score / 2050);
+
+      const skipBarrier = barrierClearTimer > 0 && Math.random() < 0.5;
+      if (frame % Math.max(26, Math.round(64 - speed * 3.1)) === 0 && !skipBarrier) spawnObstacle();
+      if (frame % Math.max(42, Math.round(84 - speed * 2.5)) === 0) spawnReward();
+
+      const steering = handlingPower();
+      if (keys.left) player.targetX -= steering * dt;
+      if (keys.right) player.targetX += steering * dt;
+      player.targetX = clamp(player.targetX, road.left + player.w / 2, road.right - player.w / 2);
+      player.x += (player.targetX - player.x) * Math.min(1, (0.22 + upgrades.engine * 0.018) * dt);
+
+      const box = playerBox();
+      obstacles.forEach((obstacle) => {
+        obstacle.y += speed * boostSpeed * dt;
+        obstacle.spin += 0.02 * dt;
+        const obstacleBox = {
+          x: obstacle.x - obstacle.w / 2,
+          y: obstacle.y,
+          w: obstacle.w,
+          h: obstacle.h,
+        };
+        if (!obstacle.hit && invincible <= 0 && rectsHit(box, obstacleBox)) {
+          obstacle.hit = true;
+          combo = 1;
+          shake = 16;
+          flash = 14;
+          invincible = 82;
+          health -= obstacle.type === "mud" ? 9 : obstacle.type === "log" ? 24 : 18;
+          showToast(obstacle.type === "mud" ? "MUD SLIDE" : "CRASH");
+          burst(player.x, player.y + 22, obstacle.type === "mud" ? "#6b3f19" : "#f97316", 16);
+        }
+        if (!obstacle.hit && !obstacle.scored && obstacle.y > player.y + player.h) {
+          obstacle.scored = true;
+          const near = Math.abs(obstacle.x - player.x) < obstacle.w / 2 + player.w / 2 + 24;
+          if (near) {
+            nearMisses += 1;
+            combo = Math.min(9, combo + 1);
+            bestCombo = Math.max(bestCombo, combo);
+            score += 65 * combo;
+            showToast(`Near miss x${combo}`);
+            burst(player.x, player.y + 64, "#f6c344", 8);
+          }
+        }
+      });
+
+      rewards.forEach((reward) => {
+        reward.y += speed * boostSpeed * dt;
+        reward.pulse += 0.09 * dt;
+        if (reward.type === "coin" && upgrades.magnet > 0) {
+          const dx = player.x - reward.x;
+          const dy = player.y + 35 - reward.y;
+          const distance = Math.hypot(dx, dy);
+          const reach = 78 + upgrades.magnet * 34;
+          if (distance < reach && distance > 1) {
+            const pull = (1 - distance / reach) * upgrades.magnet * 0.72 * dt;
+            reward.x += (dx / distance) * pull * 10;
+            reward.y += (dy / distance) * pull * 10;
+          }
+        }
+        const rewardBox = {
+          x: reward.x - reward.r - collectionPadding(reward.type),
+          y: reward.y - reward.r - collectionPadding(reward.type),
+          w: reward.r * 2 + collectionPadding(reward.type) * 2,
+          h: reward.r * 2 + collectionPadding(reward.type) * 2,
+        };
+        if (!reward.collected && rectsHit(box, rewardBox)) {
+          reward.collected = true;
+          combo = Math.min(9, combo + 1);
+          bestCombo = Math.max(bestCombo, combo);
+          if (reward.type === "coin") {
+            coins += 1;
+            score += 120 * combo;
+            burst(reward.x, reward.y, "#f6c344", 14);
+          }
+          if (reward.type === "fuel") {
+            fuel = Math.min(maxFuel(), fuel + 24 + upgrades.tank * 3);
+            score += 55 * combo;
+            burst(reward.x, reward.y, "#60c476", 16);
+          }
+          if (reward.type === "repair") {
+            health = Math.min(maxHealth(), health + 18 + upgrades.armor * 3);
+            score += 70 * combo;
+            burst(reward.x, reward.y, "#ef4444", 16);
+          }
+          if (reward.type === "boost") {
+            boost = 255;
+            invincible = Math.max(invincible, 110);
+            score += 90 * combo;
+            showToast("Trail boost");
+            burst(reward.x, reward.y, "#38bdf8", 18);
+          }
+        }
+      });
+
+      particles.forEach((particle) => {
+        particle.age += dt;
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+        particle.vy += 0.12 * dt;
+      });
+
+      obstacles = obstacles.filter((obstacle) => obstacle.y < world.h + 90);
+      rewards = rewards.filter((reward) => !reward.collected && reward.y < world.h + 60);
+      particles = particles.filter((particle) => particle.age < particle.life);
+      shake = Math.max(0, shake - dt);
+      flash = Math.max(0, flash - dt);
+      invincible = Math.max(0, invincible - dt);
+      boost = Math.max(0, boost - dt);
+      barrierClearTimer = Math.max(0, barrierClearTimer - dt);
+      toastTimer = Math.max(0, toastTimer - dt);
+      if (toastTimer <= 0) toastText.classList.remove("show");
+
+      updateHud();
+
+      if (health <= 0) endGame("Machine wrecked");
+      if (fuel <= 0) endGame("Out of fuel");
+    }
+
+    function updateHud() {
+      const healthPercent = clamp(Math.round((health / maxHealth()) * 100), 0, 100);
+      const fuelPercent = clamp(Math.round((fuel / maxFuel()) * 100), 0, 100);
+      const info = levelInfo(lifetimeXp + (state === "running" || state === "countdown" ? runXp() : 0));
+      const trail = activeTrail();
+      scoreText.textContent = score.toLocaleString();
+      coinText.textContent = String(coins);
+      comboText.textContent = `x${combo}`;
+      levelText.textContent = String(info.level);
+      startLevelText.textContent = String(levelInfo(lifetimeXp).level);
+      trailText.textContent = `Trail ${currentTrailLevel}: ${trail.name}`;
+      xpText.textContent = `${Math.max(0, Math.round(info.next - lifetimeXp - (state === "running" ? runXp() : 0)))} XP`;
+      healthText.textContent = `${healthPercent}%`;
+      fuelText.textContent = `${fuelPercent}%`;
+      healthFill.style.width = `${healthPercent}%`;
+      fuelFill.style.width = `${fuelPercent}%`;
+      xpFill.style.width = `${clamp(Math.round(info.progress * 100), 0, 100)}%`;
+      clearBarriersButton.disabled = state !== "running" || clearBarriersUsed || bankCoins < 50;
+      clearBarriersButton.textContent = clearBarriersUsed
+        ? "Barrier Clear Used"
+        : bankCoins < 50
+          ? "Need 50 Coins to Clear Barriers"
+          : "Clear 50% Barriers - 50 Coins";
+    }
+
+    function drawTrail() {
+      const trail = activeTrail();
+      const gradient = ctx.createLinearGradient(0, 0, 0, world.h);
+      gradient.addColorStop(0, "#253915");
+      gradient.addColorStop(1, currentTrailLevel >= 5 ? "#080913" : "#071407");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, world.w, world.h);
+
+      ctx.fillStyle = "rgba(246, 195, 68, 0.4)";
+      ctx.beginPath();
+      ctx.arc(338, 82, 38, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(21, 45, 19, 0.82)";
+      ctx.beginPath();
+      ctx.moveTo(0, 220);
+      ctx.lineTo(70, 122);
+      ctx.lineTo(148, 220);
+      ctx.lineTo(220, 138);
+      ctx.lineTo(314, 220);
+      ctx.lineTo(430, 112);
+      ctx.lineTo(430, 310);
+      ctx.lineTo(0, 310);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#1d130d";
+      ctx.fillRect(road.left, 0, road.right - road.left, world.h);
+
+      ctx.fillStyle = trail.color;
+      ctx.beginPath();
+      ctx.moveTo(road.left + 18, 0);
+      ctx.lineTo(road.right - 18, 0);
+      ctx.lineTo(road.right + 10, world.h);
+      ctx.lineTo(road.left - 10, world.h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 248, 232, 0.32)";
+      ctx.lineWidth = 4;
+      ctx.setLineDash([20, 36]);
+      ctx.lineDashOffset = roadOffset;
+      ctx.beginPath();
+      ctx.moveTo(road.center, -80);
+      ctx.lineTo(road.center, world.h + 80);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "rgba(246, 195, 68, 0.7)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(road.left + 8, 0);
+      ctx.lineTo(road.left - 6, world.h);
+      ctx.moveTo(road.right - 8, 0);
+      ctx.lineTo(road.right + 6, world.h);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      for (let y = -56 + roadOffset; y < world.h + 56; y += 56) {
+        ctx.fillRect(82, y, 24, 4);
+        ctx.fillRect(326, y + 24, 22, 4);
+      }
+
+      ctx.fillStyle = "rgba(6, 20, 7, 0.86)";
+      for (let y = -70 + roadOffset * 0.6; y < world.h + 70; y += 86) {
+        drawPine(24, y, 1);
+        drawPine(404, y + 42, -1);
+      }
+    }
+
+    function drawPine(x, y, side) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(side, 1);
+      ctx.fillStyle = "#2f4d22";
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(26, 22);
+      ctx.lineTo(-26, 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#193113";
+      ctx.fillRect(-4, 18, 8, 20);
+      ctx.restore();
+    }
+
+    function drawObstacle(obstacle) {
+      const x = obstacle.x;
+      const y = obstacle.y;
+      ctx.save();
+      if (!obstacle.hit && obstacle.y < 86) {
+        ctx.fillStyle = "rgba(239, 68, 68, 0.84)";
+        ctx.beginPath();
+        ctx.moveTo(x, 22);
+        ctx.lineTo(x - 13, 44);
+        ctx.lineTo(x + 13, 44);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#fff8e8";
+        ctx.fillRect(x - 2, 29, 4, 8);
+        ctx.fillRect(x - 2, 39, 4, 3);
+      }
+      ctx.translate(x, y + obstacle.h / 2);
+      if (obstacle.type === "rock") {
+        ctx.rotate(Math.sin(obstacle.spin) * 0.08);
+        ctx.fillStyle = obstacle.hit ? "#4b5563" : "#9ca3af";
+        ctx.beginPath();
+        ctx.moveTo(-obstacle.w / 2, 4);
+        ctx.lineTo(-obstacle.w / 4, -obstacle.h / 2);
+        ctx.lineTo(obstacle.w / 3, -obstacle.h / 2 + 4);
+        ctx.lineTo(obstacle.w / 2, 9);
+        ctx.lineTo(obstacle.w / 5, obstacle.h / 2);
+        ctx.lineTo(-obstacle.w / 3, obstacle.h / 2 - 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+        ctx.fillRect(-obstacle.w / 4, -obstacle.h / 4, obstacle.w / 3, 5);
+      }
+      if (obstacle.type === "mud") {
+        ctx.fillStyle = obstacle.hit ? "#241407" : "#3a220f";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, obstacle.w / 2, obstacle.h / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.beginPath();
+        ctx.ellipse(-obstacle.w * 0.1, -4, obstacle.w * 0.22, 5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (obstacle.type === "log") {
+        ctx.rotate(Math.sin(obstacle.spin) * 0.05);
+        ctx.fillStyle = obstacle.hit ? "#5b250d" : "#8b3a14";
+        ctx.fillRect(-obstacle.w / 2, -obstacle.h / 2, obstacle.w, obstacle.h);
+        ctx.fillStyle = "#3b1608";
+        ctx.fillRect(-obstacle.w / 2, -obstacle.h / 2, 8, obstacle.h);
+        ctx.fillRect(obstacle.w / 2 - 8, -obstacle.h / 2, 8, obstacle.h);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-obstacle.w / 3, -obstacle.h / 6);
+        ctx.lineTo(obstacle.w / 3, -obstacle.h / 6);
+        ctx.moveTo(-obstacle.w / 3, obstacle.h / 5);
+        ctx.lineTo(obstacle.w / 4, obstacle.h / 5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawReward(reward) {
+      const radius = reward.r + Math.sin(reward.pulse) * 1.6;
+      ctx.save();
+      ctx.translate(reward.x, reward.y);
+      ctx.shadowColor = reward.type === "coin" ? "#f6c344" : reward.type === "fuel" ? "#60c476" : "#ef4444";
+      ctx.shadowBlur = 12;
+      if (reward.type === "coin") {
+        ctx.fillStyle = "#f6c344";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#6b3f09";
+        ctx.font = "900 17px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("$", 0, 1);
+      }
+      if (reward.type === "fuel") {
+        ctx.fillStyle = "#60c476";
+        roundRect(-12, -16, 24, 32, 5);
+        ctx.fill();
+        ctx.fillStyle = "#0a260f";
+        ctx.fillRect(-5, -10, 10, 14);
+      }
+      if (reward.type === "repair") {
+        ctx.fillStyle = "#ef4444";
+        roundRect(-16, -16, 32, 32, 7);
+        ctx.fill();
+        ctx.fillStyle = "#fff8e8";
+        ctx.fillRect(-4, -11, 8, 22);
+        ctx.fillRect(-11, -4, 22, 8);
+      }
+      if (reward.type === "boost") {
+        ctx.fillStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.moveTo(0, -19);
+        ctx.lineTo(15, -3);
+        ctx.lineTo(6, -3);
+        ctx.lineTo(12, 18);
+        ctx.lineTo(-12, 0);
+        ctx.lineTo(-3, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      if (invincible > 0 && Math.floor(invincible / 5) % 2 === 0) ctx.globalAlpha = 0.64;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
+      ctx.beginPath();
+      ctx.ellipse(0, 72, 34, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (boost > 0) {
+        const flame = 18 + Math.sin(frame * 0.42) * 7;
+        ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
+        ctx.beginPath();
+        ctx.moveTo(-13, 88);
+        ctx.lineTo(0, 88 + flame);
+        ctx.lineTo(13, 88);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(246, 195, 68, 0.82)";
+        ctx.beginPath();
+        ctx.moveTo(-7, 88);
+        ctx.lineTo(0, 88 + flame * 0.62);
+        ctx.lineTo(7, 88);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#121212";
+      roundRect(-33, 10, 12, 28, 4);
+      ctx.fill();
+      roundRect(21, 10, 12, 28, 4);
+      ctx.fill();
+      roundRect(-33, 52, 12, 28, 4);
+      ctx.fill();
+      roundRect(21, 52, 12, 28, 4);
+      ctx.fill();
+
+      const skin = activeSkin();
+      const body = ctx.createLinearGradient(0, 0, 0, 88);
+      body.addColorStop(0, skin.top);
+      body.addColorStop(1, skin.bottom);
+      ctx.fillStyle = body;
+      roundRect(-26, 0, 52, 88, 10);
+      ctx.fill();
+
+      ctx.fillStyle = "#171717";
+      roundRect(-18, 13, 36, 22, 5);
+      ctx.fill();
+      ctx.fillStyle = "#f6c344";
+      roundRect(-18, 44, 36, 12, 4);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.fillRect(-19, 13, 8, 22);
+      if (boost > 0) {
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 44, 34, 52, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawParticles() {
+      particles.forEach((particle) => {
+        const alpha = 1 - particle.age / particle.life;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function render() {
+      ctx.save();
+      if (shake > 0) {
+        ctx.translate(rand(-shake, shake) * 0.35, rand(-shake, shake) * 0.35);
+      }
+      drawTrail();
+      obstacles.forEach(drawObstacle);
+      rewards.forEach(drawReward);
+      drawParticles();
+      drawPlayer();
+      ctx.restore();
+
+      if (flash > 0) {
+        ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.18, flash / 80)})`;
+        ctx.fillRect(0, 0, world.w, world.h);
+      }
+    }
+
+    function loop(now) {
+      if (state !== "running" && state !== "countdown") return;
+      const dt = clamp((now - lastTime) / 16.6667, 0.25, 2);
+      lastTime = now;
+      if (state === "countdown") updateCountdown(dt);
+      else {
+        update(dt);
+        render();
+      }
+      if (state === "running" || state === "countdown") requestAnimationFrame(loop);
+    }
+
+    function pointerX(event) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      return ((clientX - rect.left) / rect.width) * world.w;
+    }
+
+    function beginDrag(event) {
+      if (state === "idle") resetGame();
+      if (state !== "running") return;
+      player.dragging = true;
+      const x = pointerX(event);
+      player.dragOffset = player.x - x;
+      event.preventDefault();
+    }
+
+    function moveDrag(event) {
+      if (!player.dragging || state !== "running") return;
+      player.targetX = clamp(pointerX(event) + player.dragOffset, road.left + player.w / 2, road.right - player.w / 2);
+      event.preventDefault();
+    }
+
+    function endDrag() {
+      player.dragging = false;
+    }
+
+    function copyScore() {
+      const appUrl = "https://appalachiaoffroadapp.com/?utm_source=trail_runner_game&utm_medium=share&utm_campaign=score_share";
+      const text = `I reached rider level ${levelInfo(lifetimeXp).level} and scored ${score.toLocaleString()} in Appalachia Trail Runner with ${coins} coins. Plan a real ride: ${appUrl}`;
+      const sdk = window.TrailRunnerShareSDK || window.TikTokGameSDK;
+      if (sdk && typeof sdk.share === "function") {
+        sdk.share({
+          title: "Appalachia Trail Runner",
+          text,
+          url: appUrl,
+        });
+        return;
+      }
+      shareButton.textContent = "Share Ready";
+      showToast("Share via TikTok SDK");
+      window.setTimeout(() => {
+        shareButton.textContent = "Share Score";
+      }, 1000);
+    }
+
+    startButton.addEventListener("click", resetGame);
+    tutorialStartButton.addEventListener("click", () => {
+      localStorage.setItem(tutorialKey, "1");
+      resetGame();
+    });
+    restartButton.addEventListener("click", () => {
+      bankRun(1);
+      resetGame();
+    });
+    restartFromPauseButton.addEventListener("click", resetGame);
+    resumeButton.addEventListener("click", resumeGame);
+    pauseButton.addEventListener("click", () => (state === "paused" ? resumeGame() : pauseGame()));
+    clearBarriersButton.addEventListener("click", clearBarriers);
+    shareButton.addEventListener("click", copyScore);
+    reviveAdButton.addEventListener("click", () => watchRewardAd("revive"));
+    doubleCoinsButton.addEventListener("click", () => watchRewardAd("double"));
+    garageButton.addEventListener("click", openGarage);
+    skinsButton.addEventListener("click", openSkins);
+    tutorialButton.addEventListener("click", openTutorial);
+    closeTutorialButton.addEventListener("click", () => {
+      localStorage.setItem(tutorialKey, "1");
+      closeTutorial();
+    });
+    appBonusLink.addEventListener("click", claimAppBonus);
+    garageFromEndButton.addEventListener("click", () => {
+      bankRun(1);
+      openGarage();
+    });
+    closeGarageButton.addEventListener("click", closeGarage);
+    closeSkinsButton.addEventListener("click", closeSkins);
+    garageList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-upgrade]");
+      if (!button) return;
+      buyUpgrade(button.dataset.upgrade);
+    });
+    skinsList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-skin]");
+      if (!button) return;
+      buyOrEquipSkin(button.dataset.skin);
+    });
+
+    canvas.addEventListener("pointerdown", beginDrag);
+    canvas.addEventListener("pointermove", moveDrag);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") keys.left = true;
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") keys.right = true;
+      if (event.key === " " || event.key.toLowerCase() === "p") {
+        if (state === "running") pauseGame();
+        else if (state === "paused") resumeGame();
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") keys.left = false;
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") keys.right = false;
+    });
+
+    render();
+    updateHud();
+    updateGarageUi();
+    if (localStorage.getItem(tutorialKey) !== "1") openTutorial();
+  </script>
+</body>
+</html>

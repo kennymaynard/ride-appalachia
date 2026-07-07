@@ -1,0 +1,25 @@
+{
+  "name": "minis.manifest.json",
+  "resource_list": [
+    {
+      "type": "file",
+      "name": "TIKTOK_READINESS.md"
+    },
+    {
+      "type": "file",
+      "name": "icon.svg"
+    },
+    {
+      "type": "file",
+      "name": "index.html"
+    },
+    {
+      "type": "file",
+      "name": "manifest.webmanifest"
+    },
+    {
+      "type": "file",
+      "name": "minigame.config.json"
+    }
+  ]
+}

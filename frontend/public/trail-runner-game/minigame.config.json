@@ -1,0 +1,16 @@
+{
+  "minigame": {
+    "name": "Appalachia Trail Runner",
+    "clientKey": "mgpfqrnu584896ld",
+    "sourceDir": ".",
+    "entry": "index.html",
+    "trustedDomains": [
+      "https://appalachiaoffroadapp.com"
+    ],
+    "notes": [
+      "TikTok CLI setup/build completed on 2026-07-07.",
+      "Trusted domain configured: https://appalachiaoffroadapp.com.",
+      "Connect rewarded ads and share to TikTok SDK callbacks before review."
+    ]
+  }
+}
