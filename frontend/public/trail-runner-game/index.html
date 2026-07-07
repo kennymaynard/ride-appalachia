@@ -534,6 +534,100 @@
       line-height: 1;
     }
 
+    .end-card {
+      max-height: calc(100dvh - 1.4rem);
+      overflow-y: auto;
+      padding: 0.82rem;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+
+    .end-card .eyebrow {
+      margin-bottom: 0.3rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+    }
+
+    .end-card h1 {
+      font-size: clamp(2.35rem, 13vw, 3.25rem);
+    }
+
+    .end-card p {
+      margin-top: 0.45rem;
+      font-size: 0.86rem;
+      line-height: 1.25;
+    }
+
+    .end-card .stats {
+      gap: 0.34rem;
+      margin-top: 0.6rem;
+    }
+
+    .end-card .stats div {
+      border-radius: 0.42rem;
+      padding: 0.38rem 0.3rem;
+    }
+
+    .end-card .stats span {
+      font-size: 0.5rem;
+    }
+
+    .end-card .stats strong {
+      font-size: 0.88rem;
+    }
+
+    .end-card .bank,
+    .end-card .mini-link {
+      margin-top: 0.52rem;
+      padding: 0.34rem 0.5rem;
+      font-size: 0.68rem;
+    }
+
+    .end-card .bounty-chip,
+    .end-card .ad-slot,
+    .end-card .bank-row,
+    .end-card .actions {
+      margin-top: 0.58rem;
+    }
+
+    .end-card .bounty-chip {
+      padding: 0.45rem 0.58rem;
+    }
+
+    .end-card .bounty-chip strong,
+    .end-card .ad-slot strong {
+      font-size: 0.68rem;
+    }
+
+    .end-card .bounty-chip span,
+    .end-card .ad-slot span {
+      font-size: 0.66rem;
+      line-height: 1.18;
+    }
+
+    .end-card .ad-slot {
+      min-height: 3.9rem;
+      padding: 0.5rem;
+    }
+
+    .end-card .actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.42rem;
+    }
+
+    .end-card .actions button,
+    .end-card .actions .link-button {
+      min-height: 2.75rem;
+      padding: 0.6rem 0.48rem;
+      font-size: 0.74rem;
+      line-height: 1.05;
+    }
+
+    .end-card #reviveAdButton,
+    .end-card #restartButton {
+      grid-column: 1 / -1;
+    }
+
     .help {
       margin-top: 0.8rem;
       color: rgba(255, 248, 232, 0.72);
@@ -689,7 +783,7 @@
     </section>
 
     <section class="overlay hidden" id="gameOverScreen">
-      <div class="card">
+      <div class="card end-card">
         <p class="eyebrow" id="gameOverReason">Trail ended</p>
         <h1>Nice Run</h1>
         <p id="finalScore">Score: 0</p>
