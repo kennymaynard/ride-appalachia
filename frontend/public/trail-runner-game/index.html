@@ -959,7 +959,7 @@
     const streakKey = "appalachiaTrailRunnerStreak";
     const bountyKey = "appalachiaTrailRunnerBounty";
     const world = { w: 430, h: 760 };
-    const road = { left: 58, right: 372, center: 215 };
+    const road = { left: 58, right: 372, center: 215, lanes: 2 };
     const keys = { left: false, right: false };
     const trailLevels = [
       { name: "Warmup", score: 0, color: "#704c2b", speed: 0, hazard: 0, fuel: 1, double: 0, hit: 1, reward: 1, real: "Rush Off-Road", text: "Ready for the real thing? Browse Rush-area trails, food, fuel, and lodging." },
@@ -1145,6 +1145,19 @@
       localStorage.setItem(upgradeKey, JSON.stringify(upgrades));
     }
 
+    function rideFullyUpgraded() {
+      return upgradeCatalog.every((upgrade) => (upgrades[upgrade.id] || 0) >= upgrade.max);
+    }
+
+    function updateRoadWidth() {
+      const unlocked = rideFullyUpgraded();
+      road.left = unlocked ? 34 : 58;
+      road.right = unlocked ? 396 : 372;
+      road.center = (road.left + road.right) / 2;
+      road.lanes = unlocked ? 3 : 2;
+      return unlocked;
+    }
+
     function upgradeCost(upgrade) {
       const level = upgrades[upgrade.id] || 0;
       return Math.round(upgrade.baseCost * Math.pow(1.75, level));
@@ -1242,6 +1255,7 @@
       speed = 4;
       health = maxHealth();
       fuel = maxFuel();
+      updateRoadWidth();
       roadOffset = 0;
       shake = 0;
       flash = 0;
@@ -1253,8 +1267,8 @@
       obstacles = [];
       rewards = [];
       particles = [];
-      player.x = 215;
-      player.targetX = 215;
+      player.x = road.center;
+      player.targetX = road.center;
       player.dragging = false;
       hideAllScreens();
       showCountdown("3");
@@ -1566,12 +1580,15 @@
         return;
       }
       bankCoins -= cost;
+      const hadExtraLane = rideFullyUpgraded();
       upgrades[id] = level + 1;
       localStorage.setItem(coinBankKey, String(bankCoins));
       saveUpgrades();
-      showToast(`${upgrade.name} upgraded`);
+      const hasExtraLane = updateRoadWidth();
+      showToast(!hadExtraLane && hasExtraLane ? "Extra lane unlocked" : `${upgrade.name} upgraded`);
       updateGarageUi();
       updateHud();
+      render();
     }
 
     function updateGarageUi() {
@@ -1616,6 +1633,17 @@
           </div>
         `;
       }).join("");
+      if (rideFullyUpgraded()) {
+        garageList.insertAdjacentHTML("beforeend", `
+          <div class="upgrade">
+            <div>
+              <strong>Extra Lane Unlocked</strong>
+              <span>Fully upgraded ride opens a wider 3-lane trail every run.</span>
+            </div>
+            <button type="button" disabled>Active</button>
+          </div>
+        `);
+      }
       skinsList.innerHTML = skinCatalog.map((skin) => {
         const owned = skinState.owned.includes(skin.id);
         const active = skinState.active === skin.id;
@@ -1715,6 +1743,7 @@
         showToast(`Trail ${currentTrailLevel}: ${activeTrail().name}`);
         burst(player.x, player.y + 24, "#f6c344", 20);
       }
+      updateRoadWidth();
       const trail = activeTrail();
       const boostSpeed = boost > 0 ? 1.45 : 1;
       roadOffset = (roadOffset + speed * 1.75 * boostSpeed * dt) % 56;
@@ -1879,6 +1908,7 @@
     }
 
     function drawTrail() {
+      updateRoadWidth();
       const trail = activeTrail();
       const gradient = ctx.createLinearGradient(0, 0, 0, world.h);
       gradient.addColorStop(0, "#253915");
@@ -1920,10 +1950,13 @@
       ctx.lineWidth = 4;
       ctx.setLineDash([20, 36]);
       ctx.lineDashOffset = roadOffset;
-      ctx.beginPath();
-      ctx.moveTo(road.center, -80);
-      ctx.lineTo(road.center, world.h + 80);
-      ctx.stroke();
+      for (let lane = 1; lane < road.lanes; lane += 1) {
+        const laneX = road.left + ((road.right - road.left) / road.lanes) * lane;
+        ctx.beginPath();
+        ctx.moveTo(laneX, -80);
+        ctx.lineTo(laneX, world.h + 80);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
 
       ctx.strokeStyle = "rgba(246, 195, 68, 0.7)";

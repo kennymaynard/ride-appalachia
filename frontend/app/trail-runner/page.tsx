@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const trailRunnerGameUrl = "/trail-runner-game/index.html?v=2026-07-07-extra-lane";
+
 export const metadata: Metadata = {
   title: "Appalachia Trail Runner Game | Appalachia Offroad",
   description:
@@ -18,7 +20,7 @@ export default function TrailRunnerPage() {
           Appalachia Offroad to plan the real trip.
         </p>
         <div className="home-hero-actions" aria-label="Trail runner links">
-          <Link href="/trail-runner-game/index.html">Open Full Screen</Link>
+          <Link href={trailRunnerGameUrl}>Open Full Screen</Link>
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/terms">Terms</Link>
         </div>
@@ -27,7 +29,7 @@ export default function TrailRunnerPage() {
       <section className="trail-runner-frame-wrap" aria-label="Playable Trail Runner game">
         <iframe
           className="trail-runner-frame"
-          src="/trail-runner-game/index.html"
+          src={trailRunnerGameUrl}
           title="Appalachia Trail Runner playable game"
           allow="fullscreen"
           allowFullScreen
