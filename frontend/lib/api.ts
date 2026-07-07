@@ -260,6 +260,21 @@ export async function getBusinessByAccessToken(ownerAccessToken: string): Promis
   }
 }
 
+export async function syncSubscriptionCheckoutSession(sessionId: string): Promise<boolean> {
+  try {
+    const response = await apiFetch(
+      `/api/subscriptions/checkout-session/${encodeURIComponent(sessionId)}/sync`,
+      {
+        method: "POST",
+        cache: "no-store",
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function createBusiness(payload: BusinessCreateInput): Promise<Business> {
   const response = await fetch(`${getApiUrl()}/api/businesses`, {
     method: "POST",

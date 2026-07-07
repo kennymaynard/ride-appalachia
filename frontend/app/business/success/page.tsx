@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getBusinessByAccessToken } from "../../../lib/api";
+import { getBusinessByAccessToken, syncSubscriptionCheckoutSession } from "../../../lib/api";
 import { partnerTiers } from "../../../lib/sample-data";
 import type { Tier } from "../../../lib/types";
 
@@ -9,6 +9,7 @@ type Props = {
     checkout?: string;
     booking?: string;
     booking_ids?: string;
+    session_id?: string;
     tier?: Tier["id"];
     access_token?: string;
   }>;
@@ -24,6 +25,9 @@ export default async function BusinessSuccessPage({ searchParams }: Props) {
   const params = await searchParams;
   const bookingIds = params.booking_ids?.split(",").filter(Boolean) || [];
   const isBookingCheckout = params.booking === "success" || params.booking === "stub";
+  if (params.session_id && !isBookingCheckout) {
+    await syncSubscriptionCheckoutSession(params.session_id);
+  }
   const business = params.access_token
     ? await getBusinessByAccessToken(params.access_token)
     : null;

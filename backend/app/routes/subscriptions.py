@@ -139,6 +139,44 @@ def mark_subscription_status(
     return CheckoutSessionRead(checkout_url=f"/business/success?business_id={business.id}")
 
 
+@router.post("/subscriptions/checkout-session/{session_id}/sync", response_model=CheckoutSessionRead)
+def sync_subscription_checkout_session(
+    session_id: str,
+    settings: Settings = Depends(get_settings),
+    db: Session = Depends(get_db),
+) -> CheckoutSessionRead:
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+    if not session_id.startswith("cs_"):
+        raise HTTPException(status_code=400, detail="Invalid checkout session")
+
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except stripe.StripeError as exc:
+        raise HTTPException(status_code=502, detail="Unable to verify Stripe checkout session") from exc
+
+    if session.get("mode") != "subscription":
+        raise HTTPException(status_code=400, detail="Checkout session is not a subscription")
+    if session.get("payment_status") not in {"paid", "no_payment_required"}:
+        raise HTTPException(status_code=409, detail="Checkout session is not paid yet")
+
+    metadata = session.get("metadata") or {}
+    business_id = int(metadata.get("business_id") or 0)
+    if not business_id:
+        raise HTTPException(status_code=400, detail="Checkout session is missing business metadata")
+
+    business = apply_subscription_update(
+        db,
+        business_id=business_id,
+        subscription_status="active",
+        stripe_customer_id=session.get("customer") or "",
+        stripe_subscription_id=session.get("subscription") or "",
+        tier=metadata.get("tier") or "",
+    )
+    return CheckoutSessionRead(checkout_url=f"/business/success?business_id={business.id}")
+
+
 @router.post("/subscriptions/webhook")
 async def stripe_webhook(
     request: Request,

@@ -39,7 +39,7 @@ services:
       - key: PRINTIFY_SHOP_ID
         sync: false
       - key: PRINTIFY_AUTO_SUBMIT_ORDERS
-        value: "false"
+        value: "true"
       - key: PRINTIFY_SEND_SHIPPING_NOTIFICATION
         value: "false"
       - key: ADMIN_PASSWORD
