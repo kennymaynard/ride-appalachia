@@ -8,6 +8,64 @@ from app.schemas import BusinessRead
 router = APIRouter(tags=["marketplace"])
 
 
+def compact_listing(business: Business) -> dict:
+    return {
+        "id": business.id,
+        "name": business.name,
+        "slug": business.slug,
+        "category": business.category,
+        "description": business.description[:360],
+        "phone": business.phone,
+        "location": business.location,
+        "latitude": business.latitude,
+        "longitude": business.longitude,
+        "photo_url": business.photo_url,
+        "website_url": business.website_url,
+        "subscription_tier": business.subscription_tier,
+        "listing_status": business.listing_status,
+        "admin_notes": "",
+        "is_approved": business.is_approved,
+        "is_featured": business.is_featured,
+        "is_deleted": business.is_deleted,
+        "deleted_at": business.deleted_at,
+        "subscription_status": business.subscription_status,
+        "stripe_customer_id": "",
+        "stripe_subscription_id": "",
+        "stripe_connect_account_id": "",
+        "stripe_connect_onboarding_complete": business.stripe_connect_onboarding_complete,
+        "view_clicks": business.view_clicks,
+        "action_clicks": business.action_clicks,
+        "deals": [
+            {
+                "id": deal.id,
+                "title": deal.title,
+                "code": deal.code,
+                "description": deal.description[:180],
+                "is_active": deal.is_active,
+                "claim_clicks": deal.claim_clicks,
+            }
+            for deal in business.deals
+            if deal.is_active
+        ],
+        "campaigns": [
+            {
+                "id": campaign.id,
+                "business_id": campaign.business_id,
+                "campaign_type": campaign.campaign_type,
+                "title": campaign.title,
+                "description": campaign.description[:180],
+                "target_area": campaign.target_area,
+                "monthly_budget": campaign.monthly_budget,
+                "status": campaign.status,
+                "impressions": campaign.impressions,
+                "clicks": campaign.clicks,
+            }
+            for campaign in business.campaigns
+            if campaign.status == "active"
+        ],
+    }
+
+
 @router.get("/listings", response_model=list[BusinessRead])
 def list_marketplace(
     category: str | None = None,
@@ -44,7 +102,7 @@ def list_marketplace(
         )
 
     businesses = query.order_by(Business.created_at.desc()).all()
-    return sorted(
+    sorted_businesses = sorted(
         businesses,
         key=lambda business: (
             any(campaign.status == "active" for campaign in business.campaigns),
@@ -53,6 +111,7 @@ def list_marketplace(
         ),
         reverse=True,
     )
+    return [compact_listing(business) for business in sorted_businesses]
 
 
 @router.get("/listings/{slug}", response_model=BusinessRead)
