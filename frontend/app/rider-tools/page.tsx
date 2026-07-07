@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { RideAreaMap } from "../../components/RideAreaMap";
 import { RiderTools } from "../../components/RiderTools";
-import { getListings } from "../../lib/api";
 import { rideAreas } from "../../lib/sample-data";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RiderToolsPage() {
-  const listings = await getListings("all");
-
   return (
     <main className="page rider-tools-page">
       <section className="page-hero compact">
@@ -26,12 +22,8 @@ export default async function RiderToolsPage() {
         </p>
       </section>
 
-      <section className="page-section rider-public-map-section">
-        <RideAreaMap areas={rideAreas} businesses={listings} compact />
-      </section>
-
       <section className="page-section">
-        <RiderTools areas={rideAreas} listings={listings} />
+        <RiderTools areas={rideAreas} listings={[]} />
       </section>
     </main>
   );
