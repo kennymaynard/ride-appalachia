@@ -45,11 +45,11 @@
       width: 100%;
       height: 100%;
       margin: 0;
-      overflow: hidden;
+      overflow: auto;
       background: var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      touch-action: none;
+      touch-action: manipulation;
       user-select: none;
     }
 
@@ -65,7 +65,7 @@
       position: relative;
       width: min(100vw, 430px);
       height: 100dvh;
-      min-height: 620px;
+      min-height: min(620px, 100dvh);
       max-height: 932px;
       overflow: hidden;
       background: #0c0b08;
@@ -77,6 +77,7 @@
       width: 100%;
       height: 100%;
       background: #17100a;
+      touch-action: none;
     }
 
     .hud {
@@ -280,10 +281,14 @@
       display: grid;
       place-items: center;
       padding: max(1.2rem, env(safe-area-inset-top)) 1.15rem max(1.2rem, env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background:
         linear-gradient(180deg, rgba(7, 6, 4, 0.36), rgba(7, 6, 4, 0.86)),
         radial-gradient(circle at 50% 24%, rgba(242, 106, 27, 0.32), transparent 16rem);
       text-align: center;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
     }
 
     .card {
@@ -535,11 +540,14 @@
     }
 
     .end-card {
-      max-height: calc(100dvh - 1.4rem);
+      align-self: start;
+      max-height: none;
       overflow-y: auto;
       padding: 0.82rem;
       overscroll-behavior: contain;
       scrollbar-width: thin;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
     }
 
     .end-card .eyebrow {
@@ -697,7 +705,7 @@
         </div>
       </div>
       <div class="power-row">
-        <button class="power-button" id="clearBarriersButton" type="button">Clear 50% Barriers - 50 Coins</button>
+        <button class="power-button" id="clearBarriersButton" type="button">Delete Barriers 5s - 50 Coins</button>
       </div>
     </section>
 
@@ -1355,13 +1363,10 @@
       clearBarriersUsed = true;
       bankCoins -= 50;
       localStorage.setItem(coinBankKey, String(bankCoins));
-      const sorted = [...obstacles].sort((a, b) => b.y - a.y);
-      const removeCount = Math.ceil(sorted.length / 2);
-      const removeSet = new Set(sorted.slice(0, removeCount));
-      obstacles = obstacles.filter((obstacle) => !removeSet.has(obstacle));
+      obstacles = [];
       barrierClearTimer = 300;
       score += 150;
-      showToast("Barriers cleared");
+      showToast("Barriers deleted 5s");
       burst(player.x, player.y - 30, "#f6c344", 24);
       updateGarageUi();
       updateHud();
@@ -1591,7 +1596,7 @@
       fuel -= (0.025 + speed * 0.0025) * dt;
       speed = 3.65 + activeTrail().speed + Math.min(6.2, score / 2050);
 
-      const skipBarrier = barrierClearTimer > 0 && Math.random() < 0.5;
+      const skipBarrier = barrierClearTimer > 0;
       if (frame % Math.max(26, Math.round(64 - speed * 3.1)) === 0 && !skipBarrier) spawnObstacle();
       if (frame % Math.max(42, Math.round(84 - speed * 2.5)) === 0) spawnReward();
 
@@ -1727,10 +1732,10 @@
       xpFill.style.width = `${clamp(Math.round(info.progress * 100), 0, 100)}%`;
       clearBarriersButton.disabled = state !== "running" || clearBarriersUsed || bankCoins < 50;
       clearBarriersButton.textContent = clearBarriersUsed
-        ? "Barrier Clear Used"
+        ? "Barrier Delete Used"
         : bankCoins < 50
-          ? "Need 50 Coins to Clear Barriers"
-          : "Clear 50% Barriers - 50 Coins";
+          ? "Need 50 Coins"
+          : "Delete Barriers 5s - 50 Coins";
     }
 
     function drawTrail() {

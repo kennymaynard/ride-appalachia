@@ -5,7 +5,7 @@ export default function TermsPage() {
     <main className="page">
       <section className="page-hero compact">
         <p className="eyebrow">Terms</p>
-        <h1>Terms of service.</h1>
+        <h1>Terms of Service</h1>
         <p>
           Appalachia Offroad connects ATV and UTV riders with local businesses,
           ride-area planning information, deals, and reviews.
@@ -13,7 +13,23 @@ export default function TermsPage() {
         <p className="field-help">Last updated: {updatedAt}</p>
       </section>
 
-      <section className="legal-page">
+      <section className="legal-page" aria-label="Terms of service sections">
+        <aside className="legal-summary">
+          <p className="eyebrow">Agreement Overview</p>
+          <h2>Use Appalachia Offroad responsibly.</h2>
+          <p>
+            These terms cover rider planning tools, business listings,
+            marketplace activity, payments, subscriptions, community content,
+            and mini game experiences connected to the platform.
+          </p>
+          <div>
+            <span>Contact</span>
+            <a href="mailto:support@appalachiaoffroadapp.com">
+              support@appalachiaoffroadapp.com
+            </a>
+          </div>
+        </aside>
+
         <article>
           <h2>Using the App</h2>
           <p>
@@ -55,6 +71,15 @@ export default function TermsPage() {
             to request, review, approve, cancel, or coordinate these items, but
             businesses remain responsible for fulfilling their own services and
             honoring their posted policies.
+          </p>
+        </article>
+        <article>
+          <h2>Mini Games and Rewards</h2>
+          <p>
+            Trail Runner and similar mini games are provided for entertainment
+            and promotional engagement. Scores, coins, upgrades, run codes,
+            rewards, and ad-based bonuses do not have cash value and may be
+            adjusted, reset, limited, or discontinued as features change.
           </p>
         </article>
         <article>

@@ -7802,29 +7802,98 @@ button.tier-card.is-selected {
 
 .legal-page {
   display: grid;
-  gap: 1rem;
-  width: min(70rem, calc(100% - 2rem));
+  grid-template-columns: minmax(15rem, 0.42fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+  width: min(84rem, calc(100% - 2rem));
   margin: 1rem auto 0;
+  counter-reset: legal-section;
+}
+
+.legal-summary,
+.legal-page article {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(242, 106, 27, 0.07), rgba(98, 168, 120, 0.035)),
+    rgba(12, 12, 12, 0.94);
+  box-shadow: 0 1rem 2.6rem rgba(0, 0, 0, 0.22);
+}
+
+.legal-summary {
+  position: sticky;
+  top: 6.5rem;
+  padding: 1rem;
 }
 
 .legal-page article {
-  border: 1px solid var(--line);
-  border-radius: 0.55rem;
-  background: var(--panel);
-  padding: 1rem;
+  position: relative;
+  grid-column: 2;
+  padding: 1rem 1rem 1rem 3.35rem;
+  counter-increment: legal-section;
+}
+
+.legal-page article::before {
+  content: counter(legal-section, decimal-leading-zero);
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  width: 1.68rem;
+  height: 1.68rem;
+  place-items: center;
+  border-radius: 0.35rem;
+  background: var(--orange);
+  color: #160801;
+  font-size: 0.68rem;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .legal-page h2 {
   margin: 0;
   color: var(--orange-soft);
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.12rem, 2vw, 1.55rem);
   font-weight: 950;
   text-transform: uppercase;
 }
 
 .legal-page p {
+  margin: 0.45rem 0 0;
   color: var(--soft);
-  line-height: 1.5;
+  font-size: 0.96rem;
+  line-height: 1.58;
+}
+
+.legal-summary h2 {
+  margin: 0;
+  color: var(--soft);
+  font-size: clamp(1.4rem, 3vw, 2.25rem);
+  font-weight: 950;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.legal-summary div {
+  display: grid;
+  gap: 0.18rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 0.85rem;
+}
+
+.legal-summary span {
+  color: var(--orange-soft);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.legal-summary a {
+  color: var(--soft);
+  font-weight: 850;
+  overflow-wrap: anywhere;
 }
 
 .heroes-page {
@@ -9758,8 +9827,8 @@ button.tier-card.is-selected {
 
 .trail-runner-frame {
   width: min(100%, 430px);
-  height: min(88vh, 932px);
-  min-height: 720px;
+  height: min(82dvh, 932px);
+  min-height: min(620px, 82dvh);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 0.75rem;
@@ -9768,6 +9837,18 @@ button.tier-card.is-selected {
 }
 
 @media (max-width: 900px) {
+  .legal-page {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-summary {
+    position: static;
+  }
+
+  .legal-page article {
+    grid-column: auto;
+  }
+
   .trail-talk-layout,
   .rider-tools-layout {
     grid-template-columns: 1fr;
@@ -9799,8 +9880,8 @@ button.tier-card.is-selected {
 
   .trail-runner-frame {
     width: 100%;
-    height: 88vh;
-    min-height: 680px;
+    height: min(82dvh, 932px);
+    min-height: min(560px, 82dvh);
   }
 }
 

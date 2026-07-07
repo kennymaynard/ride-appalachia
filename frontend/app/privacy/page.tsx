@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <main className="page">
       <section className="page-hero compact">
         <p className="eyebrow">Privacy</p>
-        <h1>Privacy policy.</h1>
+        <h1>Privacy Policy</h1>
         <p>
           Appalachia Offroad collects only the information needed to operate the
           marketplace, business portal, payments, reviews, and trip-planning experience.
@@ -13,7 +13,23 @@ export default function PrivacyPage() {
         <p className="field-help">Last updated: {updatedAt}</p>
       </section>
 
-      <section className="legal-page">
+      <section className="legal-page" aria-label="Privacy policy sections">
+        <aside className="legal-summary">
+          <p className="eyebrow">Policy Overview</p>
+          <h2>Your information, used to run the platform.</h2>
+          <p>
+            This policy explains what we collect, how we use it, when service
+            providers help us process it, and how riders or businesses can
+            request updates.
+          </p>
+          <div>
+            <span>Contact</span>
+            <a href="mailto:support@appalachiaoffroadapp.com">
+              support@appalachiaoffroadapp.com
+            </a>
+          </div>
+        </aside>
+
         <article>
           <h2>Information We Collect</h2>
           <p>
@@ -53,6 +69,16 @@ export default function PrivacyPage() {
             saved trips, selected stops, booking lookups, reviews, partner visit
             activity, badges, and communication preferences. Trip-planning data
             is used to provide saved plans and improve rider tools.
+          </p>
+        </article>
+        <article>
+          <h2>Mini Games and Rewards</h2>
+          <p>
+            Trail Runner and similar game experiences may store local progress,
+            coins, upgrades, scores, run codes, reward interactions, and basic
+            gameplay activity. This information is used to operate the game,
+            support rewarded-ad flows, improve the experience, and help riders
+            connect back to trip-planning tools.
           </p>
         </article>
         <article>
