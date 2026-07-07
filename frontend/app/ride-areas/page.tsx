@@ -3,13 +3,10 @@ import { RideAreaFinder } from "../../components/RideAreaFinder";
 import { RideAreaGrid } from "../../components/RideAreaGrid";
 import { RideAreaMap } from "../../components/RideAreaMap";
 import { rideAreas, trailReviews } from "../../lib/sample-data";
-import { getListings } from "../../lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function RideAreasPage() {
-  const listings = await getListings("all");
-
   return (
     <main className="page">
       <section className="page-hero compact">
@@ -30,8 +27,8 @@ export default async function RideAreasPage() {
         <RideAreaGrid areas={rideAreas.slice(0, 9)} />
       </section>
 
-      <RideAreaFinder areas={rideAreas} listings={listings} />
-      <RideAreaMap areas={rideAreas} businesses={listings} reviews={trailReviews} />
+      <RideAreaFinder areas={rideAreas} listings={[]} />
+      <RideAreaMap areas={rideAreas} businesses={[]} reviews={trailReviews} />
     </main>
   );
 }

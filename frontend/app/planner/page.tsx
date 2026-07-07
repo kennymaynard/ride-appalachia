@@ -1,5 +1,4 @@
 import { TripPlanner } from "../../components/TripPlanner";
-import { getListings } from "../../lib/api";
 import { rideAreas } from "../../lib/sample-data";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +9,6 @@ type Props = {
 
 export default async function PlannerPage({ searchParams }: Props) {
   const { area } = await searchParams;
-  const listings = await getListings("all");
 
   return (
     <main className="page">
@@ -23,7 +21,7 @@ export default async function PlannerPage({ searchParams }: Props) {
         </p>
       </section>
 
-      <TripPlanner areas={rideAreas} initialLocation={area || ""} listings={listings} />
+      <TripPlanner areas={rideAreas} initialLocation={area || ""} listings={[]} />
     </main>
   );
 }

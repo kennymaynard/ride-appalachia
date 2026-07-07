@@ -8,6 +8,12 @@ from app.schemas import BusinessRead
 router = APIRouter(tags=["marketplace"])
 
 
+def public_photo_url(photo_url: str) -> str:
+    if photo_url.startswith("data:") or len(photo_url) > 1000:
+        return ""
+    return photo_url
+
+
 def compact_listing(business: Business) -> dict:
     return {
         "id": business.id,
@@ -19,7 +25,7 @@ def compact_listing(business: Business) -> dict:
         "location": business.location,
         "latitude": business.latitude,
         "longitude": business.longitude,
-        "photo_url": business.photo_url,
+        "photo_url": public_photo_url(business.photo_url),
         "website_url": business.website_url,
         "subscription_tier": business.subscription_tier,
         "listing_status": business.listing_status,
