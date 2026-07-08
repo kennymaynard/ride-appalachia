@@ -1177,7 +1177,7 @@
 
     function collectionPadding(type) {
       if (type !== "coin") return 0;
-      return upgrades.magnet * 18;
+      return upgrades.magnet * 8;
     }
 
     function xpForLevel(level) {
@@ -1808,8 +1808,10 @@
           const dx = player.x - reward.x;
           const dy = player.y + 35 - reward.y;
           const distance = Math.hypot(dx, dy);
-          const reach = 78 + upgrades.magnet * 34;
-          if (distance < reach && distance > 1) {
+          const laneWidth = (road.right - road.left) / road.lanes;
+          const horizontalReach = Math.min(laneWidth * 0.52, 42 + upgrades.magnet * 10);
+          const reach = 72 + upgrades.magnet * 22;
+          if (Math.abs(dx) < horizontalReach && distance < reach && distance > 1) {
             const pull = (1 - distance / reach) * upgrades.magnet * 0.72 * dt;
             reward.x += (dx / distance) * pull * 10;
             reward.y += (dy / distance) * pull * 10;
