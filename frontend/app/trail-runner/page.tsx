@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-const trailRunnerGameUrl = "/trail-runner-game/index.html?v=2026-07-07-level-reset-views";
+const trailRunnerGameUrl = "/trail-runner-game/index.html?v=2026-07-07-softer-tuning";
 
 export const metadata: Metadata = {
   title: "Appalachia Trail Runner Game | Appalachia Offroad",
