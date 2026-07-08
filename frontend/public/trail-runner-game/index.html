@@ -963,10 +963,10 @@
     const keys = { left: false, right: false };
     const trailLevels = [
       { name: "Warmup", score: 0, color: "#704c2b", speed: 0, hazard: 0, fuel: 1, double: 0, hit: 1, reward: 1, real: "Rush Off-Road", text: "Ready for the real thing? Browse Rush-area trails, food, fuel, and lodging." },
-      { name: "Rock Garden", score: 900, color: "#665240", speed: 0.85, hazard: 8, fuel: 1.12, double: 0.08, hit: 1.08, reward: 0.96, real: "Royal Blue", text: "Rocky section cleared. Plan a Royal Blue weekend in the app." },
-      { name: "Mud Run", score: 2200, color: "#5a3a1f", speed: 1.65, hazard: 15, fuel: 1.24, double: 0.14, hit: 1.16, reward: 0.92, real: "Hatfield-McCoy", text: "Mud survived. Find Hatfield-McCoy ride towns and stops." },
-      { name: "Ridge Climb", score: 4200, color: "#75603a", speed: 2.35, hazard: 22, fuel: 1.38, double: 0.22, hit: 1.26, reward: 0.88, real: "Harlan County", text: "Ridge unlocked. Map Harlan County riding and nearby services." },
-      { name: "Night Rush", score: 6800, color: "#3d3b45", speed: 3.15, hazard: 30, fuel: 1.55, double: 0.32, hit: 1.38, reward: 0.84, real: "Appalachia Trip Planner", text: "Night rush complete. Build a saved trip before service drops." },
+      { name: "Rock Garden", score: 900, color: "#665240", speed: 0.62, hazard: 4, fuel: 1.06, double: 0.04, hit: 1.04, reward: 0.98, real: "Royal Blue", text: "Rocky section cleared. Plan a Royal Blue weekend in the app." },
+      { name: "Mud Run", score: 2200, color: "#5a3a1f", speed: 1.18, hazard: 9, fuel: 1.14, double: 0.08, hit: 1.1, reward: 0.96, real: "Hatfield-McCoy", text: "Mud survived. Find Hatfield-McCoy ride towns and stops." },
+      { name: "Ridge Climb", score: 4200, color: "#75603a", speed: 1.75, hazard: 14, fuel: 1.24, double: 0.13, hit: 1.17, reward: 0.94, real: "Harlan County", text: "Ridge unlocked. Map Harlan County riding and nearby services." },
+      { name: "Night Rush", score: 6800, color: "#3d3b45", speed: 2.35, hazard: 20, fuel: 1.36, double: 0.2, hit: 1.25, reward: 0.92, real: "Appalachia Trip Planner", text: "Night rush complete. Build a saved trip before service drops." },
     ];
     const skinCatalog = [
       { id: "ember", name: "Trail Ember", cost: 0, top: "#ff8a2c", bottom: "#bd3f0b" },
@@ -1754,10 +1754,10 @@
         burst(player.x, player.y + 30, "#60c476", 18);
       }
       fuel -= (0.025 + speed * 0.0025) * trail.fuel * dt;
-      speed = 3.65 + trail.speed + Math.min(6.8, score / 1750);
+      speed = 3.45 + trail.speed + Math.min(5.9, score / 2150);
 
-      const obstacleInterval = Math.max(18, Math.round(66 - speed * 3.4 - trail.hazard));
-      const rewardInterval = Math.max(48, Math.round((86 - speed * 2.2) / trail.reward));
+      const obstacleInterval = Math.max(24, Math.round(72 - speed * 2.8 - trail.hazard));
+      const rewardInterval = Math.max(44, Math.round((82 - speed * 2) / trail.reward));
       if (frame % obstacleInterval === 0) spawnObstacle();
       if (frame % rewardInterval === 0) spawnReward();
 
