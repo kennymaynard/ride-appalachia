@@ -962,11 +962,11 @@
     const road = { left: 58, right: 372, center: 215, lanes: 2 };
     const keys = { left: false, right: false };
     const trailLevels = [
-      { name: "Warmup", score: 0, color: "#704c2b", speed: 0, hazard: 0, fuel: 1, double: 0, hit: 1, reward: 1, real: "Rush Off-Road", text: "Ready for the real thing? Browse Rush-area trails, food, fuel, and lodging." },
-      { name: "Rock Garden", score: 900, color: "#665240", speed: 0.62, hazard: 4, fuel: 1.06, double: 0.04, hit: 1.04, reward: 0.98, real: "Royal Blue", text: "Rocky section cleared. Plan a Royal Blue weekend in the app." },
-      { name: "Mud Run", score: 2200, color: "#5a3a1f", speed: 1.18, hazard: 9, fuel: 1.14, double: 0.08, hit: 1.1, reward: 0.96, real: "Hatfield-McCoy", text: "Mud survived. Find Hatfield-McCoy ride towns and stops." },
-      { name: "Ridge Climb", score: 4200, color: "#75603a", speed: 1.75, hazard: 14, fuel: 1.24, double: 0.13, hit: 1.17, reward: 0.94, real: "Harlan County", text: "Ridge unlocked. Map Harlan County riding and nearby services." },
-      { name: "Night Rush", score: 6800, color: "#3d3b45", speed: 2.35, hazard: 20, fuel: 1.36, double: 0.2, hit: 1.25, reward: 0.92, real: "Appalachia Trip Planner", text: "Night rush complete. Build a saved trip before service drops." },
+      { name: "Warmup", score: 0, color: "#704c2b", sky: "#253915", ground: "#071407", ridge: "#152d13", sun: "#f6c344", tree: "#2f4d22", dash: "#fff8e8", speed: 0, hazard: 0, fuel: 1, double: 0, hit: 1, reward: 1, real: "Rush Off-Road", text: "Ready for the real thing? Browse Rush-area trails, food, fuel, and lodging." },
+      { name: "Rock Garden", score: 900, color: "#665240", sky: "#2c3328", ground: "#11150f", ridge: "#263322", sun: "#f59e0b", tree: "#38412c", dash: "#fef3c7", speed: 0.62, hazard: 4, fuel: 1.06, double: 0.04, hit: 1.04, reward: 0.98, real: "Royal Blue", text: "Rocky section cleared. Plan a Royal Blue weekend in the app." },
+      { name: "Mud Run", score: 2200, color: "#5a3a1f", sky: "#2a2118", ground: "#120d09", ridge: "#3a2819", sun: "#fb923c", tree: "#31421d", dash: "#fed7aa", speed: 1.18, hazard: 9, fuel: 1.14, double: 0.08, hit: 1.1, reward: 0.96, real: "Hatfield-McCoy", text: "Mud survived. Find Hatfield-McCoy ride towns and stops." },
+      { name: "Ridge Climb", score: 4200, color: "#75603a", sky: "#1b2a34", ground: "#071018", ridge: "#26384b", sun: "#fde68a", tree: "#244532", dash: "#dbeafe", speed: 1.75, hazard: 14, fuel: 1.24, double: 0.13, hit: 1.17, reward: 0.94, real: "Harlan County", text: "Ridge unlocked. Map Harlan County riding and nearby services." },
+      { name: "Night Rush", score: 6800, color: "#3d3b45", sky: "#080913", ground: "#030409", ridge: "#161827", sun: "#bfdbfe", tree: "#17231a", dash: "#bfdbfe", speed: 2.35, hazard: 20, fuel: 1.36, double: 0.2, hit: 1.25, reward: 0.92, real: "Appalachia Trip Planner", text: "Night rush complete. Build a saved trip before service drops." },
     ];
     const skinCatalog = [
       { id: "ember", name: "Trail Ember", cost: 0, top: "#ff8a2c", bottom: "#bd3f0b" },
@@ -1211,6 +1211,24 @@
 
     function activeTrail() {
       return trailLevels[currentTrailLevel - 1] || trailLevels[0];
+    }
+
+    function resetVehicleForLevel() {
+      updateRoadWidth();
+      player.x = road.center;
+      player.targetX = road.center;
+      player.dragging = false;
+      obstacles = [];
+      rewards = [];
+      particles = [];
+      combo = 1;
+      boost = 0;
+      invincible = 120;
+      health = maxHealth();
+      fuel = maxFuel();
+      roadOffset = 0;
+      shake = 0;
+      flash = 0;
     }
 
     function rand(min, max) {
@@ -1740,8 +1758,9 @@
       const nextTrailLevel = trailLevelForScore(score);
       if (nextTrailLevel !== currentTrailLevel) {
         currentTrailLevel = nextTrailLevel;
-        showToast(`Trail ${currentTrailLevel}: ${activeTrail().name}`);
-        burst(player.x, player.y + 24, "#f6c344", 20);
+        resetVehicleForLevel();
+        showToast(`Level ${currentTrailLevel}: ${activeTrail().name}`);
+        burst(player.x, player.y + 24, activeTrail().sun, 26);
       }
       updateRoadWidth();
       const trail = activeTrail();
@@ -1911,17 +1930,17 @@
       updateRoadWidth();
       const trail = activeTrail();
       const gradient = ctx.createLinearGradient(0, 0, 0, world.h);
-      gradient.addColorStop(0, "#253915");
-      gradient.addColorStop(1, currentTrailLevel >= 5 ? "#080913" : "#071407");
+      gradient.addColorStop(0, trail.sky);
+      gradient.addColorStop(1, trail.ground);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, world.w, world.h);
 
-      ctx.fillStyle = "rgba(246, 195, 68, 0.4)";
+      ctx.fillStyle = currentTrailLevel >= 5 ? "rgba(191, 219, 254, 0.5)" : `${trail.sun}66`;
       ctx.beginPath();
       ctx.arc(338, 82, 38, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = "rgba(21, 45, 19, 0.82)";
+      ctx.fillStyle = trail.ridge;
       ctx.beginPath();
       ctx.moveTo(0, 220);
       ctx.lineTo(70, 122);
@@ -1946,7 +1965,7 @@
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(255, 248, 232, 0.32)";
+      ctx.strokeStyle = currentTrailLevel >= 5 ? "rgba(191, 219, 254, 0.38)" : `${trail.dash}52`;
       ctx.lineWidth = 4;
       ctx.setLineDash([20, 36]);
       ctx.lineDashOffset = roadOffset;
@@ -1968,24 +1987,30 @@
       ctx.lineTo(road.right + 6, world.h);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.fillStyle = currentTrailLevel >= 4 ? "rgba(219, 234, 254, 0.1)" : "rgba(255, 255, 255, 0.08)";
       for (let y = -56 + roadOffset; y < world.h + 56; y += 56) {
         ctx.fillRect(82, y, 24, 4);
         ctx.fillRect(326, y + 24, 22, 4);
       }
 
-      ctx.fillStyle = "rgba(6, 20, 7, 0.86)";
+      ctx.fillStyle = currentTrailLevel === 3 ? "rgba(45, 29, 12, 0.78)" : "rgba(6, 20, 7, 0.86)";
       for (let y = -70 + roadOffset * 0.6; y < world.h + 70; y += 86) {
-        drawPine(24, y, 1);
-        drawPine(404, y + 42, -1);
+        drawPine(24, y, 1, trail.tree);
+        drawPine(404, y + 42, -1, trail.tree);
+      }
+      if (currentTrailLevel >= 5) {
+        ctx.fillStyle = "rgba(191, 219, 254, 0.08)";
+        for (let y = -40 + roadOffset * 0.25; y < world.h + 40; y += 120) {
+          ctx.fillRect(0, y, world.w, 18);
+        }
       }
     }
 
-    function drawPine(x, y, side) {
+    function drawPine(x, y, side, color = "#2f4d22") {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(side, 1);
-      ctx.fillStyle = "#2f4d22";
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(0, -20);
       ctx.lineTo(26, 22);
