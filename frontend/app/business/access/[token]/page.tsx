@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { BusinessDashboard } from "../../../../components/BusinessDashboard";
 import { getBusinessByAccessToken } from "../../../../lib/api";
 
@@ -9,10 +8,26 @@ type Props = {
 
 export default async function BusinessAccessPage({ params }: Props) {
   const { token } = await params;
-  const business = await getBusinessByAccessToken(token);
+  const business = await getBusinessByAccessToken(decodeURIComponent(token));
 
   if (!business) {
-    notFound();
+    return (
+      <main className="page">
+        <section className="page-hero compact">
+          <p className="eyebrow">Business access</p>
+          <h1>This dashboard link needs a fresh login.</h1>
+          <p>
+            We could not verify this private business link. It may be expired,
+            copied incorrectly, or tied to a listing that needs a new dashboard
+            login email.
+          </p>
+          <div className="home-hero-actions" aria-label="Business access recovery">
+            <Link href="/business/login">Send New Login Link</Link>
+            <Link href="/contact">Contact Support</Link>
+          </div>
+        </section>
+      </main>
+    );
   }
 
   return (

@@ -1,5 +1,5 @@
 export default function PrivacyPage() {
-  const updatedAt = "June 30, 2026";
+  const updatedAt = "July 9, 2026";
 
   return (
     <main className="page">
@@ -86,9 +86,24 @@ export default function PrivacyPage() {
           <p>
             Payments, subscriptions, checkout, connected accounts, payouts, and
             certain financial onboarding steps are processed by Stripe.
-            Appalachia Offroad does not store full card numbers. Stripe may
-            collect payment, identity, tax, bank, and fraud-prevention
-            information according to Stripe&apos;s own policies.
+            Appalachia Offroad does not store full card numbers or bank account
+            information. For lodging reservations and other bookable services,
+            payment is processed through the provider&apos;s connected Stripe
+            account when online booking is available. Stripe may collect
+            payment, identity, tax, bank, and fraud-prevention information
+            according to Stripe&apos;s own policies.
+          </p>
+        </article>
+        <article>
+          <h2>Provider Tax Responsibility</h2>
+          <p>
+            Lodging providers and other bookable businesses may enter tax rates,
+            booking prices, cancellation terms, and related reservation details
+            in the business dashboard. Providers are responsible for collecting,
+            reporting, and remitting applicable sales, lodging, occupancy, and
+            local taxes. Appalachia Offroad may store booking totals and tax
+            line items for receipts, support, and marketplace records, but does
+            not store provider bank information or remit taxes for providers.
           </p>
         </article>
         <article>

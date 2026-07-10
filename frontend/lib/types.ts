@@ -56,6 +56,7 @@ export type BookableListing = {
   photo_url: string;
   nightly_rate_cents: number;
   cleaning_fee_cents: number;
+  tax_rate_basis_points: number;
   max_guests: number;
   cancellation_window_hours: number;
   cancellation_policy: string;
@@ -82,6 +83,8 @@ export type Booking = {
   message: string;
   status: "requested" | "approved" | "checkout_sent" | "paid" | "declined" | "canceled";
   subtotal_cents: number;
+  cleaning_fee_cents: number;
+  taxes_cents: number;
   platform_fee_cents: number;
   total_cents: number;
   stripe_checkout_session_id: string;
@@ -98,6 +101,7 @@ export type Booking = {
 
 export type BookingDetail = Booking & {
   business_name: string;
+  business_address: string;
   listing_title: string;
   cancellation_window_hours: number;
   cancellation_policy: string;
@@ -113,6 +117,33 @@ export type BookingTransfer = {
   amount_cents: number;
   status: "pending" | "scheduled_after_checkin" | "paid" | "failed" | "missing_connect_account" | "canceled";
   release_date: string;
+};
+
+export type StoreOrder = {
+  id: number;
+  stripe_checkout_session_id: string;
+  stripe_payment_intent_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  total_cents: number;
+  currency: string;
+  status: string;
+  items: string;
+  shipping_name: string;
+  shipping_address: string;
+  printify_submitted: boolean;
+  printify_order_id: string;
+  printify_message: string;
+  created_at: string;
+};
+
+export type AdminRiderAccount = Rider & {
+  completed_trails: number;
+  saved_trails: number;
+  badge_count: number;
+  partner_visits: number;
+  created_at?: string | null;
 };
 
 export type MarketingLead = {
@@ -182,6 +213,14 @@ export type AdminAnalytics = {
   rider_count: number;
   business_count: number;
   page_visits: number;
+  connected_stripe_accounts: number;
+  not_connected_stripe_accounts: number;
+  pending_verification_stripe_accounts: number;
+  platform_revenue_cents: number;
+  gross_booking_volume_cents: number;
+  platform_fee_collected_cents: number;
+  bookings_count: number;
+  failed_payments_count: number;
   rider_locations: Array<{
     label: string;
     latitude: number;
@@ -215,7 +254,13 @@ export type Business = {
   stripe_customer_id: string;
   stripe_subscription_id: string;
   stripe_connect_account_id: string;
+  stripe_connect_charges_enabled: boolean;
+  stripe_connect_payouts_enabled: boolean;
+  stripe_connect_business_name: string;
+  stripe_connect_business_email: string;
   stripe_connect_onboarding_complete: boolean;
+  partner_tax_agreement_accepted: boolean;
+  partner_tax_agreement_accepted_at?: string | null;
   is_approved: boolean;
   is_featured: boolean;
   is_deleted?: boolean;
@@ -243,6 +288,7 @@ export type BusinessCreateInput = {
   subscription_tier: Tier["id"];
   owner_email: string;
   owner_passcode: string;
+  partner_tax_agreement_accepted?: boolean;
 };
 
 export type BusinessUpdateInput = Partial<
@@ -494,6 +540,7 @@ export type Rider = {
   access_token: string;
   badges: RiderBadge[];
   progress: RiderTrailProgress[];
+  created_at?: string | null;
 };
 
 export type RiderRideCard = {

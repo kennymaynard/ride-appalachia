@@ -6,11 +6,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider
+from app.models import Booking, BookingPayment, BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
 from app.schemas import (
     AdminAnalyticsLocation,
     AdminAnalyticsPath,
     AdminAnalyticsRead,
+    AdminRiderAccountRead,
     AdminSmsTestRequest,
     BusinessModerationUpdate,
     BusinessDashboardRead,
@@ -22,6 +23,7 @@ from app.schemas import (
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
     PrintifyProductSyncRead,
+    StoreOrderRead,
 )
 from app.services.email_service import (
     build_business_approval_notification_payload,
@@ -156,6 +158,42 @@ def preview_printify_products(
     )
 
 
+@router.get("/store/orders", response_model=list[StoreOrderRead])
+def list_store_orders(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[StoreOrder]:
+    return db.query(StoreOrder).order_by(StoreOrder.created_at.desc()).limit(100).all()
+
+
+@router.get("/riders", response_model=list[AdminRiderAccountRead])
+def list_admin_riders(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[dict[str, object]]:
+    riders = (
+        db.query(Rider)
+        .options(
+            selectinload(Rider.badges),
+            selectinload(Rider.progress),
+            selectinload(Rider.partner_visits),
+        )
+        .order_by(Rider.created_at.desc())
+        .limit(250)
+        .all()
+    )
+    return [
+        {
+            **rider.__dict__,
+            "completed_trails": len([item for item in rider.progress if item.status == "completed"]),
+            "saved_trails": len([item for item in rider.progress if item.status == "saved"]),
+            "badge_count": len(rider.badges),
+            "partner_visits": len(rider.partner_visits),
+        }
+        for rider in riders
+    ]
+
+
 @router.post("/booking-transfers/process")
 def process_booking_transfers(
     _: None = Depends(require_admin),
@@ -233,6 +271,45 @@ def get_admin_analytics(
         rider_count=db.query(Rider).count(),
         business_count=db.query(Business).filter(Business.is_deleted.is_(False)).count(),
         page_visits=db.query(PageVisit).count(),
+        connected_stripe_accounts=(
+            db.query(Business)
+            .filter(
+                Business.stripe_connect_account_id != "",
+                Business.stripe_connect_charges_enabled.is_(True),
+                Business.stripe_connect_payouts_enabled.is_(True),
+            )
+            .count()
+        ),
+        not_connected_stripe_accounts=(
+            db.query(Business)
+            .filter(Business.is_deleted.is_(False), Business.stripe_connect_account_id == "")
+            .count()
+        ),
+        pending_verification_stripe_accounts=(
+            db.query(Business)
+            .filter(
+                Business.stripe_connect_account_id != "",
+                (
+                    (Business.stripe_connect_charges_enabled.is_(False))
+                    | (Business.stripe_connect_payouts_enabled.is_(False))
+                ),
+            )
+            .count()
+        ),
+        platform_revenue_cents=db.query(func.coalesce(func.sum(BookingPayment.platform_fee_cents), 0))
+        .filter(BookingPayment.status == "paid")
+        .scalar()
+        or 0,
+        gross_booking_volume_cents=db.query(func.coalesce(func.sum(BookingPayment.amount_cents), 0))
+        .filter(BookingPayment.status == "paid")
+        .scalar()
+        or 0,
+        platform_fee_collected_cents=db.query(func.coalesce(func.sum(BookingPayment.platform_fee_cents), 0))
+        .filter(BookingPayment.status == "paid")
+        .scalar()
+        or 0,
+        bookings_count=db.query(Booking).count(),
+        failed_payments_count=db.query(BookingPayment).filter(BookingPayment.status.in_(["failed", "payment_failed"])).count(),
         rider_locations=[
             AdminAnalyticsLocation(
                 label=location or "Unknown",

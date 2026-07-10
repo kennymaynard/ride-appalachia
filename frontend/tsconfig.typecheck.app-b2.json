@@ -11,6 +11,7 @@
     "app/rush-business-partners/page.tsx",
     "app/rush-ky-atv-trails/page.tsx",
     "app/terms/page.tsx",
+    "app/trail-runner/page.tsx",
     "app/trail-talk/page.tsx"
   ]
 }

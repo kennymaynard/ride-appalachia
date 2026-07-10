@@ -29,12 +29,14 @@ from app.schemas import (
     CheckoutSessionRead,
     ListingCalendarCreate,
     ListingCalendarRead,
+    PartnerTaxAgreementRead,
     StripeConnectOnboardingRead,
 )
 from app.services.stripe_service import (
     create_booking_checkout_session,
     create_booking_refund,
     create_connect_onboarding_link,
+    retrieve_connect_account,
 )
 from app.services.calendar_sync import sync_calendar_blocks
 from app.services.email_service import (
@@ -44,7 +46,15 @@ from app.services.email_service import (
 
 router = APIRouter(tags=["booking marketplace"])
 
-PLATFORM_FEE_BASIS_POINTS = 300
+def business_accepts_online_reservations(business: Business | None) -> bool:
+    return bool(
+        business
+        and business.stripe_connect_account_id
+        and business.stripe_connect_charges_enabled
+        and business.stripe_connect_payouts_enabled
+        and business.stripe_connect_onboarding_complete
+        and business.partner_tax_agreement_accepted
+    )
 
 
 def calculate_nights(start_date: str, end_date: str) -> int:
@@ -97,11 +107,18 @@ def listing_is_available(db: Session, listing_id: int, start_date: str, end_date
     )
 
 
-def calculate_booking_totals(listing: BookableListing, start_date: str, end_date: str) -> tuple[int, int, int]:
+def calculate_booking_totals(
+    listing: BookableListing,
+    start_date: str,
+    end_date: str,
+) -> tuple[int, int, int, int, int]:
     nights = calculate_nights(start_date, end_date)
-    subtotal = (listing.nightly_rate_cents * nights) + listing.cleaning_fee_cents
-    platform_fee = round(subtotal * PLATFORM_FEE_BASIS_POINTS / 10000)
-    return subtotal, platform_fee, subtotal + platform_fee
+    nightly_subtotal = listing.nightly_rate_cents * nights
+    taxable_subtotal = nightly_subtotal + listing.cleaning_fee_cents
+    taxes = round(taxable_subtotal * listing.tax_rate_basis_points / 10000)
+    subtotal = taxable_subtotal
+    platform_fee = 0
+    return subtotal, listing.cleaning_fee_cents, taxes, platform_fee, subtotal + taxes + platform_fee
 
 
 def calculate_cancellation_refund_cents(booking: Booking, mode: str, custom_refund_cents: int) -> int:
@@ -135,6 +152,8 @@ def to_booking_detail(booking: Booking) -> BookingDetailRead:
         rider_id=booking.rider_id,
         status=booking.status,
         subtotal_cents=booking.subtotal_cents,
+        cleaning_fee_cents=booking.cleaning_fee_cents,
+        taxes_cents=booking.taxes_cents,
         platform_fee_cents=booking.platform_fee_cents,
         total_cents=booking.total_cents,
         stripe_checkout_session_id=booking.stripe_checkout_session_id,
@@ -148,6 +167,7 @@ def to_booking_detail(booking: Booking) -> BookingDetailRead:
         refund_failure_reason=booking.refund_failure_reason,
         payout_release_date=booking.payout_release_date,
         business_name=business.name if business else "",
+        business_address=business.location if business else "",
         listing_title=listing.title if listing else "",
         cancellation_window_hours=listing.cancellation_window_hours if listing else 72,
         cancellation_policy=listing.cancellation_policy if listing else "",
@@ -221,7 +241,10 @@ def create_business_bookable_listing(
     business: Business = Depends(require_business_access),
     db: Session = Depends(get_db),
 ) -> BookableListing:
-    listing = BookableListing(business_id=business.id, **payload.model_dump())
+    data = payload.model_dump()
+    if data.get("is_active", True) and not business.partner_tax_agreement_accepted:
+        raise HTTPException(status_code=400, detail="Accept the partner tax agreement before activating listings.")
+    listing = BookableListing(business_id=business.id, **data)
     db.add(listing)
     db.commit()
     db.refresh(listing)
@@ -237,6 +260,8 @@ def update_business_bookable_listing(
 ) -> BookableListing:
     listing = require_listing_owner(business.id, listing_id, business, db)
     for key, value in payload.model_dump(exclude_unset=True).items():
+        if key == "is_active" and value and not business.partner_tax_agreement_accepted:
+            raise HTTPException(status_code=400, detail="Accept the partner tax agreement before activating listings.")
         setattr(listing, key, value)
     db.commit()
     db.refresh(listing)
@@ -292,14 +317,28 @@ def create_booking_request(
     x_rider_token: str = Header(default=""),
     db: Session = Depends(get_db),
 ) -> Booking:
-    listing = db.get(BookableListing, payload.listing_id)
+    listing = (
+        db.query(BookableListing)
+        .options(selectinload(BookableListing.business))
+        .filter(BookableListing.id == payload.listing_id)
+        .first()
+    )
     if not listing or not listing.is_active:
         raise HTTPException(status_code=404, detail="Bookable listing not found")
+    if not business_accepts_online_reservations(listing.business):
+        raise HTTPException(
+            status_code=409,
+            detail="This lodging partner is not yet accepting online reservations.",
+        )
     if not listing_is_available(db, listing.id, payload.start_date, payload.end_date):
         raise HTTPException(status_code=409, detail="Those dates are not available")
 
     rider = db.query(Rider).filter(Rider.access_token == x_rider_token).first() if x_rider_token else None
-    subtotal, platform_fee, total = calculate_booking_totals(listing, payload.start_date, payload.end_date)
+    subtotal, cleaning_fee, taxes, platform_fee, total = calculate_booking_totals(
+        listing,
+        payload.start_date,
+        payload.end_date,
+    )
     booking = Booking(
         **payload.model_dump(),
         business_id=listing.business_id,
@@ -307,6 +346,8 @@ def create_booking_request(
         customer_email=payload.customer_email.strip().lower(),
         status="requested",
         subtotal_cents=subtotal,
+        cleaning_fee_cents=cleaning_fee,
+        taxes_cents=taxes,
         platform_fee_cents=platform_fee,
         total_cents=total,
     )
@@ -512,12 +553,65 @@ def create_stripe_connect_onboarding(
 
     business.stripe_connect_account_id = account_id
     if onboarding_url.find("connect=stub") >= 0:
+        business.stripe_connect_charges_enabled = True
+        business.stripe_connect_payouts_enabled = True
         business.stripe_connect_onboarding_complete = True
+        business.stripe_connect_business_name = business.name
+        business.stripe_connect_business_email = business.owner_email
     db.commit()
     return StripeConnectOnboardingRead(
         onboarding_url=onboarding_url,
         stripe_connect_account_id=account_id,
     )
+
+
+@router.post("/businesses/{business_id}/partner-tax-agreement", response_model=PartnerTaxAgreementRead)
+def accept_partner_tax_agreement(
+    business: Business = Depends(require_business_access),
+    db: Session = Depends(get_db),
+) -> PartnerTaxAgreementRead:
+    business.partner_tax_agreement_accepted = True
+    business.partner_tax_agreement_accepted_at = datetime.utcnow()
+    db.commit()
+    db.refresh(business)
+    return PartnerTaxAgreementRead(
+        accepted=business.partner_tax_agreement_accepted,
+        accepted_at=business.partner_tax_agreement_accepted_at,
+    )
+
+
+@router.post("/businesses/{business_id}/stripe-connect/status")
+def sync_stripe_connect_status(
+    business: Business = Depends(require_business_access),
+    settings: Settings = Depends(get_settings),
+    db: Session = Depends(get_db),
+) -> dict[str, bool | str]:
+    if not business.stripe_connect_account_id:
+        return {
+            "stripe_connect_account_id": "",
+            "charges_enabled": False,
+            "payouts_enabled": False,
+            "onboarding_complete": False,
+        }
+    try:
+        account = retrieve_connect_account(settings, business.stripe_connect_account_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    business.stripe_connect_charges_enabled = bool(account.get("charges_enabled"))
+    business.stripe_connect_payouts_enabled = bool(account.get("payouts_enabled"))
+    business.stripe_connect_onboarding_complete = bool(account.get("details_submitted")) and business.stripe_connect_charges_enabled
+    business.stripe_connect_business_name = (account.get("business_profile") or {}).get("name") or business.name
+    business.stripe_connect_business_email = account.get("email") or business.owner_email
+    db.commit()
+    return {
+        "stripe_connect_account_id": business.stripe_connect_account_id,
+        "charges_enabled": business.stripe_connect_charges_enabled,
+        "payouts_enabled": business.stripe_connect_payouts_enabled,
+        "onboarding_complete": business.stripe_connect_onboarding_complete,
+        "business_name": business.stripe_connect_business_name,
+        "business_email": business.stripe_connect_business_email,
+    }
 
 
 @router.post("/booking-checkout", response_model=CheckoutSessionRead)
@@ -528,6 +622,8 @@ def create_booking_checkout(
 ) -> CheckoutSessionRead:
     if not payload.booking_ids:
         raise HTTPException(status_code=400, detail="Add at least one booking")
+    if len(payload.booking_ids) != 1:
+        raise HTTPException(status_code=400, detail="Marketplace checkout is processed one business booking at a time")
 
     bookings = db.query(Booking).filter(Booking.id.in_(payload.booking_ids)).all()
     if len(bookings) != len(set(payload.booking_ids)):
@@ -540,6 +636,9 @@ def create_booking_checkout(
     for booking in bookings:
         if booking.status not in {"approved", "checkout_sent"}:
             raise HTTPException(status_code=400, detail="All bookings must be approved before checkout")
+        if booking.platform_fee_cents:
+            booking.platform_fee_cents = 0
+            booking.total_cents = booking.subtotal_cents + booking.taxes_cents
         listing = db.get(BookableListing, booking.listing_id)
         if listing and listing.payment_timing == "after_cancellation_period":
             try:
@@ -556,13 +655,22 @@ def create_booking_checkout(
 
     total_cents = sum(booking.total_cents for booking in bookings)
     platform_fee_cents = sum(booking.platform_fee_cents for booking in bookings)
+    booking = bookings[0]
+    business = db.get(Business, booking.business_id)
+    if not business_accepts_online_reservations(business):
+        raise HTTPException(
+            status_code=409,
+            detail="This lodging partner is not yet accepting online reservations.",
+        )
     try:
         checkout_url = create_booking_checkout_session(
             settings,
-            [booking.id for booking in bookings],
+            booking.id,
             next(iter(customer_emails)),
             total_cents,
             platform_fee_cents,
+            business.stripe_connect_account_id if business else "",
+            business.name if business else "Lodging provider",
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc

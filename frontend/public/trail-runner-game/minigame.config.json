@@ -1,9 +1,11 @@
 {
+  "orientation": "VERTICAL",
   "minigame": {
     "name": "Appalachia Trail Runner",
     "clientKey": "mgpfqrnu584896ld",
     "sourceDir": ".",
     "entry": "index.html",
+    "orientation": "VERTICAL",
     "trustedDomains": [
       "https://appalachiaoffroadapp.com"
     ],

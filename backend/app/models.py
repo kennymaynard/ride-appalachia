@@ -98,7 +98,13 @@ class Business(Base):
     stripe_customer_id: Mapped[str] = mapped_column(String(180), default="")
     stripe_subscription_id: Mapped[str] = mapped_column(String(180), default="")
     stripe_connect_account_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    stripe_connect_charges_enabled: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    stripe_connect_payouts_enabled: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    stripe_connect_business_name: Mapped[str] = mapped_column(String(180), default="")
+    stripe_connect_business_email: Mapped[str] = mapped_column(String(180), default="")
     stripe_connect_onboarding_complete: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    partner_tax_agreement_accepted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    partner_tax_agreement_accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     view_clicks: Mapped[int] = mapped_column(Integer, default=0)
     action_clicks: Mapped[int] = mapped_column(Integer, default=0)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
@@ -341,6 +347,7 @@ class BookableListing(Base):
     photo_url: Mapped[str] = mapped_column(Text, default="")
     nightly_rate_cents: Mapped[int] = mapped_column(Integer, default=0)
     cleaning_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
+    tax_rate_basis_points: Mapped[int] = mapped_column(Integer, default=0)
     max_guests: Mapped[int] = mapped_column(Integer, default=1)
     cancellation_window_hours: Mapped[int] = mapped_column(Integer, default=72)
     cancellation_policy: Mapped[str] = mapped_column(
@@ -409,6 +416,8 @@ class Booking(Base):
     message: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(40), default="requested", index=True)
     subtotal_cents: Mapped[int] = mapped_column(Integer, default=0)
+    cleaning_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
+    taxes_cents: Mapped[int] = mapped_column(Integer, default=0)
     platform_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer, default=0)
     stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), default="", index=True)
@@ -458,6 +467,27 @@ class BookingTransfer(Base):
 
     booking: Mapped[Booking] = relationship()
     business: Mapped[Business] = relationship()
+
+
+class StoreOrder(Base):
+    __tablename__ = "store_orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    stripe_payment_intent_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    customer_name: Mapped[str] = mapped_column(String(160), default="")
+    customer_email: Mapped[str] = mapped_column(String(180), default="", index=True)
+    customer_phone: Mapped[str] = mapped_column(String(40), default="")
+    total_cents: Mapped[int] = mapped_column(Integer, default=0)
+    currency: Mapped[str] = mapped_column(String(10), default="usd")
+    status: Mapped[str] = mapped_column(String(40), default="paid", index=True)
+    items: Mapped[str] = mapped_column(Text, default="[]")
+    shipping_name: Mapped[str] = mapped_column(String(160), default="")
+    shipping_address: Mapped[str] = mapped_column(Text, default="{}")
+    printify_submitted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    printify_order_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    printify_message: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 class PageVisit(Base):

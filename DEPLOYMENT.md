@@ -46,7 +46,7 @@ STRIPE_PRICE_VETERAN_OWNED=
 STRIPE_WEBHOOK_SECRET=
 ```
 
-## Calendar Sync And Booking Payout Cron
+## Calendar Sync Cron
 
 Create a Render Cron Job after the backend is live:
 
@@ -54,8 +54,9 @@ Create a Render Cron Job after the backend is live:
 cd backend && python scripts/sync_calendars.py
 ```
 
-This job syncs partner iCal calendars and processes booking payouts that are
-ready to release after check-in.
+This job syncs partner iCal calendars. New online reservations are processed
+through each provider's connected Stripe account, so Appalachia Offroad does not
+run a separate booking payout workflow for new provider bookings.
 
 Suggested schedule:
 
@@ -155,6 +156,7 @@ After deploy:
 6. Confirm Stripe redirects to `/business/success`.
 7. Confirm the backend logs show the Stripe webhook received.
 8. Test business login email from `/business/login`.
+9. For a lodging partner, connect Stripe, accept the tax agreement, create a bookable listing, and confirm checkout shows no Appalachia Offroad booking fee.
 
 ## Before Sharing Publicly
 

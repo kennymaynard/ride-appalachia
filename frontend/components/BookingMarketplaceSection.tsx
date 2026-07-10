@@ -35,7 +35,7 @@ export function BookingMarketplaceSection() {
             <h3>Stripe Connect Payments</h3>
             <p>
               Customers pay in the app. The business receives their payout
-              automatically, and Appalachia Offroad collects a 3% booking fee.
+              automatically through its own connected Stripe account.
             </p>
           </article>
 
@@ -74,7 +74,7 @@ export function BookingMarketplaceSection() {
 
             <div>
               <span>5</span>
-              <p>Business gets paid automatically. App keeps 3%.</p>
+              <p>Business gets paid automatically through Stripe Connect.</p>
             </div>
           </div>
         </div>

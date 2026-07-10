@@ -14,8 +14,8 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 - Multiple bookable listings per business
 - iCal calendar sync for Airbnb, Vrbo, Booking.com, Google Calendar, and other iCal sources
 - Date-based search for riders
-- Stripe Connect payouts
-- Automatic 3% booking fee to Appalachia Offroad
+- Stripe Connect Express for lodging/provider merchant accounts
+- Provider-paid reservations with no Appalachia Offroad booking fee
 - Request-to-book first, instant booking later
 
 ## Main Tables Needed
@@ -34,8 +34,8 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 1. Rider submits a booking request.
 2. Business approves the request.
 3. Rider pays through Stripe Checkout.
-4. Stripe sends the business payout through Stripe Connect.
-5. Appalachia Offroad keeps a 3% platform fee.
+4. Payment is processed through the business's connected Stripe account.
+5. The business is responsible for payout settings, taxes, accounting, and refund decisions.
 
 ## Build Order
 
@@ -44,12 +44,12 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 3. Add rider date search.
 4. Add request-to-book messages and status tracking. Request and approval status are in place.
 5. Add Stripe Connect onboarding for businesses. Onboarding link creation is in place.
-6. Add Checkout with a 3% application fee. Booking checkout foundation is in place.
+6. Add Checkout using provider Stripe accounts with no Appalachia Offroad booking fee.
 7. Add instant booking only after calendar sync is dependable.
 
 ## Current Limitation
 
-Single-business checkout can use a Stripe Connect destination charge. Multi-business bundles keep one rider checkout, and the webhook creates transfer records for each business share after payment succeeds.
+Online reservation checkout is one provider booking at a time so the connected business remains the merchant of record. Historical transfer records may still exist for older test bookings, but new provider reservations should not create a separate Appalachia Offroad transfer workflow.
 
 ## Calendar Sync
 

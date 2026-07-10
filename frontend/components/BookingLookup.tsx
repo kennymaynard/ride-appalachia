@@ -130,14 +130,41 @@ export function BookingLookup({ initialBookingId = "" }: Props) {
               <dd>{booking.guests}</dd>
             </div>
             <div>
-              <dt>Total</dt>
+              <dt>Business Name</dt>
+              <dd>{booking.business_name}</dd>
+            </div>
+            <div>
+              <dt>Business Address</dt>
+              <dd>{booking.business_address || "Provided by lodging partner"}</dd>
+            </div>
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{centsToDollars(booking.subtotal_cents)}</dd>
+            </div>
+            <div>
+              <dt>Cleaning Fee</dt>
+              <dd>{centsToDollars(booking.cleaning_fee_cents)}</dd>
+            </div>
+            <div>
+              <dt>Taxes</dt>
+              <dd>{centsToDollars(booking.taxes_cents)}</dd>
+            </div>
+            <div>
+              <dt>Total Paid</dt>
               <dd>{centsToDollars(booking.total_cents)}</dd>
+            </div>
+            <div>
+              <dt>Payment processed by</dt>
+              <dd>{booking.business_name}</dd>
             </div>
             <div>
               <dt>Refund review</dt>
               <dd>{statusText(booking.refund_status)}</dd>
             </div>
           </dl>
+          <p className="field-help">
+            Taxes are collected and remitted by the lodging provider.
+          </p>
 
           <div className="policy-panel">
             <h3>Cancellation Policy</h3>

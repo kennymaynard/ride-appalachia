@@ -252,6 +252,53 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
     return EmailResult(sent=False, message="Unable to send login email.")
 
 
+def send_rider_password_reset_email(to_email: str, display_name: str, reset_url: str) -> EmailResult:
+    settings = get_settings()
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    clean_to_email = clean_email_setting(to_email)
+    if not resend_api_key or not clean_to_email:
+        return EmailResult(
+            sent=False,
+            message="Email is not configured. Development reset link returned.",
+        )
+
+    greeting = display_name.strip() or "Rider"
+    payload = {
+        "from": email_from,
+        "to": [clean_to_email],
+        "subject": "Reset your Appalachia Offroad rider password",
+        "html": (
+            "<h1>Reset your rider password</h1>"
+            f"<p>Hi {escape(greeting)}, use this secure link to set a new password for your rider profile.</p>"
+            f'<p><a href="{reset_url}">Reset Rider Password</a></p>'
+            "<p>If you did not request this, you can ignore this email.</p>"
+        ),
+        "text": (
+            f"Hi {greeting}, reset your Appalachia Offroad rider password here:\n\n"
+            f"{reset_url}\n\n"
+            "If you did not request this, you can ignore this email."
+        ),
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=get_resend_headers(resend_api_key),
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Password reset link sent.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=get_resend_error_message("rider password reset email", exc, email_from))
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send rider password reset email: {exc}")
+
+    return EmailResult(sent=False, message="Unable to send rider password reset email.")
+
+
 def send_lead_notification(lead_type: str, email: str, details: dict[str, str]) -> EmailResult:
     settings = get_settings()
     resend_api_key = clean_secret_setting(settings.resend_api_key)
@@ -462,6 +509,99 @@ def send_booking_cancellation_request_notification(
         return EmailResult(sent=False, message=f"Unable to send cancellation request notification: {exc}")
 
     return EmailResult(sent=False, message="Unable to send cancellation request notification.")
+
+
+def send_booking_confirmation_emails(
+    customer_email: str,
+    business_email: str,
+    admin_email: str,
+    business_name: str,
+    customer_name: str,
+    booking_id: int,
+    listing_title: str,
+    start_date: str,
+    end_date: str,
+    subtotal_cents: int,
+    cleaning_fee_cents: int,
+    taxes_cents: int,
+    platform_fee_cents: int,
+    total_cents: int,
+    booking_url: str,
+) -> list[EmailResult]:
+    settings = get_settings()
+    resend_api_key = clean_secret_setting(settings.resend_api_key)
+    email_from = clean_email_setting(settings.email_from)
+    recipients = [
+        ("customer", customer_email),
+        ("business", business_email),
+        ("admin", admin_email),
+    ]
+    if not resend_api_key:
+        return [EmailResult(sent=False, message="Booking confirmation email is not configured.")]
+
+    def dollars(cents: int) -> str:
+        return f"${cents / 100:.2f}"
+
+    subject = f"Booking #{booking_id} confirmed"
+    html = (
+        f"<h1>{subject}</h1>"
+        f"<p><strong>Business:</strong> {escape(business_name)}</p>"
+        f"<p><strong>Customer:</strong> {escape(customer_name)}</p>"
+        f"<p><strong>Reservation:</strong> {escape(listing_title)} from {escape(start_date)} to {escape(end_date)}</p>"
+        f"<p><strong>Subtotal:</strong> {dollars(subtotal_cents)}</p>"
+        f"<p><strong>Cleaning Fee:</strong> {dollars(cleaning_fee_cents)}</p>"
+        f"<p><strong>Taxes:</strong> {dollars(taxes_cents)}</p>"
+        f"<p><strong>Total Paid:</strong> {dollars(total_cents)}</p>"
+        f"<p>Payment processed by: {escape(business_name)}</p>"
+        "<p>Taxes are collected and remitted by the lodging provider.</p>"
+        f'<p><a href="{booking_url}">View Booking</a></p>'
+    )
+    text = "\n".join(
+        [
+            subject,
+            f"Business: {business_name}",
+            f"Customer: {customer_name}",
+            f"Reservation: {listing_title} from {start_date} to {end_date}",
+            f"Subtotal: {dollars(subtotal_cents)}",
+            f"Cleaning Fee: {dollars(cleaning_fee_cents)}",
+            f"Taxes: {dollars(taxes_cents)}",
+            f"Total Paid: {dollars(total_cents)}",
+            f"Payment processed by: {business_name}",
+            "Taxes are collected and remitted by the lodging provider.",
+            f"Booking: {booking_url}",
+        ],
+    )
+
+    results: list[EmailResult] = []
+    for audience, to_email in recipients:
+        if not to_email:
+            continue
+        payload = {
+            "from": email_from,
+            "to": [clean_email_setting(to_email)],
+            "subject": f"Appalachia Offroad: {subject}",
+            "html": html,
+            "text": text,
+        }
+        request = Request(
+            "https://api.resend.com/emails",
+            data=json.dumps(payload).encode("utf-8"),
+            headers=get_resend_headers(resend_api_key),
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=10) as response:
+                if 200 <= response.status < 300:
+                    results.append(EmailResult(sent=True, message=f"Booking confirmation sent to {audience}."))
+                    continue
+        except HTTPError as exc:
+            results.append(EmailResult(sent=False, message=get_resend_error_message("booking confirmation", exc, email_from)))
+            continue
+        except (URLError, TimeoutError) as exc:
+            results.append(EmailResult(sent=False, message=f"Unable to send booking confirmation: {exc}"))
+            continue
+        results.append(EmailResult(sent=False, message="Unable to send booking confirmation."))
+    return results
 
 
 def send_booking_cancellation_decision_email(

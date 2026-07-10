@@ -1,5 +1,6 @@
 import secrets
 import re
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
@@ -24,7 +25,7 @@ from app.schemas import (
 )
 from app.services.email_service import send_business_approval_notification, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
-from app.services.photos import normalize_photo_url
+from app.services.photos import fallback_photo_for_category, is_oversized_embedded_photo, normalize_photo_url
 from app.services.sms_service import send_sms
 
 router = APIRouter(tags=["business dashboard"])
@@ -60,6 +61,12 @@ def send_business_pending_approval_sms(business: Business) -> None:
         business.phone,
         "Appalachia Offroad: your business listing was received and is pending approval. Reply STOP to opt out.",
     )
+
+
+def replace_oversized_business_photo(db: Session, business: Business) -> None:
+    if is_oversized_embedded_photo(business.photo_url):
+        business.photo_url = fallback_photo_for_category(business.category)
+        db.commit()
 
 
 def require_business_access(
@@ -143,6 +150,8 @@ def create_business(payload: BusinessCreate, db: Session = Depends(get_db)) -> B
     data["photo_url"] = normalize_photo_url(data["photo_url"], data["category"])
     data["owner_access_token"] = secrets.token_urlsafe(24)
     data["owner_passcode_hash"] = hash_passcode(owner_passcode.strip())
+    if data.get("partner_tax_agreement_accepted"):
+        data["partner_tax_agreement_accepted_at"] = datetime.utcnow()
     business = Business(
         **data,
         is_approved=False,
@@ -177,6 +186,7 @@ def get_business_by_access_token(
     )
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
+    replace_oversized_business_photo(db, business)
     return business
 
 
@@ -199,6 +209,7 @@ def get_business(
     )
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
+    replace_oversized_business_photo(db, business)
     return business
 
 
