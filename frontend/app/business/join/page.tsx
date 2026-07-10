@@ -22,6 +22,7 @@ const categoryPhotos: Record<Exclude<Category, "deals">, string> = {
   services:
     "https://images.unsplash.com/photo-1581092921461-7d65ca45393a?auto=format&fit=crop&w=1200&q=80",
 };
+const MAX_LISTING_PHOTO_BYTES = 2 * 1024 * 1024;
 
 const initialForm = {
   name: "",
@@ -84,6 +85,7 @@ export default function JoinPage() {
   const [error, setError] = useState("");
   const [checkoutNotice, setCheckoutNotice] = useState("");
   const [geocodeStatus, setGeocodeStatus] = useState("");
+  const [partnerTaxAgreementAccepted, setPartnerTaxAgreementAccepted] = useState(false);
 
   const selectedTier = useMemo(
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
@@ -126,6 +128,12 @@ export default function JoinPage() {
 
   function useUploadedPhoto(file?: File) {
     if (!file) return;
+    setError("");
+    if (file.size > MAX_LISTING_PHOTO_BYTES) {
+      setForm((current) => ({ ...current, photo_url: "" }));
+      setError("That image is too large. Please upload a photo under 2 MB or paste a hosted image URL.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
@@ -188,6 +196,12 @@ export default function JoinPage() {
       return;
     }
 
+    if (tier === "lodging_partner" && !partnerTaxAgreementAccepted) {
+      setIsSubmitting(false);
+      setError("Accept the lodging partner tax responsibility agreement before continuing.");
+      return;
+    }
+
     const payload: BusinessCreateInput = {
       name: form.name.trim(),
       slug: slugify(form.name),
@@ -202,6 +216,7 @@ export default function JoinPage() {
       subscription_tier: tier,
       owner_email: form.owner_email.trim(),
       owner_passcode: form.owner_passcode.trim(),
+      partner_tax_agreement_accepted: tier === "lodging_partner" ? partnerTaxAgreementAccepted : false,
     };
 
     try {
@@ -412,7 +427,7 @@ export default function JoinPage() {
           </label>
           <p className="field-help">
             Claims and new listings are reviewed before public approval. We use
-            a category photo if you do not upload one.
+            a category photo if you do not upload one. Uploaded photos must be under 2 MB.
           </p>
           <label>
             Listing photo
@@ -431,6 +446,19 @@ export default function JoinPage() {
               onChange={(event) => updateForm("description", event.target.value)}
             />
           </label>
+          {tier === "lodging_partner" ? (
+            <label className="admin-toggle-row">
+              <input
+                required
+                type="checkbox"
+                checked={partnerTaxAgreementAccepted}
+                onChange={(event) => setPartnerTaxAgreementAccepted(event.target.checked)}
+              />
+              I understand my business is responsible for collecting and remitting all required federal,
+              state, county, and local taxes, including lodging and occupancy taxes. Appalachia Offroad
+              is not responsible for tax collection or remittance on behalf of my business.
+            </label>
+          ) : null}
 
           {error ? <p className="form-error">{error}</p> : null}
 

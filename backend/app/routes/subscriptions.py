@@ -1,13 +1,15 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+import json
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 import stripe
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import Settings, get_db, get_settings
-from app.models import Booking, BookingPayment, BookingTransfer, Business, Campaign
+from app.models import Booking, BookingPayment, Business, Campaign, StoreOrder
 from app.schemas import CheckoutSessionRead, StripeWebhookPayload, SubscriptionRequest
+from app.services.email_service import send_booking_confirmation_emails
 from app.services.printify_service import submit_store_order_from_stripe_session
 from app.services.stripe_service import construct_webhook_event, create_checkout_session
 
@@ -212,14 +214,31 @@ async def stripe_webhook(
         return 0
 
     if event_type == "checkout.session.completed":
-        metadata = data_object.get("metadata", {})
+        metadata = data_object.get("metadata") or {}
+        print(
+            "Checkout session inspected:",
+            {
+                "session_id": data_object.get("id") or "",
+                "payment_status": data_object.get("payment_status") or "",
+                "mode": data_object.get("mode") or "",
+                "order_type": metadata.get("order_type") or "",
+                "fulfillment": metadata.get("fulfillment") or "",
+                "metadata_items_present": bool(metadata.get("items")),
+            },
+            flush=True,
+        )
         booking_ids = [
             int(value)
             for value in (metadata.get("booking_ids") or "").split(",")
             if value.strip().isdigit()
         ]
         if booking_ids:
-            bookings = db.query(Booking).filter(Booking.id.in_(booking_ids)).all()
+            bookings = (
+                db.query(Booking)
+                .options(selectinload(Booking.business), selectinload(Booking.listing))
+                .filter(Booking.id.in_(booking_ids))
+                .all()
+            )
             for booking in bookings:
                 booking.status = "paid"
                 booking.stripe_checkout_session_id = data_object.get("id") or ""
@@ -237,36 +256,151 @@ async def stripe_webhook(
                     payment.status = "paid"
                     payment.stripe_checkout_session_id = data_object.get("id") or ""
                     payment.stripe_payment_intent_id = data_object.get("payment_intent") or ""
-                existing_transfer = (
-                    db.query(BookingTransfer)
-                    .filter(BookingTransfer.booking_id == booking.id)
-                    .first()
-                )
-                if not existing_transfer:
-                    transfer = BookingTransfer(
-                        booking_id=booking.id,
-                        business_id=booking.business_id,
-                        amount_cents=booking.subtotal_cents,
-                        release_date=booking.payout_release_date,
-                        status="scheduled_after_checkin",
-                    )
-                    db.add(transfer)
             db.commit()
+            for booking in bookings:
+                business = booking.business
+                listing = booking.listing
+                send_booking_confirmation_emails(
+                    booking.customer_email,
+                    business.owner_email if business else "",
+                    settings.lead_notify_email,
+                    business.name if business else "Lodging provider",
+                    booking.customer_name,
+                    booking.id,
+                    listing.title if listing else "Trip booking",
+                    booking.start_date,
+                    booking.end_date,
+                    booking.subtotal_cents,
+                    booking.cleaning_fee_cents,
+                    booking.taxes_cents,
+                    booking.platform_fee_cents,
+                    booking.total_cents,
+                    f"{settings.frontend_url}/bookings?booking_id={booking.id}",
+                )
             return {"received": True}
 
+        print(
+            "Checkout routing decision:",
+            {
+                "session_id": data_object.get("id") or "",
+                "is_merch": metadata.get("order_type") == "merch",
+                "is_print_on_demand": metadata.get("fulfillment") == "print_on_demand",
+            },
+            flush=True,
+        )
         if metadata.get("order_type") == "merch":
             stripe.api_key = settings.stripe_secret_key
+            print(
+                "Merch branch entered:",
+                {"session_id": data_object.get("id") or ""},
+                flush=True,
+            )
             stripe_line_items = stripe.checkout.Session.list_line_items(
                 data_object.get("id") or "",
                 expand=["data.price.product"],
                 limit=100,
             )
+            line_items = list(stripe_line_items.get("data") or [])
+            print(
+                "Stripe line items loaded:",
+                {
+                    "session_id": data_object.get("id") or "",
+                    "line_item_count": len(line_items),
+                },
+                flush=True,
+            )
+            print(
+                "Printify fulfillment call starting:",
+                {
+                    "session_id": data_object.get("id") or "",
+                    "line_item_count": len(line_items),
+                },
+                flush=True,
+            )
             printify_result = submit_store_order_from_stripe_session(
                 data_object,
                 settings,
-                list(stripe_line_items.get("data") or []),
+                line_items,
             )
-            print(f"Store order Printify status: {printify_result.message}")
+            print(
+                "Printify fulfillment call completed:",
+                {
+                    "session_id": data_object.get("id") or "",
+                    "submitted": printify_result.submitted,
+                    "order_id": printify_result.order_id,
+                    "message": printify_result.message,
+                },
+                flush=True,
+            )
+            customer_details = data_object.get("customer_details") or {}
+            collected_information = data_object.get("collected_information") or {}
+            shipping_details = (
+                data_object.get("shipping_details")
+                or collected_information.get("shipping_details")
+                or {}
+            )
+            shipping_address = shipping_details.get("address") or {}
+            print(
+                "Merch checkout received:",
+                {
+                    "session_id": data_object.get("id") or "",
+                    "payment_status": data_object.get("payment_status") or "",
+                    "shipping_name_present": bool(shipping_details.get("name")),
+                    "shipping_address_present": bool(shipping_address),
+                    "line_item_count": len(line_items),
+                },
+                flush=True,
+            )
+            order_items = []
+            for line_item in line_items:
+                price = line_item.get("price") or {}
+                product = price.get("product") or {}
+                product_metadata = product.get("metadata") if isinstance(product, dict) else {}
+                product_name = product.get("name") if isinstance(product, dict) else ""
+                order_items.append(
+                    {
+                        "name": line_item.get("description") or product_name or "Store item",
+                        "quantity": int(line_item.get("quantity") or 1),
+                        "amount_subtotal": int(line_item.get("amount_subtotal") or 0),
+                        "amount_total": int(line_item.get("amount_total") or 0),
+                        "product_id": (product_metadata or {}).get("product_id") or "",
+                        "variant": (product_metadata or {}).get("variant") or "",
+                        "dropship_sku": (product_metadata or {}).get("dropship_sku") or "",
+                    }
+                )
+            session_id = data_object.get("id") or ""
+            store_order = (
+                db.query(StoreOrder)
+                .filter(StoreOrder.stripe_checkout_session_id == session_id)
+                .first()
+            )
+            if not store_order:
+                store_order = StoreOrder(stripe_checkout_session_id=session_id, created_at=datetime.utcnow())
+                db.add(store_order)
+            store_order.stripe_payment_intent_id = data_object.get("payment_intent") or ""
+            store_order.customer_name = customer_details.get("name") or shipping_details.get("name") or ""
+            store_order.customer_email = customer_details.get("email") or data_object.get("customer_email") or ""
+            store_order.customer_phone = customer_details.get("phone") or ""
+            store_order.total_cents = int(data_object.get("amount_total") or 0)
+            store_order.currency = data_object.get("currency") or "usd"
+            store_order.status = data_object.get("payment_status") or "paid"
+            store_order.items = json.dumps(order_items)
+            store_order.shipping_name = shipping_details.get("name") or ""
+            store_order.shipping_address = json.dumps(shipping_address)
+            store_order.printify_submitted = printify_result.submitted
+            store_order.printify_order_id = printify_result.order_id
+            store_order.printify_message = printify_result.message
+            db.commit()
+            print(
+                "Store order Printify status:",
+                {
+                    "session_id": session_id,
+                    "submitted": printify_result.submitted,
+                    "order_id": printify_result.order_id,
+                    "message": printify_result.message,
+                },
+                flush=True,
+            )
             return {"received": True}
 
         business_id = resolve_business_id(
@@ -302,6 +436,19 @@ async def stripe_webhook(
                 tier=metadata.get("tier") or "",
             )
 
+    if event_type == "checkout.session.async_payment_failed":
+        metadata = data_object.get("metadata", {})
+        booking_ids = [
+            int(value)
+            for value in (metadata.get("booking_ids") or "").split(",")
+            if value.strip().isdigit()
+        ]
+        if booking_ids:
+            payments = db.query(BookingPayment).filter(BookingPayment.booking_id.in_(booking_ids)).all()
+            for payment in payments:
+                payment.status = "payment_failed"
+            db.commit()
+
     if event_type == "account.updated":
         account_id = data_object.get("id") or ""
         if account_id:
@@ -312,6 +459,10 @@ async def stripe_webhook(
             )
             if business:
                 capabilities = data_object.get("capabilities", {})
+                business.stripe_connect_charges_enabled = bool(data_object.get("charges_enabled"))
+                business.stripe_connect_payouts_enabled = bool(data_object.get("payouts_enabled"))
+                business.stripe_connect_business_name = (data_object.get("business_profile") or {}).get("name") or business.name
+                business.stripe_connect_business_email = data_object.get("email") or business.owner_email
                 business.stripe_connect_onboarding_complete = bool(
                     data_object.get("details_submitted")
                     and data_object.get("charges_enabled")

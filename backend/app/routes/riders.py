@@ -15,6 +15,7 @@ from app.models import (
     RiderTrailProgress,
 )
 from app.services.passcodes import hash_passcode, verify_passcode
+from app.services.email_service import send_rider_password_reset_email
 from app.services.sms_service import send_sms
 from app.schemas import (
     BusinessReviewCreate,
@@ -24,6 +25,8 @@ from app.schemas import (
     RiderAlertPreferencesUpdate,
     RiderLoginRead,
     RiderLoginRequest,
+    RiderPasswordResetConfirm,
+    RiderPasswordResetRequest,
     RiderRead,
     RiderRideCardRead,
     RiderTrailProgressCreate,
@@ -119,6 +122,59 @@ def award_partner_visit_badges(db: Session, rider: Rider) -> None:
                 f"{milestone} Partner Visit Badge",
                 "partner",
             )
+
+
+@router.post("/riders/password-reset/request")
+def request_rider_password_reset(
+    payload: RiderPasswordResetRequest,
+    db: Session = Depends(get_db),
+) -> dict[str, str | bool]:
+    email = normalize_email(payload.email)
+    rider = db.query(Rider).filter(Rider.email == email).first()
+    sent = False
+    message = "If a rider account exists for that email, a reset link has been sent."
+    reset_url = ""
+
+    if rider:
+        if not rider.access_token:
+            rider.access_token = secrets.token_urlsafe(24)
+            db.commit()
+            db.refresh(rider)
+
+        reset_url = f"{get_settings().frontend_url}/rider/login?reset_token={rider.access_token}"
+        result = send_rider_password_reset_email(rider.email, rider.display_name, reset_url)
+        sent = result.sent
+        if not result.sent and "Development reset link returned" in result.message:
+            message = result.message
+
+    return {
+        "sent": sent,
+        "message": message,
+        "reset_url": reset_url if message.startswith("Email is not configured") else "",
+    }
+
+
+@router.post("/riders/password-reset/confirm", response_model=RiderLoginRead)
+def confirm_rider_password_reset(
+    payload: RiderPasswordResetConfirm,
+    db: Session = Depends(get_db),
+) -> RiderLoginRead:
+    rider = db.query(Rider).filter(Rider.access_token == payload.reset_token.strip()).first()
+    if not rider:
+        raise HTTPException(status_code=401, detail="Password reset link is invalid")
+
+    rider.password_hash = hash_passcode(payload.password.strip())
+    if not rider.access_token:
+        rider.access_token = secrets.token_urlsafe(24)
+    db.commit()
+    db.refresh(rider)
+
+    access_path = f"/rider/access/{rider.access_token}"
+    return RiderLoginRead(
+        access_url=access_path,
+        access_token=rider.access_token,
+        message="Rider password reset.",
+    )
 
 
 @router.post("/riders/login", response_model=RiderLoginRead)

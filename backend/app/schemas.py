@@ -41,6 +41,13 @@ STORE_PRODUCT_IDS = {
     "trail-hat",
     "appalachia-offroad-garden-flag",
 }
+MAX_EMBEDDED_PHOTO_CHARS = 3_000_000
+
+
+def validate_embedded_photo_size(value: Optional[str]) -> Optional[str]:
+    if value and value.startswith("data:image/") and len(value) > MAX_EMBEDDED_PHOTO_CHARS:
+        raise ValueError("Uploaded image is too large. Use an image under 2 MB or paste a hosted image URL.")
+    return value
 
 
 class DealBase(BaseModel):
@@ -144,6 +151,7 @@ class BookableListingBase(BaseModel):
     photo_url: str = ""
     nightly_rate_cents: int = 0
     cleaning_fee_cents: int = 0
+    tax_rate_basis_points: int = 0
     max_guests: int = 1
     cancellation_window_hours: int = 72
     cancellation_policy: str = (
@@ -190,6 +198,7 @@ class BookableListingUpdate(BaseModel):
     photo_url: Optional[str] = None
     nightly_rate_cents: Optional[int] = None
     cleaning_fee_cents: Optional[int] = None
+    tax_rate_basis_points: Optional[int] = None
     max_guests: Optional[int] = None
     cancellation_window_hours: Optional[int] = None
     cancellation_policy: Optional[str] = None
@@ -247,6 +256,8 @@ class BookingRead(BookingRequestCreate):
     rider_id: Optional[int] = None
     status: str = "requested"
     subtotal_cents: int = 0
+    cleaning_fee_cents: int = 0
+    taxes_cents: int = 0
     platform_fee_cents: int = 0
     total_cents: int = 0
     stripe_checkout_session_id: str = ""
@@ -263,6 +274,7 @@ class BookingRead(BookingRequestCreate):
 
 class BookingDetailRead(BookingRead):
     business_name: str = ""
+    business_address: str = ""
     listing_title: str = ""
     cancellation_window_hours: int = 72
     cancellation_policy: str = ""
@@ -431,10 +443,16 @@ class BusinessBase(BaseModel):
             raise ValueError("Unknown subscription tier")
         return value
 
+    @field_validator("photo_url")
+    @classmethod
+    def validate_photo_url_size(cls, value: str) -> str:
+        return validate_embedded_photo_size(value) or ""
+
 
 class BusinessCreate(BusinessBase):
     owner_email: str = ""
     owner_passcode: str = Field(min_length=4, max_length=32)
+    partner_tax_agreement_accepted: bool = False
 
     @field_validator("owner_passcode")
     @classmethod
@@ -469,6 +487,11 @@ class BusinessUpdate(BaseModel):
             raise ValueError("Business password must be at least 4 characters")
         return stripped
 
+    @field_validator("photo_url")
+    @classmethod
+    def validate_optional_photo_url_size(cls, value: Optional[str]) -> Optional[str]:
+        return validate_embedded_photo_size(value)
+
     @field_validator("category")
     @classmethod
     def validate_optional_category(cls, value: Optional[str]) -> Optional[str]:
@@ -498,7 +521,13 @@ class BusinessRead(BusinessBase):
     stripe_customer_id: str = ""
     stripe_subscription_id: str = ""
     stripe_connect_account_id: str = ""
+    stripe_connect_charges_enabled: bool = False
+    stripe_connect_payouts_enabled: bool = False
+    stripe_connect_business_name: str = ""
+    stripe_connect_business_email: str = ""
     stripe_connect_onboarding_complete: bool = False
+    partner_tax_agreement_accepted: bool = False
+    partner_tax_agreement_accepted_at: Optional[datetime] = None
     view_clicks: int
     action_clicks: int
     deals: list[DealRead] = []
@@ -523,6 +552,11 @@ class BusinessModerationUpdate(BaseModel):
         if value not in LISTING_STATUSES:
             raise ValueError("Unknown listing status")
         return value
+
+
+class PartnerTaxAgreementRead(BaseModel):
+    accepted: bool
+    accepted_at: Optional[datetime] = None
 
 
 class BusinessClaimRequest(BaseModel):
@@ -592,6 +626,23 @@ class RiderLoginRead(BaseModel):
     access_url: str = ""
     access_token: str = ""
     message: str
+
+
+class RiderPasswordResetRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=180)
+
+
+class RiderPasswordResetConfirm(BaseModel):
+    reset_token: str = Field(min_length=12, max_length=120)
+    password: str = Field(min_length=4, max_length=64)
+
+    @field_validator("password")
+    @classmethod
+    def validate_reset_password(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 4:
+            raise ValueError("Rider password must be at least 4 characters")
+        return stripped
 
 
 class RiderBadgeRead(BaseModel):
@@ -683,6 +734,14 @@ class RiderRead(BaseModel):
     access_token: str = ""
     badges: list[RiderBadgeRead] = []
     progress: list[RiderTrailProgressRead] = []
+    created_at: Optional[datetime] = None
+
+
+class AdminRiderAccountRead(RiderRead):
+    completed_trails: int = 0
+    saved_trails: int = 0
+    badge_count: int = 0
+    partner_visits: int = 0
 
 
 class RiderRideCardRead(BaseModel):
@@ -757,6 +816,27 @@ class PrintifyProductSyncRead(BaseModel):
     count: int
     products: list[StoreProductRead]
     message: str = ""
+
+
+class StoreOrderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    stripe_checkout_session_id: str
+    stripe_payment_intent_id: str = ""
+    customer_name: str = ""
+    customer_email: str = ""
+    customer_phone: str = ""
+    total_cents: int = 0
+    currency: str = "usd"
+    status: str = "paid"
+    items: str = "[]"
+    shipping_name: str = ""
+    shipping_address: str = "{}"
+    printify_submitted: bool = False
+    printify_order_id: str = ""
+    printify_message: str = ""
+    created_at: datetime
 
 
 class MarketingLeadCreate(BaseModel):
@@ -840,5 +920,13 @@ class AdminAnalyticsRead(BaseModel):
     rider_count: int
     business_count: int
     page_visits: int
+    connected_stripe_accounts: int = 0
+    not_connected_stripe_accounts: int = 0
+    pending_verification_stripe_accounts: int = 0
+    platform_revenue_cents: int = 0
+    gross_booking_volume_cents: int = 0
+    platform_fee_collected_cents: int = 0
+    bookings_count: int = 0
+    failed_payments_count: int = 0
     rider_locations: list[AdminAnalyticsLocation]
     top_paths: list[AdminAnalyticsPath]

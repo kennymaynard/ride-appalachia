@@ -15,7 +15,7 @@ Use this as the working checklist before real bookings and wider rider launch.
 - [ ] Refund processed email
 - [ ] Partial refund email
 - [ ] No-refund cancellation email
-- [ ] Business payout scheduled email
+- [ ] Business payment received notice
 
 ## Booking And Payments
 
@@ -26,8 +26,9 @@ Use this as the working checklist before real bookings and wider rider launch.
 - [ ] Test full refund on Render
 - [ ] Test partial refund on Render
 - [ ] Test no-refund cancellation on Render
-- [ ] Verify payout is not sent on canceled bookings
-- [ ] Verify payout processes after check-in
+- [ ] Verify booking checkout uses the provider connected Stripe account
+- [ ] Verify no Appalachia Offroad booking fee is added to reservation totals
+- [ ] Verify taxes are displayed as provider-collected/remitted
 - [ ] Add admin booking/refund audit page
 - [ ] Add business booking calendar view
 - [ ] Add downloadable rider booking details
@@ -56,7 +57,7 @@ Use this as the working checklist before real bookings and wider rider launch.
 - [ ] Submit a partner deal request from business dashboard
 - [ ] Make property/calendar setup easier
 - [ ] Add booking calendar view
-- [ ] Add payout status explanations
+- [ ] Add connected Stripe account status explanations
 - [ ] Add refund policy helper text
 - [x] Add business dashboard quick setup checklist
 - [ ] Add reminders for missing Stripe Connect setup

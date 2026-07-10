@@ -5,9 +5,10 @@ export default function RefundsPage() {
         <p className="eyebrow">Refunds</p>
         <h1>Refund and cancellation policy.</h1>
         <p>
-          Appalachia Offroad handles partner subscriptions, booking payments,
-          cancellation requests, and marketplace support for riders and partner
-          businesses.
+          Appalachia Offroad supports partner subscriptions, cancellation
+          requests, and marketplace communication. Reservation payments are
+          processed by the lodging provider or bookable business through its
+          connected Stripe account when online booking is available.
         </p>
       </section>
 
@@ -38,16 +39,17 @@ export default function RefundsPage() {
             policy for each property, rental, guide service, event, or booking
             item. Approved cancellations may receive a full or partial refund.
             Late cancellations, no-shows, non-refundable fees, or custom
-            property terms may reduce or prevent a refund.
+            property terms may reduce or prevent a refund. Refund decisions are
+            made by the business that accepted the booking.
           </p>
         </article>
         <article>
-          <h2>Business Payout Timing</h2>
+          <h2>Provider Payments</h2>
           <p>
-            Booking funds are collected through the app and the business payout
-            is scheduled for the day after check-in. This gives time for
-            cancellation review, check-in confirmation, and support review when
-            needed.
+            Online reservation payments are processed through the provider&apos;s
+            connected Stripe account. The provider is responsible for its own
+            Stripe payout settings, payout timing, taxes, and accounting.
+            Appalachia Offroad does not store provider bank information.
           </p>
         </article>
         <article>
@@ -72,7 +74,9 @@ export default function RefundsPage() {
           <p>
             If you believe a charge was made in error, contact
             support@appalachiaoffroadapp.com so the account or booking can be
-            reviewed.
+            reviewed. For reservation-specific refund questions, the lodging
+            provider or bookable business may need to approve the refund before
+            it can be processed.
           </p>
         </article>
       </section>

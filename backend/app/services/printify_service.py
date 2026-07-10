@@ -441,9 +441,25 @@ def _parse_stripe_line_items(line_items: list[dict]) -> list[dict[str, str | int
 
 def build_printify_order_payload(session: dict, settings: Settings, line_items: list[dict] | None = None) -> dict:
     metadata = session.get("metadata") or {}
-    shipping_details = session.get("shipping_details") or {}
+    collected_information = session.get("collected_information") or {}
+    shipping_details = (
+        session.get("shipping_details")
+        or collected_information.get("shipping_details")
+        or {}
+    )
     customer_details = session.get("customer_details") or {}
     address = shipping_details.get("address") or {}
+    print(
+        "Building Printify payload:",
+        {
+            "session_id": session.get("id") or "",
+            "shipping_name_present": bool(shipping_details.get("name")),
+            "shipping_address_present": bool(address),
+            "metadata_items_present": bool(metadata.get("items")),
+            "stripe_line_item_count": len(line_items or []),
+        },
+        flush=True,
+    )
     first_name, last_name = _split_name(shipping_details.get("name") or customer_details.get("name") or "")
     printify_line_items = _parse_stripe_line_items(line_items or [])
     if not printify_line_items:
@@ -488,6 +504,20 @@ def submit_store_order_from_stripe_session(
     line_items: list[dict] | None = None,
 ) -> PrintifyOrderResult:
     metadata = session.get("metadata") or {}
+    session_id = session.get("id") or ""
+    print(
+        "Printify fulfillment inspected:",
+        {
+            "session_id": session_id,
+            "order_type": metadata.get("order_type") or "",
+            "fulfillment": metadata.get("fulfillment") or "",
+            "auto_submit_enabled": settings.printify_auto_submit_orders,
+            "api_token_configured": bool(settings.printify_api_token),
+            "shop_id_configured": bool(settings.printify_shop_id),
+            "stripe_line_item_count": len(line_items or []),
+        },
+        flush=True,
+    )
     if metadata.get("order_type") != "merch":
         return PrintifyOrderResult(submitted=False, message="Not a merch order.")
     if not settings.printify_auto_submit_orders:
@@ -497,19 +527,59 @@ def submit_store_order_from_stripe_session(
 
     try:
         payload = build_printify_order_payload(session, settings, line_items)
+        print(
+            "Printify order submission started:",
+            {
+                "session_id": session_id,
+                "printify_line_item_count": len(payload.get("line_items") or []),
+            },
+            flush=True,
+        )
         response = _post_printify(settings, f"/shops/{settings.printify_shop_id}/orders.json", payload)
     except ValueError as exc:
+        print(
+            "Printify order validation failed:",
+            {"session_id": session_id, "message": str(exc)},
+            flush=True,
+        )
         return PrintifyOrderResult(submitted=False, message=str(exc))
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
+        print(
+            "Printify order rejected:",
+            {
+                "session_id": session_id,
+                "status_code": exc.code,
+                "detail": detail[:500],
+            },
+            flush=True,
+        )
         return PrintifyOrderResult(
             submitted=False,
             message=f"Printify rejected the order: {exc.code} {detail[:500]}",
         )
     except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        print(
+            "Printify order submission failed:",
+            {
+                "session_id": session_id,
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+            },
+            flush=True,
+        )
         return PrintifyOrderResult(submitted=False, message=f"Unable to submit Printify order: {exc}")
 
     order_id = str(response.get("id") or "")
+    print(
+        "Printify order response received:",
+        {
+            "session_id": session_id,
+            "order_id": order_id,
+            "submitted": bool(order_id),
+        },
+        flush=True,
+    )
     return PrintifyOrderResult(
         submitted=bool(order_id),
         order_id=order_id,

@@ -1,5 +1,5 @@
 export default function TermsPage() {
-  const updatedAt = "June 30, 2026";
+  const updatedAt = "July 9, 2026";
 
   return (
     <main className="page">
@@ -57,9 +57,11 @@ export default function TermsPage() {
             Businesses are responsible for keeping listing details, phone
             numbers, owner emails, websites, photos, pricing, offers,
             availability, cancellation policies, and booking information
-            accurate. Appalachia Offroad may edit, hide, reject, or remove
-            listings that appear inaccurate, misleading, unsafe, unlawful, or
-            harmful to riders or other businesses.
+            accurate. For lodging and other bookable listings, the listed
+            business is the merchant of record for the reservation. Appalachia
+            Offroad may edit, hide, reject, or remove listings that appear
+            inaccurate, misleading, unsafe, unlawful, or harmful to riders or
+            other businesses.
           </p>
         </article>
         <article>
@@ -70,7 +72,19 @@ export default function TermsPage() {
             provider, and business involved. Appalachia Offroad may provide tools
             to request, review, approve, cancel, or coordinate these items, but
             businesses remain responsible for fulfilling their own services and
-            honoring their posted policies.
+            honoring their posted policies, pricing, taxes, cancellation terms,
+            and refund decisions.
+          </p>
+        </article>
+        <article>
+          <h2>Taxes</h2>
+          <p>
+            Lodging providers and other bookable businesses are responsible for
+            determining, collecting, reporting, and remitting all applicable
+            federal, state, county, city, sales, lodging, occupancy, tourism,
+            and local taxes connected to their reservations or services.
+            Appalachia Offroad does not collect or remit lodging, occupancy, or
+            sales taxes on behalf of partner businesses.
           </p>
         </article>
         <article>
@@ -86,11 +100,14 @@ export default function TermsPage() {
           <h2>Payments, Payouts, and Refunds</h2>
           <p>
             Payments may be processed by Stripe or another payment provider.
-            Appalachia Offroad does not store full card numbers. Subscription,
-            booking, cancellation, payout, and refund terms may depend on the
-            selected product, business policy, Stripe rules, and the refund and
-            cancellation policy shown in the app. Paid partner tiers do not
-            guarantee bookings, calls, revenue, ranking, or rider traffic.
+            Appalachia Offroad does not store full card numbers. Customer
+            reservation payments are processed through the lodging provider or
+            bookable business&apos;s connected Stripe account when online booking is
+            available. Subscription, booking, cancellation, payout, and refund
+            terms may depend on the selected product, business policy, Stripe
+            rules, and the refund and cancellation policy shown in the app. Paid
+            partner tiers do not guarantee bookings, calls, revenue, ranking, or
+            rider traffic.
           </p>
         </article>
         <article>

@@ -10,7 +10,9 @@ import {
   getAdminMarketingLeads,
   getAdminPrintifyProducts,
   getAdminBookingTransfers,
+  getAdminRiders,
   getAdminServiceRequests,
+  getAdminStoreOrders,
   getAdminTrailConditionReports,
   getAdminTrailTalkPosts,
   getAdminTrailReviews,
@@ -30,11 +32,13 @@ import {
 } from "../lib/api";
 import type {
   AdminAnalytics,
+  AdminRiderAccount,
   Business,
   BusinessUpdateInput,
   BookingTransfer,
   LodgingServiceRequest,
   MarketingLead,
+  StoreOrder,
   TrailConditionReport,
   TrailReview,
   TrailTalkPost,
@@ -66,6 +70,29 @@ function mapPoint(latitude: number, longitude: number) {
   };
 }
 
+function formatCents(cents: number, currency = "usd") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(cents / 100);
+}
+
+function parseStoreOrderItems(items: string) {
+  try {
+    const parsed = JSON.parse(items);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not recorded";
+  return date.toLocaleDateString();
+}
+
 export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [pendingReviews, setPendingReviews] = useState<TrailReview[]>([]);
@@ -74,6 +101,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [serviceRequests, setServiceRequests] = useState<LodgingServiceRequest[]>([]);
   const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>([]);
   const [bookingTransfers, setBookingTransfers] = useState<BookingTransfer[]>([]);
+  const [storeOrders, setStoreOrders] = useState<StoreOrder[]>([]);
+  const [riderAccounts, setRiderAccounts] = useState<AdminRiderAccount[]>([]);
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [adminPassword, setAdminPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(initialBusinesses.length > 0);
@@ -105,6 +134,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     [businesses],
   );
 
+  const storeItemRequests = marketingLeads.filter((lead) => lead.source === "store_vendor_request");
+  const generalMarketingLeads = marketingLeads.filter((lead) => lead.source !== "store_vendor_request");
+
   function replaceBusiness(updatedBusiness: Business) {
     setBusinesses((current) =>
       current.map((business) =>
@@ -134,6 +166,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
       const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
       const loadedBookingTransfers = await getAdminBookingTransfers(adminPassword);
+      const loadedStoreOrders = await getAdminStoreOrders(adminPassword);
+      const loadedRiderAccounts = await getAdminRiders(adminPassword);
       const loadedAnalytics = await getAdminAnalytics(adminPassword).catch(() => null);
       setBusinesses(loadedBusinesses);
       setPendingReviews(loadedReviews);
@@ -142,6 +176,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       setServiceRequests(loadedServiceRequests);
       setMarketingLeads(loadedMarketingLeads);
       setBookingTransfers(loadedBookingTransfers);
+      setStoreOrders(loadedStoreOrders);
+      setRiderAccounts(loadedRiderAccounts);
       setAnalytics(loadedAnalytics);
       setIsUnlocked(true);
     } catch (caughtError) {
@@ -583,7 +619,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
             {pendingReviews.length +
               pendingTrailTalkPosts.length +
               serviceRequests.length +
-              marketingLeads.length +
+              generalMarketingLeads.length +
+              storeItemRequests.length +
               bookingTransfers.length}
           </strong>
           <span>Queues</span>
@@ -609,7 +646,35 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
               <strong>{analytics.business_count}</strong>
               <span>Businesses</span>
             </div>
+            <div>
+              <strong>{analytics.connected_stripe_accounts}</strong>
+              <span>Connected Stripe Accounts</span>
+            </div>
+            <div>
+              <strong>{analytics.not_connected_stripe_accounts}</strong>
+              <span>Not Connected</span>
+            </div>
+            <div>
+              <strong>{analytics.pending_verification_stripe_accounts}</strong>
+              <span>Pending Verification</span>
+            </div>
+            <div>
+              <strong>{formatCents(analytics.gross_booking_volume_cents)}</strong>
+              <span>Gross Booking Volume</span>
+            </div>
+            <div>
+              <strong>{analytics.bookings_count}</strong>
+              <span>Bookings</span>
+            </div>
+            <div>
+              <strong>{analytics.failed_payments_count}</strong>
+              <span>Failed Payments</span>
+            </div>
           </div>
+          <p className="field-help">
+            Booking platform fees are disabled. Lodging businesses process reservations
+            through their own connected Stripe accounts.
+          </p>
           <div className="admin-analytics-layout">
             <div className="admin-location-map" aria-label="Rider hometown map">
               {analytics.rider_locations.length ? (
@@ -643,6 +708,55 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           </div>
         </section>
       ) : null}
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Rider accounts</p>
+          <h2>Profiles saved in the app</h2>
+        </div>
+        {riderAccounts.length ? (
+          <div className="admin-list">
+            {riderAccounts.map((rider) => (
+              <article className="admin-business-card" key={rider.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{rider.veteran_verification_status}</span>
+                    <span>joined {formatDate(rider.created_at)}</span>
+                  </div>
+                  <h2>{rider.display_name || rider.email}</h2>
+                  <p>
+                    {rider.home_location || "No hometown saved"} - {rider.completed_trails} completed,
+                    {" "}
+                    {rider.saved_trails} saved, {rider.badge_count} badges.
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{rider.email}</dd>
+                    </div>
+                    <div>
+                      <dt>Phone</dt>
+                      <dd>{rider.phone || "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt>Partner visits</dt>
+                      <dd>{rider.partner_visits}</dd>
+                    </div>
+                    <div>
+                      <dt>Profile</dt>
+                      <dd>
+                        <a href={`/rider/access/${rider.access_token}`}>Open ride card</a>
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No rider accounts found yet.</p>
+        )}
+      </div>
 
       <div className="admin-email-tools">
         <button type="button" disabled={sendingTestEmail} onClick={sendTestApprovalEmail}>
@@ -686,6 +800,131 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       {smsStatus ? <p className="form-success">{smsStatus}</p> : null}
       {geocodeStatus ? <p className="form-success">{geocodeStatus}</p> : null}
 
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Store orders</p>
+          <h2>Merch checkout and Printify status</h2>
+        </div>
+        {storeOrders.length ? (
+          <div className="admin-list">
+            {storeOrders.map((order) => {
+              const items = parseStoreOrderItems(order.items);
+              return (
+                <article className="admin-business-card" key={order.id}>
+                  <div>
+                    <div className="listing-meta">
+                      <span>{order.status}</span>
+                      <span>{order.printify_submitted ? "Printify submitted" : "Printify needs attention"}</span>
+                    </div>
+                    <h2>{order.customer_name || order.customer_email || `Order #${order.id}`}</h2>
+                    <p>
+                      {formatCents(order.total_cents, order.currency)} paid through Stripe.
+                      {" "}
+                      {order.printify_message || "No Printify message recorded yet."}
+                    </p>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{order.customer_email || "Not provided"}</dd>
+                      </div>
+                      <div>
+                        <dt>Phone</dt>
+                        <dd>{order.customer_phone || "Not provided"}</dd>
+                      </div>
+                      <div>
+                        <dt>Stripe session</dt>
+                        <dd>{order.stripe_checkout_session_id}</dd>
+                      </div>
+                      <div>
+                        <dt>Printify order</dt>
+                        <dd>{order.printify_order_id || "Not created"}</dd>
+                      </div>
+                    </dl>
+                    {items.length ? (
+                      <div className="admin-order-items">
+                        {items.map((item, index) => (
+                          <p key={`${order.id}-${index}`}>
+                            <strong>{item.name || "Store item"}</strong>
+                            {" "}
+                            x{item.quantity || 1}
+                            {item.variant ? ` - ${item.variant}` : ""}
+                            {item.dropship_sku ? ` - SKU ${item.dropship_sku}` : ""}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="empty-state">No merch orders recorded yet.</p>
+        )}
+      </div>
+
+      <div className="admin-review-queue">
+        <div className="section-heading">
+          <p>Store item requests</p>
+          <h2>Businesses asking to sell gear</h2>
+        </div>
+        {storeItemRequests.length ? (
+          <div className="admin-list">
+            {storeItemRequests.map((lead) => (
+              <article className="admin-business-card" key={lead.id}>
+                <div>
+                  <div className="listing-meta">
+                    <span>{lead.status}</span>
+                    <span>{lead.area || "store seller"}</span>
+                  </div>
+                  <h2>{lead.business_name || lead.email}</h2>
+                  <p>{lead.notes || "No item details provided."}</p>
+                  <dl>
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{lead.email}</dd>
+                    </div>
+                    <div>
+                      <dt>Phone</dt>
+                      <dd>{lead.phone || "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt>Website</dt>
+                      <dd>{lead.website || "Not provided"}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "converted")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "closed")}
+                  >
+                    Deny
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingId === lead.id}
+                    onClick={() => runLeadAction(lead.id, "contacted")}
+                  >
+                    Contacted
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">No business store item requests are waiting.</p>
+        )}
+      </div>
+
       <div className="admin-email-tools">
         <label className="admin-toggle-row">
           <input
@@ -700,8 +939,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
 
       <div className="admin-review-queue">
         <div className="section-heading">
-          <p>Booking payouts</p>
-          <h2>Scheduled and payout issues</h2>
+          <p>Legacy booking payouts</p>
+          <h2>Old transfer records and payout issues</h2>
         </div>
         <div className="admin-email-tools">
           <button
@@ -728,7 +967,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           >
             Process Due Payouts
           </button>
-          <span>Runs the same payout processor as the Render scheduled job.</span>
+          <span>
+            New reservations use provider Stripe accounts directly. This queue is
+            only for older transfer records that still need attention.
+          </span>
         </div>
         {bookingTransfers.length ? (
           <div className="admin-list">
@@ -768,9 +1010,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <p>Inbound leads</p>
           <h2>Launch and business signups</h2>
         </div>
-        {marketingLeads.length ? (
+        {generalMarketingLeads.length ? (
           <div className="admin-list">
-            {marketingLeads.map((lead) => (
+            {generalMarketingLeads.map((lead) => (
               <article className="admin-business-card" key={lead.id}>
                 <div>
                   <div className="listing-meta">

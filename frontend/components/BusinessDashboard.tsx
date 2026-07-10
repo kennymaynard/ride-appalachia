@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   addDeal,
   addListingCalendar,
+  acceptPartnerTaxAgreement,
   approveBooking,
   createCampaign,
   createBookableListing,
@@ -13,6 +14,7 @@ import {
   deleteDeal,
   geocodeLocation,
   getListings,
+  syncStripeConnectStatus,
   syncListingCalendar,
   updateBusiness,
   updateDeal,
@@ -48,6 +50,7 @@ const tiers = [
   { id: "lodging_partner", label: "$59 lodging partner" },
   { id: "veteran_owned", label: "$0.00 veteran owned" },
 ] as const;
+const MAX_LISTING_PHOTO_BYTES = 2 * 1024 * 1024;
 
 function getActiveTier(tier: string) {
   return tiers.some((item) => item.id === tier) ? tier : tiers[0].id;
@@ -115,6 +118,7 @@ function emptyBookableForm(business?: Business) {
     photo_url: business?.photo_url || "",
     nightly_rate: "",
     cleaning_fee: "",
+    tax_rate: "",
     max_guests: "4",
     cancellation_window_hours: "72",
     cancellation_policy:
@@ -197,6 +201,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
   const [savingPartnerDeal, setSavingPartnerDeal] = useState(false);
   const [syncingCalendarId, setSyncingCalendarId] = useState(0);
   const [connectingStripe, setConnectingStripe] = useState(false);
+  const [refreshingStripe, setRefreshingStripe] = useState(false);
+  const [acceptingAgreement, setAcceptingAgreement] = useState(false);
   const [refundChoices, setRefundChoices] = useState<Record<number, { mode: RefundMode; customAmount: string }>>({});
 
   useEffect(() => {
@@ -349,6 +355,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
 
   function useUploadedPhoto(file?: File) {
     if (!file || !listingForm) return;
+    setError("");
+    if (file.size > MAX_LISTING_PHOTO_BYTES) {
+      setError("That image is too large. Please upload a photo under 2 MB or paste a hosted image URL.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
@@ -631,6 +642,56 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
     }
   }
 
+  async function refreshStripeStatus() {
+    if (!selectedBusiness) return;
+    setRefreshingStripe(true);
+    setError("");
+    setStatus("");
+    try {
+      const stripeStatus = await syncStripeConnectStatus(
+        selectedBusiness.id,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        stripe_connect_account_id: stripeStatus.stripe_connect_account_id,
+        stripe_connect_charges_enabled: stripeStatus.charges_enabled,
+        stripe_connect_payouts_enabled: stripeStatus.payouts_enabled,
+        stripe_connect_onboarding_complete: stripeStatus.onboarding_complete,
+        stripe_connect_business_name: stripeStatus.business_name || selectedBusiness.name,
+        stripe_connect_business_email: stripeStatus.business_email || selectedBusiness.owner_email || "",
+      });
+      setStatus("Stripe status refreshed.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to refresh Stripe status.");
+    } finally {
+      setRefreshingStripe(false);
+    }
+  }
+
+  async function acceptTaxAgreement() {
+    if (!selectedBusiness) return;
+    setAcceptingAgreement(true);
+    setError("");
+    setStatus("");
+    try {
+      const agreement = await acceptPartnerTaxAgreement(
+        selectedBusiness.id,
+        selectedBusiness.owner_access_token,
+      );
+      replaceBusiness({
+        ...selectedBusiness,
+        partner_tax_agreement_accepted: agreement.accepted,
+        partner_tax_agreement_accepted_at: agreement.accepted_at || new Date().toISOString(),
+      });
+      setStatus("Partner tax agreement accepted.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to accept partner agreement.");
+    } finally {
+      setAcceptingAgreement(false);
+    }
+  }
+
   async function publishBookableListing(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedBusiness) return;
@@ -647,6 +708,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
         photo_url: bookableForm.photo_url,
         nightly_rate_cents: dollarsToCents(bookableForm.nightly_rate),
         cleaning_fee_cents: dollarsToCents(bookableForm.cleaning_fee),
+        tax_rate_basis_points: Math.round((Number(bookableForm.tax_rate) || 0) * 100),
         max_guests: Number(bookableForm.max_guests) || 1,
         cancellation_window_hours: Number(bookableForm.cancellation_window_hours) || 72,
         cancellation_policy: bookableForm.cancellation_policy,
@@ -1058,7 +1120,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
               onChange={(event) => useUploadedPhoto(event.target.files?.[0])}
             />
             <small className="field-help">
-              Upload a listing photo, or paste a direct image URL below.
+              Upload a listing photo under 2 MB, or paste a direct image URL below.
             </small>
           </label>
           <label>
@@ -1206,15 +1268,61 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           <div className="booking-status-row">
             <span>
               Stripe Connect:{" "}
-              {selectedBusiness.stripe_connect_onboarding_complete
+              {selectedBusiness.stripe_connect_charges_enabled && selectedBusiness.stripe_connect_payouts_enabled
                 ? "Connected"
                 : selectedBusiness.stripe_connect_account_id
-                  ? "Started"
+                  ? "Pending verification"
                   : "Not connected"}
             </span>
             <button type="button" onClick={connectStripePayouts} disabled={connectingStripe}>
-              {connectingStripe ? "Opening..." : "Connect Stripe Payouts"}
+              {connectingStripe
+                ? "Opening..."
+                : selectedBusiness.stripe_connect_account_id
+                  ? "Reconnect Stripe"
+                  : "Connect Stripe"}
             </button>
+            <button type="button" onClick={refreshStripeStatus} disabled={refreshingStripe}>
+              {refreshingStripe ? "Checking..." : "View Payout Status"}
+            </button>
+          </div>
+          <div className="booking-status-row">
+            <span>
+              Partner tax agreement:{" "}
+              {selectedBusiness.partner_tax_agreement_accepted ? "Accepted" : "Required"}
+            </span>
+            <button
+              type="button"
+              onClick={acceptTaxAgreement}
+              disabled={acceptingAgreement || selectedBusiness.partner_tax_agreement_accepted}
+            >
+              {acceptingAgreement ? "Saving..." : "Accept Agreement"}
+            </button>
+          </div>
+          <p className="field-help">
+            I understand my business is responsible for collecting and remitting
+            all required federal, state, county, and local taxes, including
+            lodging and occupancy taxes. Appalachia Offroad is not responsible
+            for tax collection or remittance on behalf of my business.
+          </p>
+          <div className="booking-status-row">
+            <span>
+              Booking revenue:{" "}
+              {centsToDollars(
+                (selectedBusiness.bookings || [])
+                  .filter((booking) => booking.status === "paid")
+                  .reduce((sum, booking) => sum + booking.subtotal_cents + booking.taxes_cents, 0),
+              )}
+            </span>
+            <span>
+              Upcoming reservations:{" "}
+              {(selectedBusiness.bookings || []).filter((booking) => booking.status === "paid").length}
+            </span>
+            <span>
+              Completed reservations:{" "}
+              {(selectedBusiness.bookings || []).filter(
+                (booking) => booking.status === "paid" && new Date(booking.end_date) < new Date(),
+              ).length}
+            </span>
           </div>
         </section>
         ) : null}
@@ -1280,6 +1388,17 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                 }
               />
             </label>
+            <label>
+              Tax rate %
+              <input
+                inputMode="decimal"
+                placeholder="12"
+                value={bookableForm.tax_rate}
+                onChange={(event) =>
+                  setBookableForm({ ...bookableForm, tax_rate: event.target.value })
+                }
+              />
+            </label>
           </div>
           <label>
             Max guests
@@ -1319,8 +1438,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             </select>
           </label>
           <small className="field-help">
-            Business payout is scheduled for the day after check-in once payment
-            is complete.
+            Reservation payments are processed through this business&apos;s connected
+            Stripe account. Manage payout timing inside Stripe.
           </small>
           <label>
             Photo URL
@@ -1361,6 +1480,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
           <button type="submit" disabled={savingBookable}>
             {savingBookable ? "Adding..." : "Add Property"}
           </button>
+          {!selectedBusiness.partner_tax_agreement_accepted ? (
+            <p className="form-error">
+              Accept the partner tax agreement before activating listings.
+            </p>
+          ) : null}
         </form>
         ) : null}
 
@@ -1429,7 +1553,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     {listing.calendars.length === 1 ? "" : "s"}
                   </p>
                   <p>
-                    {listing.cancellation_window_hours} hour cancellation window • payout day after check-in
+                    {listing.cancellation_window_hours} hour cancellation window • payouts handled by Stripe
                   </p>
                   {listing.calendars.length ? (
                     <div className="calendar-sync-list">
@@ -1471,9 +1595,11 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     {booking.start_date} to {booking.end_date} • {booking.guests} guest
                     {booking.guests === 1 ? "" : "s"} • {centsToDollars(booking.total_cents)}
                   </p>
-                  {booking.payout_release_date ? (
-                    <p>Payout release date: {booking.payout_release_date}</p>
-                  ) : null}
+                  <p>
+                    Subtotal {centsToDollars(booking.subtotal_cents)} • Taxes{" "}
+                    {centsToDollars(booking.taxes_cents)}
+                  </p>
+                  <p>Payment processed by this business&apos;s connected Stripe account.</p>
                   {booking.refund_status === "requested" ? (
                     <div className="alert-inline">
                       <strong>Cancellation requested</strong>

@@ -3,6 +3,7 @@ import type { StoreProduct } from "./store-products";
 import type {
   AdminEmailTestResult,
   AdminAnalytics,
+  AdminRiderAccount,
   Business,
   AdminSmsTestResult,
   Booking,
@@ -32,6 +33,7 @@ import type {
   RiderTrailProgress,
   RiderTrailProgressCreateInput,
   StoreCheckoutInput,
+  StoreOrder,
   TrailConditionReport,
   TrailConditionReportCreateInput,
   TrailReview,
@@ -249,9 +251,13 @@ export async function geocodeLocation(query: string): Promise<GeocodeResult> {
 }
 
 export async function getBusinessByAccessToken(ownerAccessToken: string): Promise<Business | null> {
+  const cleanToken = ownerAccessToken.trim();
+  if (!cleanToken) return null;
+
   try {
-    const response = await apiFetch(`/api/businesses/access/${ownerAccessToken}`, {
+    const response = await apiFetch(`/api/businesses/access/${encodeURIComponent(cleanToken)}`, {
       cache: "no-store",
+      signal: timeoutSignal(10000),
     });
     if (!response.ok) return null;
     return response.json();
@@ -326,6 +332,41 @@ export async function loginRider(payload: {
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Unable to open rider profile");
+  }
+
+  return response.json();
+}
+
+export async function requestRiderPasswordReset(
+  email: string,
+): Promise<{ sent: boolean; message: string; reset_url?: string }> {
+  const response = await fetch(`${getApiUrl()}/api/riders/password-reset/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to request password reset");
+  }
+
+  return response.json();
+}
+
+export async function confirmRiderPasswordReset(payload: {
+  reset_token: string;
+  password: string;
+}): Promise<{ access_url: string; access_token: string; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/riders/password-reset/confirm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to reset rider password");
   }
 
   return response.json();
@@ -751,6 +792,47 @@ export async function createStripeConnectOnboarding(
   return response.json();
 }
 
+export async function syncStripeConnectStatus(
+  businessId: number,
+  ownerAccessToken?: string,
+): Promise<{
+  stripe_connect_account_id: string;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  onboarding_complete: boolean;
+  business_name?: string;
+  business_email?: string;
+}> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/stripe-connect/status`, {
+    method: "POST",
+    headers: getBusinessHeaders(ownerAccessToken),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to refresh Stripe status");
+  }
+
+  return response.json();
+}
+
+export async function acceptPartnerTaxAgreement(
+  businessId: number,
+  ownerAccessToken?: string,
+): Promise<{ accepted: boolean; accepted_at?: string | null }> {
+  const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/partner-tax-agreement`, {
+    method: "POST",
+    headers: getBusinessHeaders(ownerAccessToken),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Unable to accept partner agreement");
+  }
+
+  return response.json();
+}
+
 export async function createMarketingLead(payload: MarketingLeadCreateInput): Promise<MarketingLead> {
   const response = await fetch(`${getApiUrl()}/api/leads`, {
     method: "POST",
@@ -1107,6 +1189,28 @@ export async function getAdminBookingTransfers(
   adminPassword?: string,
 ): Promise<BookingTransfer[]> {
   const response = await fetch(`${getApiUrl()}/api/admin/booking-transfers?status=needs_attention`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
+}
+
+export async function getAdminStoreOrders(adminPassword?: string): Promise<StoreOrder[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/store/orders`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
+}
+
+export async function getAdminRiders(adminPassword?: string): Promise<AdminRiderAccount[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/riders`, {
     cache: "no-store",
     headers: getAdminHeaders(adminPassword),
   });

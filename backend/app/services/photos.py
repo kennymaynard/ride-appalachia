@@ -11,6 +11,7 @@ CATEGORY_FALLBACK_PHOTOS = {
 }
 
 DIRECT_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif")
+MAX_EMBEDDED_PHOTO_CHARS = 3_000_000
 TRUSTED_IMAGE_HOSTS = {
     "images.unsplash.com",
     "plus.unsplash.com",
@@ -30,12 +31,16 @@ def fallback_photo_for_category(category: str) -> str:
     return CATEGORY_FALLBACK_PHOTOS.get(category, CATEGORY_FALLBACK_PHOTOS["lodging"])
 
 
+def is_oversized_embedded_photo(photo_url: str) -> bool:
+    return photo_url.startswith("data:image/") and len(photo_url) > MAX_EMBEDDED_PHOTO_CHARS
+
+
 def is_valid_photo_url(photo_url: str) -> bool:
     if not photo_url:
         return False
 
     if photo_url.startswith("data:image/"):
-        return True
+        return not is_oversized_embedded_photo(photo_url)
 
     parsed_url = urlparse(photo_url.strip())
     hostname = (parsed_url.hostname or "").lower()

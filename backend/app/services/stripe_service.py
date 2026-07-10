@@ -111,29 +111,58 @@ def create_connect_onboarding_link(
     return (account_link.url, account_id)
 
 
+def retrieve_connect_account(settings: Settings, account_id: str) -> dict:
+    if not account_id:
+        return {}
+    if not settings.stripe_secret_key:
+        if settings.frontend_url.startswith("http://localhost"):
+            return {
+                "id": account_id,
+                "charges_enabled": True,
+                "payouts_enabled": True,
+                "details_submitted": True,
+                "business_profile": {"name": ""},
+                "email": "",
+            }
+        raise RuntimeError("Stripe is not configured for Connect account status")
+
+    stripe.api_key = settings.stripe_secret_key
+    return stripe.Account.retrieve(account_id)
+
+
 def create_booking_checkout_session(
     settings: Settings,
-    booking_ids: list[int],
+    booking_id: int,
     customer_email: str,
     total_cents: int,
     platform_fee_cents: int,
+    destination_account_id: str,
+    business_name: str,
 ) -> str:
-    joined_booking_ids = ",".join(str(booking_id) for booking_id in booking_ids)
-    success_url = f"{settings.frontend_url}/business/success?booking=success&booking_ids={joined_booking_ids}"
+    success_url = f"{settings.frontend_url}/business/success?booking=success&booking_ids={booking_id}"
     cancel_url = f"{settings.frontend_url}/marketplace?booking=cancelled"
 
     if not settings.stripe_secret_key:
         if settings.frontend_url.startswith("http://localhost"):
             return success_url.replace("booking=success", "booking=stub")
         raise RuntimeError("Stripe is not configured for booking checkout")
+    if not destination_account_id:
+        raise RuntimeError("This lodging partner is not connected to Stripe")
 
     stripe.api_key = settings.stripe_secret_key
     payment_intent_data = {
+        "transfer_data": {
+            "destination": destination_account_id,
+        },
         "metadata": {
-            "booking_ids": joined_booking_ids,
+            "booking_ids": str(booking_id),
+            "booking_id": str(booking_id),
             "platform_fee_cents": str(platform_fee_cents),
+            "merchant_of_record": business_name,
         },
     }
+    if platform_fee_cents > 0:
+        payment_intent_data["application_fee_amount"] = platform_fee_cents
 
     session_params = {
         "mode": "payment",
@@ -143,7 +172,7 @@ def create_booking_checkout_session(
                 "price_data": {
                     "currency": "usd",
                     "product_data": {
-                        "name": "Appalachia Offroad trip booking",
+                        "name": f"{business_name} reservation",
                     },
                     "unit_amount": total_cents,
                 },
@@ -153,8 +182,10 @@ def create_booking_checkout_session(
         "success_url": success_url,
         "cancel_url": cancel_url,
         "metadata": {
-            "booking_ids": joined_booking_ids,
+            "booking_ids": str(booking_id),
+            "booking_id": str(booking_id),
             "platform_fee_cents": str(platform_fee_cents),
+            "merchant_of_record": business_name,
         },
         "payment_intent_data": payment_intent_data,
     }
