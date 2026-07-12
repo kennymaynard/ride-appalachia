@@ -552,8 +552,8 @@ def send_booking_confirmation_emails(
         f"<p><strong>Cleaning Fee:</strong> {dollars(cleaning_fee_cents)}</p>"
         f"<p><strong>Taxes:</strong> {dollars(taxes_cents)}</p>"
         f"<p><strong>Total Paid:</strong> {dollars(total_cents)}</p>"
-        f"<p>Payment processed by: {escape(business_name)}</p>"
-        "<p>Taxes are collected and remitted by the lodging provider.</p>"
+        "<p>Payment collected through Appalachia Offroad using Stripe Connect.</p>"
+        f"<p>{escape(business_name)} receives the provider payout and remains responsible for applicable taxes and services.</p>"
         f'<p><a href="{booking_url}">View Booking</a></p>'
     )
     text = "\n".join(
@@ -566,8 +566,8 @@ def send_booking_confirmation_emails(
             f"Cleaning Fee: {dollars(cleaning_fee_cents)}",
             f"Taxes: {dollars(taxes_cents)}",
             f"Total Paid: {dollars(total_cents)}",
-            f"Payment processed by: {business_name}",
-            "Taxes are collected and remitted by the lodging provider.",
+            "Payment collected through Appalachia Offroad using Stripe Connect.",
+            f"{business_name} receives the provider payout and remains responsible for applicable taxes and services.",
             f"Booking: {booking_url}",
         ],
     )

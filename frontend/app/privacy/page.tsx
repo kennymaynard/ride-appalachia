@@ -88,8 +88,8 @@ export default function PrivacyPage() {
             certain financial onboarding steps are processed by Stripe.
             Appalachia Offroad does not store full card numbers or bank account
             information. For lodging reservations and other bookable services,
-            payment is processed through the provider&apos;s connected Stripe
-            account when online booking is available. Stripe may collect
+            payment is collected through Appalachia Offroad using Stripe Connect,
+            and the provider&apos;s connected account receives its payout. Stripe may collect
             payment, identity, tax, bank, and fraud-prevention information
             according to Stripe&apos;s own policies.
           </p>

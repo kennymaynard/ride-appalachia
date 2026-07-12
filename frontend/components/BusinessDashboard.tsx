@@ -1438,8 +1438,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
             </select>
           </label>
           <small className="field-help">
-            Reservation payments are processed through this business&apos;s connected
-            Stripe account. Manage payout timing inside Stripe.
+            Payments are collected through Appalachia Offroad using Stripe Connect.
+            This business&apos;s connected account receives the provider payout.
           </small>
           <label>
             Photo URL
@@ -1599,7 +1599,7 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
                     Subtotal {centsToDollars(booking.subtotal_cents)} • Taxes{" "}
                     {centsToDollars(booking.taxes_cents)}
                   </p>
-                  <p>Payment processed by this business&apos;s connected Stripe account.</p>
+                  <p>Payment collected through Appalachia Offroad using Stripe Connect; this business receives the provider payout.</p>
                   {booking.refund_status === "requested" ? (
                     <div className="alert-inline">
                       <strong>Cancellation requested</strong>

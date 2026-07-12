@@ -2,7 +2,7 @@ from datetime import datetime
 import secrets
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
@@ -274,6 +274,8 @@ def get_admin_analytics(
         connected_stripe_accounts=(
             db.query(Business)
             .filter(
+                Business.is_deleted.is_(False),
+                Business.stripe_connect_account_id.isnot(None),
                 Business.stripe_connect_account_id != "",
                 Business.stripe_connect_charges_enabled.is_(True),
                 Business.stripe_connect_payouts_enabled.is_(True),
@@ -282,12 +284,17 @@ def get_admin_analytics(
         ),
         not_connected_stripe_accounts=(
             db.query(Business)
-            .filter(Business.is_deleted.is_(False), Business.stripe_connect_account_id == "")
+            .filter(
+                Business.is_deleted.is_(False),
+                or_(Business.stripe_connect_account_id.is_(None), Business.stripe_connect_account_id == ""),
+            )
             .count()
         ),
         pending_verification_stripe_accounts=(
             db.query(Business)
             .filter(
+                Business.is_deleted.is_(False),
+                Business.stripe_connect_account_id.isnot(None),
                 Business.stripe_connect_account_id != "",
                 (
                     (Business.stripe_connect_charges_enabled.is_(False))

@@ -7,8 +7,8 @@ export default function RefundsPage() {
         <p>
           Appalachia Offroad supports partner subscriptions, cancellation
           requests, and marketplace communication. Reservation payments are
-          processed by the lodging provider or bookable business through its
-          connected Stripe account when online booking is available.
+          collected through Appalachia Offroad using Stripe Connect when online
+          booking is available. The provider&apos;s connected account receives its payout.
         </p>
       </section>
 
@@ -46,8 +46,9 @@ export default function RefundsPage() {
         <article>
           <h2>Provider Payments</h2>
           <p>
-            Online reservation payments are processed through the provider&apos;s
-            connected Stripe account. The provider is responsible for its own
+            Online reservation payments are collected through Appalachia Offroad
+            using Stripe Connect. The provider&apos;s connected account receives the
+            provider payout. The provider is responsible for its own
             Stripe payout settings, payout timing, taxes, and accounting.
             Appalachia Offroad does not store provider bank information.
           </p>

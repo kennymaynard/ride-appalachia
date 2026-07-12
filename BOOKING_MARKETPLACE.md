@@ -14,7 +14,7 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 - Multiple bookable listings per business
 - iCal calendar sync for Airbnb, Vrbo, Booking.com, Google Calendar, and other iCal sources
 - Date-based search for riders
-- Stripe Connect Express for lodging/provider merchant accounts
+- Stripe Connect Express for provider payout accounts
 - Provider-paid reservations with no Appalachia Offroad booking fee
 - Request-to-book first, instant booking later
 
@@ -44,12 +44,12 @@ Start with request-to-book plus calendar sync. Add instant booking after importe
 3. Add rider date search.
 4. Add request-to-book messages and status tracking. Request and approval status are in place.
 5. Add Stripe Connect onboarding for businesses. Onboarding link creation is in place.
-6. Add Checkout using provider Stripe accounts with no Appalachia Offroad booking fee.
+6. Add platform Checkout using Stripe Connect destination charges and provider payouts.
 7. Add instant booking only after calendar sync is dependable.
 
 ## Current Limitation
 
-Online reservation checkout is one provider booking at a time so the connected business remains the merchant of record. Historical transfer records may still exist for older test bookings, but new provider reservations should not create a separate Appalachia Offroad transfer workflow.
+Online reservation payments are collected through the Appalachia Offroad platform using Stripe Connect. The connected business receives the provider payout, while the platform may collect its booking fee before transferring the provider portion. Providers remain responsible for their business obligations, listing accuracy, applicable taxes, services, cancellations, and refunds under the partner agreement.
 
 ## Calendar Sync
 

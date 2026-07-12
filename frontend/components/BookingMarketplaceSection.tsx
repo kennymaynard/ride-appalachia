@@ -34,8 +34,8 @@ export function BookingMarketplaceSection() {
           <article className="booking-feature-card">
             <h3>Stripe Connect Payments</h3>
             <p>
-              Customers pay in the app. The business receives their payout
-              automatically through its own connected Stripe account.
+              Payments are collected through Appalachia Offroad using Stripe
+              Connect, and the business receives the provider payout.
             </p>
           </article>
 

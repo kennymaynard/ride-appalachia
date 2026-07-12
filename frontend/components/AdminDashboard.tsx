@@ -970,8 +970,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
             Process Due Payouts
           </button>
           <span>
-            New reservations use provider Stripe accounts directly. This queue is
-            only for older transfer records that still need attention.
+            New reservations use platform checkout with Stripe Connect provider
+            payouts. This queue is only for older transfer records that still need attention.
           </span>
         </div>
         {bookingTransfers.length ? (

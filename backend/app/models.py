@@ -296,6 +296,8 @@ class Rider(Base):
     home_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     home_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     access_token: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    password_reset_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     veteran_verification_status: Mapped[str] = mapped_column(
         String(40),
         default=VeteranVerificationStatus.unverified.value,
@@ -468,6 +470,7 @@ class Booking(Base):
     platform_fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer, default=0)
     stripe_checkout_session_id: Mapped[str] = mapped_column(String(180), default="", index=True)
+    confirmation_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancellation_requested_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     cancellation_reason: Mapped[str] = mapped_column(Text, default="")
     cancellation_decision_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
