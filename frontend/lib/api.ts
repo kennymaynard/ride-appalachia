@@ -1039,6 +1039,41 @@ export async function getEventPlanner(slug: string, radius = 25): Promise<EventP
   return response.json();
 }
 
+export async function getEvent(slug: string): Promise<RideEvent | null> {
+  const response = await apiFetch(`/api/events/${encodeURIComponent(slug)}`, { cache: "no-store" });
+  return response.ok ? response.json() : null;
+}
+
+export async function getEventEngagement(slug: string, token = "") {
+  const response = await apiFetch(`/api/events/${encodeURIComponent(slug)}/engagement`, { headers: token ? { "X-Rider-Token": token } : {} });
+  if (!response.ok) throw new Error("Unable to load event activity");
+  return response.json();
+}
+
+export async function saveRideEvent(eventId: number, token: string, saved: boolean) {
+  const response = await apiFetch(`/api/events/${eventId}/save`, { method: saved ? "POST" : "DELETE", headers: { "X-Rider-Token": token } });
+  if (!response.ok) throw new Error("Rider login required to save events");
+  return response.json();
+}
+
+export async function setEventAttendance(eventId: number, token: string, status: string) {
+  const response = await apiFetch(`/api/events/${eventId}/attendance`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify({ status }) });
+  if (!response.ok) throw new Error("Rider login required to update attendance");
+  return response.json();
+}
+
+export async function createEventPlan(eventId: number, token: string, payload: object) {
+  const response = await apiFetch(`/api/events/${eventId}/plans`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error("Unable to save ride plan");
+  return response.json();
+}
+
+export async function getSavedRideEvents(token: string): Promise<RideEvent[]> {
+  const response = await apiFetch("/api/riders/me/saved-events", { headers: { "X-Rider-Token": token }, cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load saved events");
+  return response.json();
+}
+
 export async function getAdminEvents(adminPassword: string, status = "all"): Promise<RideEvent[]> {
   const response = await fetch(`${getApiUrl()}/api/admin/events?status=${status}`, {
     cache: "no-store",

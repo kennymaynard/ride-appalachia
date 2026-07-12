@@ -244,8 +244,65 @@ class Event(Base):
     submitted_by_name: Mapped[str] = mapped_column(String(120), default="")
     submitted_by_email: Mapped[str] = mapped_column(String(180), default="", index=True)
     admin_notes: Mapped[str] = mapped_column(Text, default="")
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reverify_after: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RiderSavedEvent(Base):
+    __tablename__ = "rider_saved_events"
+    __table_args__ = (UniqueConstraint("rider_id", "event_id", name="uq_rider_saved_event"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EventAttendee(Base):
+    __tablename__ = "event_attendees"
+    __table_args__ = (UniqueConstraint("rider_id", "event_id", name="uq_event_attendee"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    status: Mapped[str] = mapped_column(String(20), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EventRidePlan(Base):
+    __tablename__ = "event_ride_plans"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    title: Mapped[str] = mapped_column(String(180))
+    arrival_date: Mapped[date] = mapped_column(Date)
+    departure_date: Mapped[date] = mapped_column(Date)
+    items: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    share_token: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EventReminder(Base):
+    __tablename__ = "event_reminders"
+    __table_args__ = (UniqueConstraint("rider_id", "event_id", "days_before", name="uq_event_reminder"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    days_before: Mapped[int] = mapped_column(Integer)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EventMetric(Base):
+    __tablename__ = "event_metrics"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id"), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(60), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 class LodgingServiceRequest(Base):

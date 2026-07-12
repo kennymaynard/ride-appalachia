@@ -3,11 +3,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   getRiderRideCard,
+  getSavedRideEvents,
   requestVeteranVerification,
   saveRiderProgress,
   updateRiderAlerts,
 } from "../lib/api";
-import type { Rider, RiderActivity, RiderRideCard } from "../lib/types";
+import type { RideEvent, Rider, RiderActivity, RiderRideCard } from "../lib/types";
 
 type Props = {
   accessToken: string;
@@ -113,6 +114,7 @@ export function RiderDashboard({ accessToken }: Props) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [trackedTrailKey, setTrackedTrailKey] = useState("");
+  const [savedEvents, setSavedEvents] = useState<RideEvent[]>([]);
 
   const rider = rideCard?.rider;
   const currentTrailKey = `${(areaSlug.trim() || "appalachia").toLowerCase()}::${trailName.trim().toLowerCase()}`;
@@ -155,6 +157,7 @@ export function RiderDashboard({ accessToken }: Props) {
 
   useEffect(() => {
     refreshRideCard();
+    getSavedRideEvents(accessToken).then(setSavedEvents).catch(() => setSavedEvents([]));
   }, [accessToken]);
 
   async function checkInAndTrack() {
@@ -276,6 +279,8 @@ export function RiderDashboard({ accessToken }: Props) {
     <section className="rider-dashboard">
       {error ? <p className="form-error">{error}</p> : null}
       {message ? <p className="form-success">{message}</p> : null}
+
+      <article className="dashboard-card"><p className="eyebrow">Saved events</p><h2>Your upcoming rides</h2>{savedEvents.length ? savedEvents.map((event) => <p key={event.id}><a href={`/trail-talk/rides/${event.slug}`}>{event.title}</a> • {event.start_date}</p>) : <p className="empty-state">No saved events yet.</p>}</article>
 
       <div className="rider-stat-grid">
         <StatCard label="Trails Finished" value={rideCard.completed_trails} />
