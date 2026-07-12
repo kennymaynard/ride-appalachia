@@ -40,6 +40,10 @@ import type {
   TrailReviewCreateInput,
   TrailTalkPost,
   TrailTalkPostCreateInput,
+  RideEvent,
+  EventFilters,
+  EventSubmissionInput,
+  EventPlannerResult,
 } from "./types";
 
 function getApiUrl() {
@@ -1006,6 +1010,66 @@ export async function createTrailTalkPost(
 function getAdminHeaders(adminPassword?: string): Record<string, string> {
   const trimmedPassword = adminPassword?.trim();
   return trimmedPassword ? { "x-admin-password": trimmedPassword } : {};
+}
+
+export async function getEvents(filters: EventFilters = {}): Promise<RideEvent[]> {
+  if (shouldSkipApiDuringBuild()) return [];
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  });
+  const response = await apiFetch(`/api/events${params.size ? `?${params}` : ""}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load events");
+  return response.json();
+}
+
+export async function submitEvent(payload: EventSubmissionInput): Promise<RideEvent> {
+  const response = await fetch(`${getApiUrl()}/api/events/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to submit event");
+  return response.json();
+}
+
+export async function getEventPlanner(slug: string, radius = 25): Promise<EventPlannerResult> {
+  const response = await apiFetch(`/api/events/${slug}/planner?radius=${radius}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load ride planner");
+  return response.json();
+}
+
+export async function getAdminEvents(adminPassword: string, status = "all"): Promise<RideEvent[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/events?status=${status}`, {
+    cache: "no-store",
+    headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) throw new Error("Unable to load admin events");
+  return response.json();
+}
+
+export async function createAdminEvent(payload: Partial<RideEvent>, adminPassword: string): Promise<RideEvent> {
+  const response = await fetch(`${getApiUrl()}/api/admin/events`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to create event");
+  return response.json();
+}
+
+export async function updateAdminEvent(eventId: number, payload: Partial<RideEvent>, adminPassword: string): Promise<RideEvent> {
+  const response = await fetch(`${getApiUrl()}/api/admin/events/${eventId}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to update event");
+  return response.json();
+}
+
+export async function moderateAdminEvent(eventId: number, payload: { status: string; admin_notes?: string; is_verified?: boolean; is_featured?: boolean; verification_source?: string }, adminPassword: string): Promise<RideEvent> {
+  const response = await fetch(`${getApiUrl()}/api/admin/events/${eventId}/moderate`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to moderate event");
+  return response.json();
 }
 
 export async function getAdminBusinesses(adminPassword?: string, includeDeleted = false): Promise<Business[]> {

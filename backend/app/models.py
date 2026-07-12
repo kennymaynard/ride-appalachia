@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -56,6 +56,14 @@ class TrailTalkStatus(str, Enum):
     pending = "pending"
     approved = "approved"
     rejected = "rejected"
+
+
+class EventStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    expired = "expired"
+    unpublished = "unpublished"
 
 
 class LeadStatus(str, Enum):
@@ -199,6 +207,45 @@ class TrailTalkPost(Base):
     message: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(40), default=TrailTalkStatus.pending.value, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Event(Base):
+    __tablename__ = "events"
+    __table_args__ = (
+        Index("ix_events_state_start_date", "state", "start_date"),
+        Index("ix_events_status_end_date", "status", "end_date"),
+        Index("ix_events_verified_featured", "is_verified", "is_featured"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(180), index=True)
+    slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
+    organizer: Mapped[str] = mapped_column(String(180), default="")
+    description: Mapped[str] = mapped_column(Text)
+    state: Mapped[str] = mapped_column(String(2), index=True)
+    city: Mapped[str] = mapped_column(String(120), index=True)
+    venue: Mapped[str] = mapped_column(String(180), default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    start_date: Mapped[date] = mapped_column(Date, index=True)
+    end_date: Mapped[date] = mapped_column(Date, index=True)
+    category: Mapped[str] = mapped_column(String(80), index=True)
+    vehicle_types: Mapped[list[str]] = mapped_column(JSON, default=list)
+    official_url: Mapped[str] = mapped_column(Text, default="")
+    registration_url: Mapped[str] = mapped_column(Text, default="")
+    facebook_url: Mapped[str] = mapped_column(Text, default="")
+    image_url: Mapped[str] = mapped_column(Text, default="")
+    verification_source: Mapped[str] = mapped_column(Text, default="")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    status: Mapped[str] = mapped_column(String(30), default=EventStatus.pending.value, index=True)
+    submitted_by_name: Mapped[str] = mapped_column(String(120), default="")
+    submitted_by_email: Mapped[str] = mapped_column(String(180), default="", index=True)
+    admin_notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class LodgingServiceRequest(Base):
