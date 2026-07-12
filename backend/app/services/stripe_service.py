@@ -158,7 +158,7 @@ def create_booking_checkout_session(
             "booking_ids": str(booking_id),
             "booking_id": str(booking_id),
             "platform_fee_cents": str(platform_fee_cents),
-            "merchant_of_record": business_name,
+            "provider_business": business_name,
         },
     }
     if platform_fee_cents > 0:
@@ -185,7 +185,7 @@ def create_booking_checkout_session(
             "booking_ids": str(booking_id),
             "booking_id": str(booking_id),
             "platform_fee_cents": str(platform_fee_cents),
-            "merchant_of_record": business_name,
+            "provider_business": business_name,
         },
         "payment_intent_data": payment_intent_data,
     }

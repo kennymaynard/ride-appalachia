@@ -1,5 +1,6 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import json
+import logging
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 import stripe
@@ -14,6 +15,7 @@ from app.services.printify_service import submit_store_order_from_stripe_session
 from app.services.stripe_service import construct_webhook_event, create_checkout_session
 
 router = APIRouter(tags=["subscriptions"])
+logger = logging.getLogger(__name__)
 
 SUBSCRIPTION_STATUS_MAP = {
     "active": "active",
@@ -258,9 +260,11 @@ async def stripe_webhook(
                     payment.stripe_payment_intent_id = data_object.get("payment_intent") or ""
             db.commit()
             for booking in bookings:
+                if booking.confirmation_email_sent_at is not None:
+                    continue
                 business = booking.business
                 listing = booking.listing
-                send_booking_confirmation_emails(
+                results = send_booking_confirmation_emails(
                     booking.customer_email,
                     business.owner_email if business else "",
                     settings.lead_notify_email,
@@ -277,6 +281,11 @@ async def stripe_webhook(
                     booking.total_cents,
                     f"{settings.frontend_url}/bookings?booking_id={booking.id}",
                 )
+                if results and all(result.sent for result in results):
+                    booking.confirmation_email_sent_at = datetime.now(timezone.utc)
+                    db.commit()
+                else:
+                    logger.warning("Booking confirmation email failed for booking_id=%s", booking.id)
             return {"received": True}
 
         print(

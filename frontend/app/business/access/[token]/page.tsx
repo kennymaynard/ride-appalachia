@@ -8,7 +8,8 @@ type Props = {
 
 export default async function BusinessAccessPage({ params }: Props) {
   const { token } = await params;
-  const business = await getBusinessByAccessToken(decodeURIComponent(token));
+  // Next.js supplies path parameters decoded; the API client handles encoding.
+  const business = await getBusinessByAccessToken(token);
 
   if (!business) {
     return (

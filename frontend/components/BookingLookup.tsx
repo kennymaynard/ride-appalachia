@@ -154,8 +154,8 @@ export function BookingLookup({ initialBookingId = "" }: Props) {
               <dd>{centsToDollars(booking.total_cents)}</dd>
             </div>
             <div>
-              <dt>Payment processed by</dt>
-              <dd>{booking.business_name}</dd>
+              <dt>Payment platform</dt>
+              <dd>Appalachia Offroad using Stripe Connect</dd>
             </div>
             <div>
               <dt>Refund review</dt>
@@ -163,7 +163,7 @@ export function BookingLookup({ initialBookingId = "" }: Props) {
             </div>
           </dl>
           <p className="field-help">
-            Taxes are collected and remitted by the lodging provider.
+            The provider receives its payout and remains responsible for applicable taxes and services.
           </p>
 
           <div className="policy-panel">

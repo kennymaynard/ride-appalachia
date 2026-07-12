@@ -1,6 +1,8 @@
 import secrets
 import re
-from datetime import datetime
+import hashlib
+import hmac
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
@@ -44,6 +46,10 @@ PARTNER_BADGE_MILESTONES = (1, 5, 10, 25)
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def hash_password_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def require_rider_access(
@@ -131,26 +137,22 @@ def request_rider_password_reset(
 ) -> dict[str, str | bool]:
     email = normalize_email(payload.email)
     rider = db.query(Rider).filter(Rider.email == email).first()
-    sent = False
     message = "If a rider account exists for that email, a reset link has been sent."
     reset_url = ""
 
     if rider:
-        if not rider.access_token:
-            rider.access_token = secrets.token_urlsafe(24)
-            db.commit()
-            db.refresh(rider)
-
-        reset_url = f"{get_settings().frontend_url}/rider/login?reset_token={rider.access_token}"
-        result = send_rider_password_reset_email(rider.email, rider.display_name, reset_url)
-        sent = result.sent
-        if not result.sent and "Development reset link returned" in result.message:
-            message = result.message
+        raw_token = secrets.token_urlsafe(32)
+        rider.password_reset_token_hash = hash_password_reset_token(raw_token)
+        rider.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.commit()
+        settings = get_settings()
+        reset_url = f"{settings.frontend_url}/rider/login?reset_token={raw_token}"
+        send_rider_password_reset_email(rider.email, rider.display_name, reset_url)
 
     return {
-        "sent": sent,
+        "sent": True,
         "message": message,
-        "reset_url": reset_url if message.startswith("Email is not configured") else "",
+        "reset_url": reset_url if reset_url and get_settings().frontend_url.startswith("http://localhost") else "",
     }
 
 
@@ -159,13 +161,22 @@ def confirm_rider_password_reset(
     payload: RiderPasswordResetConfirm,
     db: Session = Depends(get_db),
 ) -> RiderLoginRead:
-    rider = db.query(Rider).filter(Rider.access_token == payload.reset_token.strip()).first()
-    if not rider:
+    token_hash = hash_password_reset_token(payload.reset_token.strip())
+    rider = db.query(Rider).filter(Rider.password_reset_token_hash == token_hash).first()
+    if not rider or not rider.password_reset_token_hash or not hmac.compare_digest(rider.password_reset_token_hash, token_hash):
         raise HTTPException(status_code=401, detail="Password reset link is invalid")
 
+    expires_at = rider.password_reset_expires_at
+    if expires_at is None:
+        raise HTTPException(status_code=401, detail="Password reset link is invalid")
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Password reset link is invalid or expired")
+
     rider.password_hash = hash_passcode(payload.password.strip())
-    if not rider.access_token:
-        rider.access_token = secrets.token_urlsafe(24)
+    rider.password_reset_token_hash = None
+    rider.password_reset_expires_at = None
     db.commit()
     db.refresh(rider)
 

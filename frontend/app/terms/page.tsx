@@ -58,7 +58,8 @@ export default function TermsPage() {
             numbers, owner emails, websites, photos, pricing, offers,
             availability, cancellation policies, and booking information
             accurate. For lodging and other bookable listings, the listed
-            business is the merchant of record for the reservation. Appalachia
+            business remains responsible for listing accuracy, applicable taxes,
+            services, cancellations, and refunds under the partner agreement. Appalachia
             Offroad may edit, hide, reject, or remove listings that appear
             inaccurate, misleading, unsafe, unlawful, or harmful to riders or
             other businesses.
