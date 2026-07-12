@@ -5884,6 +5884,31 @@ button.tier-card.is-selected {
   color: #02150b;
 }
 
+.leaflet-feature-pin.is-fish span {
+  background: #2b9ee8;
+  border-color: #bce7ff;
+}
+
+.leaflet-feature-pin.is-water_access span {
+  background: #28c8d8;
+  border-color: #c9fbff;
+}
+
+.leaflet-feature-pin.is-river_level span {
+  background: #725cff;
+  border-color: #ddd7ff;
+}
+
+.leaflet-feature-pin.is-wma span {
+  background: #8eb84a;
+  border-color: #e1f5bb;
+}
+
+.river-gauge-readout small {
+  display: block;
+  margin-top: 0.2rem;
+}
+
 .trail-layer-controls button.is-intel {
   border-color: rgba(93, 148, 186, 0.58);
 }
@@ -9193,6 +9218,81 @@ button.tier-card.is-selected {
 .ride-tracker-panel button:hover {
   background: var(--orange);
   color: #050505;
+}
+
+.trail-talk-events {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: rgba(8, 8, 8, 0.94);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.event-filter-grid,
+.event-submission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.event-filter-grid input,
+.event-filter-grid select,
+.event-submission-grid input,
+.event-submission-grid select,
+.event-submission-grid textarea {
+  width: 100%;
+}
+
+.event-submission-grid textarea,
+.event-submission-grid h3 {
+  grid-column: 1 / -1;
+}
+
+.trail-talk-event-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.trail-talk-event {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+}
+
+.trail-talk-event.is-featured {
+  border-color: rgba(242, 106, 27, 0.75);
+  box-shadow: 0 0 0 1px rgba(242, 106, 27, 0.18);
+}
+
+.event-planner-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.event-planner-panel article {
+  border-top: 1px solid var(--line);
+  padding-top: 0.75rem;
+}
+
+.admin-event-panel {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .event-filter-grid,
+  .event-submission-grid,
+  .trail-talk-event-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .trail-talk-list,

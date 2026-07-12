@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { TrailTalkBoard } from "../../components/TrailTalkBoard";
 import { getTrailTalkPosts } from "../../lib/api";
+import { getEvents } from "../../lib/api";
+import { TrailTalkEvents } from "../../components/TrailTalkEvents";
 import { rideAreas } from "../../lib/sample-data";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TrailTalkPage() {
-  const posts = await getTrailTalkPosts();
+  const [posts, events] = await Promise.all([getTrailTalkPosts(), getEvents().catch(() => [])]);
 
   return (
     <main className="page trail-talk-page">
@@ -26,6 +28,7 @@ export default async function TrailTalkPage() {
       </section>
 
       <section className="page-section">
+        <TrailTalkEvents initialEvents={events} />
         <TrailTalkBoard areas={rideAreas} initialPosts={posts} />
       </section>
     </main>

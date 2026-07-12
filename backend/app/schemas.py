@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel", "services"}
@@ -25,6 +25,9 @@ TRAIL_TALK_CATEGORIES = {
     "lodging_food",
     "heroes_rides",
 }
+EVENT_STATES = {"KY", "WV", "VA", "TN", "NC"}
+EVENT_STATUSES = {"pending", "approved", "rejected", "expired", "unpublished"}
+EVENT_BUSINESS_CATEGORIES = {"lodging", "food", "fuel", "rentals", "repairs", "services"}
 BOOKABLE_LISTING_TYPES = {"lodging", "camping", "rental", "guide", "event", "service"}
 BOOKING_STATUSES = {"requested", "approved", "checkout_sent", "paid", "declined", "canceled"}
 PAYOUT_TIMINGS = {"after_check_in", "on_payment"}
@@ -414,6 +417,201 @@ class TrailTalkPostAdminRead(TrailTalkPostRead):
 
 class TrailTalkModerationUpdate(BaseModel):
     status: str
+
+
+def normalize_event_url(value: str) -> str:
+    value = value.strip()
+    if value and not value.startswith(("http://", "https://")):
+        return f"https://{value}"
+    return value
+
+
+class EventBase(BaseModel):
+    title: str = Field(min_length=2, max_length=180)
+    organizer: str = Field(default="", max_length=180)
+    description: str = Field(min_length=2)
+    state: str
+    city: str = Field(min_length=2, max_length=120)
+    venue: str = Field(default="", max_length=180)
+    address: str = Field(default="", max_length=240)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    start_date: date
+    end_date: date
+    category: str = Field(min_length=2, max_length=80)
+    vehicle_types: list[str] = []
+    official_url: str = ""
+    registration_url: str = ""
+    facebook_url: str = ""
+    image_url: str = ""
+
+    @field_validator("state")
+    @classmethod
+    def validate_event_state(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if normalized not in EVENT_STATES:
+            raise ValueError("State must be KY, WV, VA, TN, or NC")
+        return normalized
+
+    @field_validator("title", "organizer", "description", "city", "venue", "address", "category")
+    @classmethod
+    def trim_event_text(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("vehicle_types")
+    @classmethod
+    def normalize_vehicle_types(cls, value: list[str]) -> list[str]:
+        return list(dict.fromkeys(item.strip() for item in value if item.strip()))
+
+    @field_validator("official_url", "registration_url", "facebook_url", "image_url")
+    @classmethod
+    def normalize_event_urls(cls, value: str) -> str:
+        return normalize_event_url(value)
+
+    @model_validator(mode="after")
+    def validate_event_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("Event end date cannot precede start date")
+        return self
+
+
+class EventSubmission(EventBase):
+    submitted_by_name: str = Field(min_length=2, max_length=120)
+    submitted_by_email: str = Field(min_length=5, max_length=180)
+
+    @field_validator("submitted_by_name", "submitted_by_email")
+    @classmethod
+    def trim_submitter(cls, value: str) -> str:
+        return value.strip()
+
+
+class AdminEventCreate(EventBase):
+    verification_source: str = ""
+    is_verified: bool = False
+    is_featured: bool = False
+    status: str = "pending"
+    submitted_by_name: str = ""
+    submitted_by_email: str = ""
+    admin_notes: str = ""
+
+    @field_validator("verification_source")
+    @classmethod
+    def normalize_verification_source(cls, value: str) -> str:
+        return normalize_event_url(value)
+
+    @model_validator(mode="after")
+    def validate_verification(self):
+        if self.is_verified and not self.verification_source:
+            raise ValueError("A verification source is required for verified events")
+        if self.status not in EVENT_STATUSES:
+            raise ValueError("Unknown event status")
+        return self
+
+
+class AdminEventUpdate(BaseModel):
+    title: Optional[str] = None
+    organizer: Optional[str] = None
+    description: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+    venue: Optional[str] = None
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    category: Optional[str] = None
+    vehicle_types: Optional[list[str]] = None
+    official_url: Optional[str] = None
+    registration_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    image_url: Optional[str] = None
+    verification_source: Optional[str] = None
+    is_verified: Optional[bool] = None
+    is_featured: Optional[bool] = None
+    status: Optional[str] = None
+    submitted_by_name: Optional[str] = None
+    submitted_by_email: Optional[str] = None
+    admin_notes: Optional[str] = None
+
+    @field_validator("state")
+    @classmethod
+    def validate_optional_state(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        normalized = value.strip().upper()
+        if normalized not in EVENT_STATES:
+            raise ValueError("State must be KY, WV, VA, TN, or NC")
+        return normalized
+
+    @field_validator("status")
+    @classmethod
+    def validate_optional_status(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in EVENT_STATUSES:
+            raise ValueError("Unknown event status")
+        return value
+
+    @field_validator("official_url", "registration_url", "facebook_url", "image_url", "verification_source")
+    @classmethod
+    def normalize_optional_urls(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_event_url(value) if value is not None else None
+
+
+class EventModerationUpdate(BaseModel):
+    status: str
+    admin_notes: str = ""
+    is_verified: Optional[bool] = None
+    is_featured: Optional[bool] = None
+    verification_source: Optional[str] = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_moderation_status(cls, value: str) -> str:
+        if value not in EVENT_STATUSES:
+            raise ValueError("Unknown event status")
+        return value
+
+
+class EventRead(EventBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    slug: str
+    verification_source: str = ""
+    verified_at: Optional[datetime] = None
+    is_verified: bool = False
+    is_featured: bool = False
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminEventRead(EventRead):
+    submitted_by_name: str = ""
+    submitted_by_email: str = ""
+    admin_notes: str = ""
+
+
+class EventPlannerBusiness(BaseModel):
+    id: int
+    name: str
+    slug: str
+    category: str
+    description: str
+    location: str
+    latitude: float
+    longitude: float
+    website_url: str = ""
+    distance_miles: float
+    is_featured: bool
+    is_sponsored: bool
+    has_active_deal: bool
+
+
+class EventPlannerResult(BaseModel):
+    event: EventRead
+    radius_miles: int
+    businesses: list[EventPlannerBusiness]
 
 
 class BusinessBase(BaseModel):

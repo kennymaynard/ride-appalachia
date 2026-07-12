@@ -384,13 +384,21 @@ export type RideMapFeature = TrailCoordinate & {
     | "offline"
     | "group"
     | "passport"
-    | "deal";
+    | "deal"
+    | "fish"
+    | "water_access"
+    | "river_level"
+    | "wma"
+    | "ky_elk";
   summary: string;
   detail: string;
   status?: string;
   updatedAt?: string;
   vehicleTypes?: Array<"ATV" | "SxS" | "Jeep" | "Dirt bike" | "Beginner" | "Family">;
   url?: string;
+  waterAccessType?: "trailer" | "carry_down" | "shoreline";
+  amenities?: string[];
+  usgsSiteId?: string;
 };
 
 export type OutdoorStop = {
@@ -572,4 +580,76 @@ export type StoreCheckoutItemInput = {
 export type StoreCheckoutInput = {
   items: StoreCheckoutItemInput[];
   customer_email?: string;
+};
+
+export type EventStatus = "pending" | "approved" | "rejected" | "expired" | "unpublished";
+
+export type RideEvent = {
+  id: number;
+  title: string;
+  slug: string;
+  organizer: string;
+  description: string;
+  state: "KY" | "WV" | "VA" | "TN" | "NC";
+  city: string;
+  venue: string;
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  start_date: string;
+  end_date: string;
+  category: string;
+  vehicle_types: string[];
+  official_url: string;
+  registration_url: string;
+  facebook_url: string;
+  image_url: string;
+  verification_source: string;
+  verified_at?: string | null;
+  is_verified: boolean;
+  is_featured: boolean;
+  status: EventStatus;
+  submitted_by_name?: string;
+  submitted_by_email?: string;
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EventSubmissionInput = Omit<RideEvent, "id" | "slug" | "verification_source" | "verified_at" | "is_verified" | "is_featured" | "status" | "admin_notes" | "created_at" | "updated_at"> & {
+  submitted_by_name: string;
+  submitted_by_email: string;
+};
+
+export type EventFilters = {
+  state?: string;
+  month?: string;
+  category?: string;
+  vehicle?: string;
+  featured?: boolean;
+  verified?: boolean;
+  search?: string;
+  weekend?: boolean;
+};
+
+export type EventPlannerBusiness = {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  website_url: string;
+  distance_miles: number;
+  is_featured: boolean;
+  is_sponsored: boolean;
+  has_active_deal: boolean;
+};
+
+export type EventPlannerResult = {
+  event: RideEvent;
+  radius_miles: number;
+  businesses: EventPlannerBusiness[];
 };
