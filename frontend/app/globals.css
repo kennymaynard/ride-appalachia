@@ -14,6 +14,8 @@
   --blue: #5d94ba;
 }
 
+.destination-card-grid,.itinerary-grid,.destination-form-grid,.weather-strip,.destination-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.destination-group{margin:1.5rem 0}.destination-card-grid img,.destination-media-grid img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px}.destination-sponsored{border:2px solid #d89a3d}.sponsor-label{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:#d89a3d;color:#17251b;font-weight:800}.weather-strip article,.itinerary-grid article{padding:1rem;border-radius:12px;background:rgba(255,255,255,.06)}.weather-strip strong,.weather-strip span{display:block}.destination-form-grid form{display:grid;gap:.65rem}.destination-media-grid figure{margin:0}@media(max-width:640px){.destination-card-grid,.itinerary-grid,.destination-form-grid,.weather-strip{grid-template-columns:1fr}.event-destination-page .hero-actions a,.event-destination-page .hero-actions button{flex:1 1 100%;text-align:center}}
+
 * {
   box-sizing: border-box;
 }

@@ -1561,3 +1561,31 @@ export async function getEventsIntelligence(adminPassword: string) {
   if (!response.ok) throw new Error("Unable to load events intelligence");
   return response.json();
 }
+
+export async function getEventDestination(slug: string): Promise<import("./types").EventDestination | null> {
+  const response = await fetch(`${getApiUrl()}/api/events/${encodeURIComponent(slug)}/destination`, { next: { revalidate: 900 } });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Unable to load event destination");
+  return response.json();
+}
+
+export async function addEventDiscussion(eventId: number, token: string, kind: "comment" | "question", message: string) {
+  const response = await fetch(`${getApiUrl()}/api/events/${eventId}/discussions`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify({ kind, message }) });
+  if (!response.ok) throw new Error("Unable to submit event discussion"); return response.json();
+}
+
+export async function addEventMedia(eventId: number, token: string, media_type: "photo" | "video", media_url: string, caption: string) {
+  const response = await fetch(`${getApiUrl()}/api/events/${eventId}/media`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify({ media_type, media_url, caption }) });
+  if (!response.ok) throw new Error("Unable to submit event media"); return response.json();
+}
+
+export async function createEventInvite(eventId: number, token: string, email: string) {
+  const response = await fetch(`${getApiUrl()}/api/events/${eventId}/invites`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify({ email }) });
+  if (!response.ok) throw new Error("Unable to create invite"); return response.json();
+}
+
+export async function downloadAdminEventFlyer(eventId: number, format: "facebook" | "instagram" | "story" | "poster" | "pdf", adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/events/${eventId}/flyer.${format}`, { headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error("Unable to generate flyer");
+  const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `event-${eventId}-${format}.${format === "pdf" ? "pdf" : "svg"}`; anchor.click(); URL.revokeObjectURL(url);
+}

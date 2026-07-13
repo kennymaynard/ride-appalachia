@@ -603,7 +603,12 @@ export type RideEvent = {
   official_url: string;
   registration_url: string;
   facebook_url: string;
+  instagram_url: string;
   image_url: string;
+  difficulty: string;
+  family_friendly?: boolean | null;
+  estimated_attendance?: number | null;
+  trail_area_slug: string;
   verification_source: string;
   verified_at?: string | null;
   is_verified: boolean;
@@ -616,7 +621,23 @@ export type RideEvent = {
   updated_at: string;
 };
 
-export type EventSubmissionInput = Omit<RideEvent, "id" | "slug" | "verification_source" | "verified_at" | "is_verified" | "is_featured" | "status" | "admin_notes" | "created_at" | "updated_at"> & {
+export type DestinationBusiness = {
+  id: number; name: string; slug: string; category: string; group: string; description: string;
+  phone: string; website_url: string; photo_url: string; distance_miles: number; rating?: number | null;
+  review_count: number; is_partner: boolean; is_sponsored: boolean; placement: string;
+  disclosure: string; has_booking: boolean;
+};
+
+export type EventDestination = {
+  event: RideEvent; businesses: DestinationBusiness[];
+  itinerary: { day: string; items: { label: string; business_slug?: string | null }[] }[];
+  weather: { available: boolean; current?: Record<string, number>; daily?: Record<string, Array<string | number>>; message?: string };
+  conditions: { id: number; type: string; severity: string; trail: string; note: string; created_at: string }[];
+  discussions: { id: number; kind: string; message: string; created_at: string }[];
+  media: { id: number; type: "photo" | "video"; url: string; caption: string }[];
+};
+
+export type EventSubmissionInput = Omit<RideEvent, "id" | "slug" | "verification_source" | "verified_at" | "is_verified" | "is_featured" | "status" | "admin_notes" | "created_at" | "updated_at" | "instagram_url" | "difficulty" | "family_friendly" | "estimated_attendance" | "trail_area_slug"> & {
   submitted_by_name: string;
   submitted_by_email: string;
 };

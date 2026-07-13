@@ -235,7 +235,12 @@ class Event(Base):
     official_url: Mapped[str] = mapped_column(Text, default="")
     registration_url: Mapped[str] = mapped_column(Text, default="")
     facebook_url: Mapped[str] = mapped_column(Text, default="")
+    instagram_url: Mapped[str] = mapped_column(Text, default="")
     image_url: Mapped[str] = mapped_column(Text, default="")
+    difficulty: Mapped[str] = mapped_column(String(40), default="not_listed")
+    family_friendly: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    estimated_attendance: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    trail_area_slug: Mapped[str] = mapped_column(String(120), default="", index=True)
     verification_source: Mapped[str] = mapped_column(Text, default="")
     verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
@@ -303,6 +308,53 @@ class EventMetric(Base):
     business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id"), nullable=True, index=True)
     action: Mapped[str] = mapped_column(String(60), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class EventBusinessPlacement(Base):
+    __tablename__ = "event_business_placements"
+    __table_args__ = (UniqueConstraint("event_id", "business_id", "placement", name="uq_event_business_placement"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    placement: Mapped[str] = mapped_column(String(40), index=True)
+    starts_at: Mapped[datetime] = mapped_column(DateTime)
+    ends_at: Mapped[datetime] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    disclosure_label: Mapped[str] = mapped_column(String(80), default="Sponsored partner")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EventDiscussion(Base):
+    __tablename__ = "event_discussions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(20), default="comment", index=True)
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EventMedia(Base):
+    __tablename__ = "event_media"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    media_type: Mapped[str] = mapped_column(String(20), index=True)
+    media_url: Mapped[str] = mapped_column(Text)
+    caption: Mapped[str] = mapped_column(String(240), default="")
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EventInvite(Base):
+    __tablename__ = "event_invites"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    invite_token: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    recipient_email: Mapped[str] = mapped_column(String(180), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class EventSource(Base):
@@ -602,6 +654,7 @@ class Booking(Base):
     listing_id: Mapped[int] = mapped_column(ForeignKey("bookable_listings.id"), index=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
     rider_id: Mapped[int | None] = mapped_column(ForeignKey("riders.id"), nullable=True, index=True)
+    event_id: Mapped[int | None] = mapped_column(ForeignKey("events.id"), nullable=True, index=True)
     customer_name: Mapped[str] = mapped_column(String(120))
     customer_email: Mapped[str] = mapped_column(String(180), index=True)
     customer_phone: Mapped[str] = mapped_column(String(40), default="")
