@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import BookableListing, Business, Campaign, Deal, LodgingServiceRequest
+from app.models import BookableListing, Business, BusinessClaim, Campaign, Deal, LodgingServiceRequest
 from app.schemas import (
     BusinessClaimRequest,
+    BusinessClaimRead,
     BusinessLoginRead,
     BusinessLoginRequest,
     BusinessCreate,
@@ -237,48 +238,31 @@ def update_business(
     return business
 
 
-@router.post("/businesses/{business_id}/claim", response_model=BusinessDashboardRead)
+@router.post("/businesses/{business_id}/claim", response_model=BusinessClaimRead)
 def claim_business(
     business_id: int,
     payload: BusinessClaimRequest,
     db: Session = Depends(get_db),
-) -> Business:
-    business = (
-        db.query(Business)
-        .options(
-            selectinload(Business.deals),
-            selectinload(Business.campaigns),
-            selectinload(Business.service_requests),
-            selectinload(Business.bookable_listings).selectinload(BookableListing.calendars),
-            selectinload(Business.bookings),
-        )
-        .filter(Business.id == business_id)
-        .first()
-    )
+) -> BusinessClaim:
+    business = db.get(Business, business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
 
-    if business.owner_email and business.owner_email != payload.owner_email.strip().lower():
+    if business.owner_email:
         raise HTTPException(status_code=409, detail="This listing is already claimed")
-
-    if digits_only(business.phone)[-4:] != payload.phone_last4:
-        raise HTTPException(status_code=400, detail="Phone verification did not match")
-
-    business.owner_email = payload.owner_email.strip().lower()
-    business.subscription_tier = payload.subscription_tier
-    if not business.owner_access_token:
-        business.owner_access_token = secrets.token_urlsafe(24)
-    if not business.owner_passcode_hash:
-        business.owner_passcode_hash = hash_passcode(payload.phone_last4)
-    if business.listing_status == "rejected":
-        business.listing_status = "needs_changes"
-        business.admin_notes = "Claim received. Admin will review ownership before publishing changes."
-
+    email = payload.claimant_email.strip().lower()
+    existing = db.query(BusinessClaim).filter(
+        BusinessClaim.business_id == business_id,
+        BusinessClaim.claimant_email == email,
+        BusinessClaim.status == "pending",
+    ).first()
+    if existing:
+        return existing
+    claim = BusinessClaim(**payload.model_dump(exclude={"claimant_email"}), claimant_email=email, business_id=business_id)
+    db.add(claim)
     db.commit()
-    db.refresh(business)
-    send_business_access_email(business)
-    send_business_pending_approval_email(business)
-    return business
+    db.refresh(claim)
+    return claim
 
 
 @router.post("/businesses/{business_id}/deals", response_model=DealRead)

@@ -531,8 +531,8 @@ export async function updateBusiness(
 
 export async function claimBusiness(
   businessId: number,
-  payload: { owner_email: string; phone_last4: string; subscription_tier: string },
-): Promise<Business> {
+  payload: { claimant_name: string; claimant_email: string; claimant_phone: string; claimant_role: string; proof_url: string; proof_notes: string; subscription_tier: string },
+): Promise<import("./types").BusinessClaim> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/claim`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -544,6 +544,28 @@ export async function claimBusiness(
     throw new Error(message || "Unable to verify business ownership");
   }
 
+  return response.json();
+}
+
+export async function activateExistingImportedBusinesses(adminPassword: string): Promise<{ activated: number }> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-import/activate-existing`, {
+    method: "POST", headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to activate imported businesses");
+  return response.json();
+}
+
+export async function getAdminBusinessClaims(adminPassword: string): Promise<import("./types").BusinessClaim[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-claims`, { cache: "no-store", headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to load business claims");
+  return response.json();
+}
+
+export async function reviewAdminBusinessClaim(claimId: number, action: "approve" | "reject", adminNotes: string, adminPassword: string): Promise<import("./types").BusinessClaim> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-claims/${claimId}/review`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify({ action, admin_notes: adminNotes }),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to review business claim");
   return response.json();
 }
 

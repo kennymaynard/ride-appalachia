@@ -135,6 +135,24 @@ class Business(Base):
     bookings: Mapped[list["Booking"]] = relationship(back_populates="business", cascade="all, delete-orphan")
 
 
+class BusinessClaim(Base):
+    __tablename__ = "business_claims"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    claimant_name: Mapped[str] = mapped_column(String(160))
+    claimant_email: Mapped[str] = mapped_column(String(180), index=True)
+    claimant_phone: Mapped[str] = mapped_column(String(40), default="")
+    claimant_role: Mapped[str] = mapped_column(String(80))
+    proof_url: Mapped[str] = mapped_column(Text, default="")
+    proof_notes: Mapped[str] = mapped_column(Text, default="")
+    subscription_tier: Mapped[str] = mapped_column(String(40), default=SubscriptionTier.local_business.value)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    admin_notes: Mapped[str] = mapped_column(Text, default="")
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class Deal(Base):
     __tablename__ = "deals"
 

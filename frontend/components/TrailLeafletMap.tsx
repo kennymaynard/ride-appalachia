@@ -478,6 +478,14 @@ export function TrailLeafletMap({
     );
   };
 
+  const toggleAllIntelligenceLayers = () => {
+    setIntelligenceLayers((current) =>
+      current.length === intelligenceLayerOptions.length
+        ? []
+        : intelligenceLayerOptions.map((layer) => layer.id),
+    );
+  };
+
   const clearAllLayers = () => {
     setShowOhv(false);
     setShowHiking(false);
@@ -575,7 +583,14 @@ export function TrailLeafletMap({
               {layer.label}
             </button>
           ))}
-          <span>Ride intel</span>
+          <button
+            aria-pressed={intelligenceLayers.length === intelligenceLayerOptions.length}
+            className={intelligenceLayers.length ? "is-active is-intel" : "is-intel"}
+            type="button"
+            onClick={toggleAllIntelligenceLayers}
+          >
+            Ride intel
+          </button>
           {intelligenceLayerOptions.map((layer) => (
             <button
               aria-pressed={intelligenceLayers.includes(layer.id)}

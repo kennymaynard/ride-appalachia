@@ -7,7 +7,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Booking, BookingPayment, BookingTransfer, Business, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
+from app.models import Booking, BookingPayment, BookingTransfer, Business, BusinessClaim, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
 from app.schemas import (
     AdminAnalyticsLocation,
     AdminAnalyticsPath,
@@ -21,6 +21,8 @@ from app.schemas import (
     BusinessImportResult,
     BusinessImportScanRequest,
     BusinessImportCandidate,
+    BusinessClaimRead,
+    BusinessClaimReview,
     BusinessUpdate,
     BookingTransferRead,
     LodgingServiceRequestRead,
@@ -35,6 +37,7 @@ from app.services.email_service import (
     clean_email_setting,
     get_resend_key_diagnostic,
     send_business_approval_notification,
+    send_business_login_email,
     send_marketing_lead_status_email,
     send_resend_direct_test_email,
 )
@@ -296,9 +299,9 @@ def import_businesses(
             source_id=candidate.source_id,
             source_url=candidate.source_url,
             imported_at=datetime.utcnow(),
-            listing_status="pending",
-            admin_notes=f"Unclaimed OpenStreetMap import for {candidate.area_name}. Verify before approval.",
-            is_approved=False,
+            listing_status="approved",
+            admin_notes=f"Approved unclaimed OpenStreetMap import for {candidate.area_name}.",
+            is_approved=True,
             subscription_status="incomplete",
         )
         db.add(business)
@@ -306,6 +309,68 @@ def import_businesses(
         imported_ids.append(business.id)
     db.commit()
     return BusinessImportResult(imported=len(imported_ids), skipped=skipped, business_ids=imported_ids)
+
+
+@router.post("/business-import/activate-existing")
+def activate_existing_imports(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    rows = db.query(Business).filter(
+        Business.source_provider == "openstreetmap",
+        Business.is_deleted.is_(False),
+        Business.is_approved.is_(False),
+    ).all()
+    for business in rows:
+        business.is_approved = True
+        business.listing_status = "approved"
+        business.admin_notes = "Approved unclaimed OpenStreetMap import. Ownership claim requires proof review."
+    db.commit()
+    return {"activated": len(rows)}
+
+
+@router.get("/business-claims", response_model=list[BusinessClaimRead])
+def list_business_claims(
+    _: None = Depends(require_admin),
+    status: str = "pending",
+    db: Session = Depends(get_db),
+) -> list[BusinessClaim]:
+    query = db.query(BusinessClaim)
+    if status != "all":
+        query = query.filter(BusinessClaim.status == status)
+    return query.order_by(BusinessClaim.created_at.desc()).all()
+
+
+@router.post("/business-claims/{claim_id}/review", response_model=BusinessClaimRead)
+def review_business_claim(
+    claim_id: int,
+    payload: BusinessClaimReview,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BusinessClaim:
+    claim = db.get(BusinessClaim, claim_id)
+    if not claim or claim.status != "pending":
+        raise HTTPException(status_code=404, detail="Pending claim not found")
+    business = db.get(Business, claim.business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    claim.admin_notes = payload.admin_notes
+    claim.reviewed_at = datetime.utcnow()
+    if payload.action == "approve":
+        if business.owner_email:
+            raise HTTPException(status_code=409, detail="Business is already claimed")
+        claim.status = "approved"
+        business.owner_email = claim.claimant_email
+        business.subscription_tier = claim.subscription_tier
+        business.owner_access_token = secrets.token_urlsafe(24)
+        business.owner_passcode_hash = ""
+        access_url = f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
+        send_business_login_email(business.owner_email, business.name, access_url)
+    else:
+        claim.status = "rejected"
+    db.commit()
+    db.refresh(claim)
+    return claim
 
 
 @router.get("/analytics", response_model=AdminAnalyticsRead)
