@@ -1,5 +1,6 @@
 from datetime import datetime
 import secrets
+import re
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import func, or_
@@ -16,6 +17,10 @@ from app.schemas import (
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
+    BusinessImportRequest,
+    BusinessImportResult,
+    BusinessImportScanRequest,
+    BusinessImportCandidate,
     BusinessUpdate,
     BookingTransferRead,
     LodgingServiceRequestRead,
@@ -39,6 +44,8 @@ from app.services.passcodes import hash_passcode
 from app.services.photos import normalize_photo_url
 from app.services.printify_service import list_curated_store_products
 from app.services.sms_service import send_marketing_lead_status_sms, send_sms
+from app.services.business_import import find_duplicate, scan_openstreetmap
+from app.services.photos import fallback_photo_for_category
 
 router = APIRouter(tags=["admin"])
 
@@ -239,6 +246,66 @@ def list_businesses(
         (Business.listing_status == "needs_changes").desc(),
         Business.created_at.desc(),
     ).all()
+
+
+@router.post("/business-import/scan", response_model=list[BusinessImportCandidate])
+def scan_businesses(
+    payload: BusinessImportScanRequest,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[BusinessImportCandidate]:
+    try:
+        return scan_openstreetmap(db, payload)
+    except Exception as error:
+        raise HTTPException(status_code=502, detail=f"OpenStreetMap scan failed: {error}") from error
+
+
+def imported_slug(name: str, source_id: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:145] or "business"
+    suffix = re.sub(r"[^a-z0-9]+", "-", source_id.lower()).strip("-")
+    return f"{base}-{suffix}"[:180]
+
+
+@router.post("/business-import/import", response_model=BusinessImportResult)
+def import_businesses(
+    payload: BusinessImportRequest,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BusinessImportResult:
+    imported_ids: list[int] = []
+    skipped = 0
+    for candidate in payload.candidates:
+        duplicate_id, _ = find_duplicate(
+            db, candidate.source_id, candidate.name, candidate.latitude, candidate.longitude,
+        )
+        if duplicate_id:
+            skipped += 1
+            continue
+        business = Business(
+            name=candidate.name,
+            slug=imported_slug(candidate.name, candidate.source_id),
+            category=candidate.category,
+            description=candidate.description,
+            phone=candidate.phone or "Not listed",
+            location=candidate.location,
+            latitude=candidate.latitude,
+            longitude=candidate.longitude,
+            photo_url=fallback_photo_for_category(candidate.category),
+            website_url=candidate.website_url,
+            source_provider="openstreetmap",
+            source_id=candidate.source_id,
+            source_url=candidate.source_url,
+            imported_at=datetime.utcnow(),
+            listing_status="pending",
+            admin_notes=f"Unclaimed OpenStreetMap import for {candidate.area_name}. Verify before approval.",
+            is_approved=False,
+            subscription_status="incomplete",
+        )
+        db.add(business)
+        db.flush()
+        imported_ids.append(business.id)
+    db.commit()
+    return BusinessImportResult(imported=len(imported_ids), skipped=skipped, business_ids=imported_ids)
 
 
 @router.get("/analytics", response_model=AdminAnalyticsRead)
