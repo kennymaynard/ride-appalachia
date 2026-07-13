@@ -46,11 +46,16 @@ def category_for(tags: dict[str, str]) -> str | None:
     return None
 
 
-def build_location(tags: dict[str, str], fallback: str) -> str:
+def build_location(tags: dict[str, str], fallback_area: str) -> str:
+    full_address = str(tags.get("addr:full") or "").strip()
+    if full_address:
+        return full_address
     street = " ".join(filter(None, [tags.get("addr:housenumber", ""), tags.get("addr:street", "")])).strip()
     city = tags.get("addr:city") or tags.get("addr:place") or ""
     state = tags.get("addr:state", "")
-    return ", ".join(filter(None, [street, city, state])) or fallback
+    if not street:
+        return f"Address unavailable — near {fallback_area}"
+    return ", ".join(filter(None, [street, city, state]))
 
 
 def find_duplicate(db: Session, source_id: str, name: str, latitude: float, longitude: float) -> tuple[int | None, str]:
@@ -83,6 +88,7 @@ def scan_openstreetmap(db: Session, payload: BusinessImportScanRequest) -> list[
         tags = element.get("tags") or {}
         category = category_for(tags)
         name = str(tags.get("name") or "").strip()
+        location = build_location(tags, payload.area_name)
         coordinates = element.get("center") or element
         latitude, longitude = coordinates.get("lat"), coordinates.get("lon")
         if not category or not name or latitude is None or longitude is None: continue
@@ -99,7 +105,7 @@ def scan_openstreetmap(db: Session, payload: BusinessImportScanRequest) -> list[
             category=category,
             description=f"Imported from OpenStreetMap near {payload.area_name}. Unclaimed listing; details require owner or admin verification.",
             phone=tags.get("contact:phone") or tags.get("phone") or "",
-            location=build_location(tags, payload.area_name),
+            location=location,
             latitude=float(latitude), longitude=float(longitude),
             website_url=tags.get("contact:website") or tags.get("website") or "",
             distance_miles=round(haversine_miles(payload.latitude, payload.longitude, float(latitude), float(longitude)), 1),

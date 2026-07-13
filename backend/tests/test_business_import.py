@@ -16,7 +16,7 @@ class FakeResponse:
     def __enter__(self): return self
     def __exit__(self, *_): return False
     def read(self):
-        return b'{"elements":[{"type":"node","id":101,"lat":37.1,"lon":-82.1,"tags":{"name":"Trail Fuel","amenity":"fuel","phone":"6065550101","addr:city":"Pikeville","addr:state":"KY"}},{"type":"way","id":202,"center":{"lat":37.2,"lon":-82.2},"tags":{"name":"Rider Motel","tourism":"motel"}}]}'
+        return b'{"elements":[{"type":"node","id":101,"lat":37.1,"lon":-82.1,"tags":{"name":"Trail Fuel","amenity":"fuel","phone":"6065550101","addr:housenumber":"100","addr:street":"Main Street","addr:city":"Pikeville","addr:state":"KY"}},{"type":"way","id":202,"center":{"lat":37.2,"lon":-82.2},"tags":{"name":"Rider Motel","tourism":"motel","addr:full":"25 Trail Road, Test Area, KY"}},{"type":"node","id":303,"lat":37.3,"lon":-82.3,"tags":{"name":"No Address Cafe","amenity":"cafe"}}]}'
 
 
 class BusinessImportTests(unittest.TestCase):
@@ -36,9 +36,11 @@ class BusinessImportTests(unittest.TestCase):
     @patch("app.services.business_import.urlopen", return_value=FakeResponse())
     def test_scan_uses_source_coordinates_and_categories(self, _urlopen):
         rows = scan_openstreetmap(self.db, BusinessImportScanRequest(area_slug="test", area_name="Test Area", latitude=37.0, longitude=-82.0, radius_miles=25))
-        self.assertEqual({row.category for row in rows}, {"fuel", "lodging"})
+        self.assertEqual({row.category for row in rows}, {"food", "fuel", "lodging"})
         self.assertEqual(rows[0].source_provider, "openstreetmap")
         self.assertTrue(all(row.latitude and row.longitude for row in rows))
+        missing_address = next(row for row in rows if row.name == "No Address Cafe")
+        self.assertEqual(missing_address.location, "Address unavailable — near Test Area")
 
     def test_import_is_pending_unclaimed_and_idempotent(self):
         candidate = {

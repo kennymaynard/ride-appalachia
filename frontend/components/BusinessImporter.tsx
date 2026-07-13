@@ -48,7 +48,7 @@ export function BusinessImporter({ adminPassword, onImported }: { adminPassword:
 
   return <section className="admin-panel">
     <div className="section-heading"><p className="eyebrow">Business coverage</p><h2>OpenStreetMap importer</h2></div>
-    <p>Discover real businesses near one riding area, review duplicates, then import selected listings as unclaimed and pending.</p>
+    <p>Discover real businesses near one riding area, review duplicates and clearly labeled missing addresses, then import selected listings as unclaimed and pending.</p>
     <div className="admin-actions">
       <select aria-label="Riding area" value={areaSlug} onChange={(event) => setAreaSlug(event.target.value)}>
         {rideAreas.map((item) => <option key={item.slug} value={item.slug}>{item.name} — {item.state}</option>)}
