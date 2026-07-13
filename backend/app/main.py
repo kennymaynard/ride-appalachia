@@ -6,7 +6,7 @@ from alembic import command
 from alembic.config import Config
 
 from app.database import SessionLocal, get_settings
-from app.routes import admin, analytics, bookings, business, events, geocode, leads, listings, planner, reviews, riders, store, subscriptions, trail_talk
+from app.routes import admin, analytics, bookings, business, event_destination, event_discovery, events, geocode, leads, listings, planner, reviews, riders, store, subscriptions, trail_talk
 from app.seed import seed_database
 
 settings = get_settings()
@@ -59,3 +59,5 @@ app.include_router(store.router, prefix="/api")
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(trail_talk.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
+app.include_router(event_discovery.router, prefix="/api/admin")
+app.include_router(event_destination.router, prefix="/api")

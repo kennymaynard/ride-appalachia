@@ -9,7 +9,9 @@ from app import models  # noqa: F401
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Migrations also run during FastAPI startup. Preserve Uvicorn's loggers so
+    # its startup-complete and request logs remain visible after Alembic runs.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 settings = get_settings()
 database_url = settings.database_url

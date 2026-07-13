@@ -443,7 +443,12 @@ class EventBase(BaseModel):
     official_url: str = ""
     registration_url: str = ""
     facebook_url: str = ""
+    instagram_url: str = ""
     image_url: str = ""
+    difficulty: str = "not_listed"
+    family_friendly: Optional[bool] = None
+    estimated_attendance: Optional[int] = Field(default=None, ge=0)
+    trail_area_slug: str = ""
 
     @field_validator("state")
     @classmethod
@@ -463,7 +468,7 @@ class EventBase(BaseModel):
     def normalize_vehicle_types(cls, value: list[str]) -> list[str]:
         return list(dict.fromkeys(item.strip() for item in value if item.strip()))
 
-    @field_validator("official_url", "registration_url", "facebook_url", "image_url")
+    @field_validator("official_url", "registration_url", "facebook_url", "instagram_url", "image_url")
     @classmethod
     def normalize_event_urls(cls, value: str) -> str:
         return normalize_event_url(value)
@@ -525,7 +530,12 @@ class AdminEventUpdate(BaseModel):
     official_url: Optional[str] = None
     registration_url: Optional[str] = None
     facebook_url: Optional[str] = None
+    instagram_url: Optional[str] = None
     image_url: Optional[str] = None
+    difficulty: Optional[str] = None
+    family_friendly: Optional[bool] = None
+    estimated_attendance: Optional[int] = Field(default=None, ge=0)
+    trail_area_slug: Optional[str] = None
     verification_source: Optional[str] = None
     is_verified: Optional[bool] = None
     is_featured: Optional[bool] = None
@@ -551,7 +561,7 @@ class AdminEventUpdate(BaseModel):
             raise ValueError("Unknown event status")
         return value
 
-    @field_validator("official_url", "registration_url", "facebook_url", "image_url", "verification_source")
+    @field_validator("official_url", "registration_url", "facebook_url", "instagram_url", "image_url", "verification_source")
     @classmethod
     def normalize_optional_urls(cls, value: Optional[str]) -> Optional[str]:
         return normalize_event_url(value) if value is not None else None

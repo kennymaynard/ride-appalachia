@@ -11,6 +11,10 @@ import type {
   TrailReview,
 } from "../lib/types";
 import { getTrailMapSource, getTrailMapStatusLabel } from "../lib/trail-map-sources";
+import { appalachianRiverFishPopulations } from "../lib/fish-populations";
+import { appalachianWaterAccess } from "../lib/water-access";
+import { appalachianRiverGauges } from "../lib/river-gauges";
+import { appalachianWildlifeManagementAreas } from "../lib/wildlife-management-areas";
 import { TrailMapShell } from "./TrailMapShell";
 
 type Props = {
@@ -87,44 +91,6 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function getSeed(value: string) {
-  return value.split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
-}
-
-function buildApproximateRouteLine(area: RideArea, trail: TrailInfo, activity: MapPoint["activity"]): TrailCoordinate[] {
-  const latitude = trail.latitude ?? area.latitude;
-  const longitude = trail.longitude ?? area.longitude;
-  const seed = getSeed(`${area.slug}-${trail.name}`);
-  const direction = seed % 2 === 0 ? 1 : -1;
-  const activityScale = activity === "Hiking" ? 0.018 : 0.038;
-  const spread = activityScale + (seed % 5) * 0.004;
-  const startLatitude = area.latitude;
-  const startLongitude = area.longitude;
-
-  if (Math.abs(startLatitude - latitude) < 0.004 && Math.abs(startLongitude - longitude) < 0.004) {
-    return [
-      { latitude: latitude - spread * 0.75, longitude: longitude - spread * direction },
-      { latitude: latitude + spread * 0.25, longitude: longitude - spread * 0.55 * direction },
-      { latitude: latitude + spread, longitude: longitude + spread * 0.2 * direction },
-      { latitude: latitude + spread * 0.25, longitude: longitude + spread * direction },
-      { latitude: latitude - spread * 0.75, longitude: longitude - spread * direction },
-    ];
-  }
-
-  return [
-    { latitude: startLatitude, longitude: startLongitude },
-    {
-      latitude: (startLatitude + latitude) / 2 + spread * 0.35,
-      longitude: (startLongitude + longitude) / 2 + spread * direction,
-    },
-    { latitude, longitude },
-    {
-      latitude: latitude + spread * 0.5,
-      longitude: longitude + spread * 0.55 * direction,
-    },
-  ];
-}
-
 function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): MapPoint {
   const reviewSummary = getAreaReviewSummary(area.slug, reviews);
   const activity = trail.activity ?? (trail.type.toLowerCase().includes("hiking") ? "Hiking" : "OHV");
@@ -135,7 +101,7 @@ function toMapPoint(area: RideArea, trail: TrailInfo, reviews: TrailReview[]): M
     ? importedRouteSegments
     : exactRouteLine.length
       ? [exactRouteLine]
-      : [buildApproximateRouteLine(area, trail, activity)];
+      : [];
 
   return {
     id: `${area.slug}-${slugify(trail.name)}`,
@@ -174,47 +140,6 @@ function getMapPoints(areas: RideArea[], reviews: TrailReview[], activeArea?: Ri
 
 function hasBusinessCoordinates(business: Business) {
   return typeof business.latitude === "number" && typeof business.longitude === "number";
-}
-
-function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function findBusinessArea(business: Business, areas: RideArea[]) {
-  const businessText = normalize(
-    [business.location, business.description, business.name].join(" "),
-  );
-
-  return areas.find((area) => {
-    const areaTerms = [area.name, area.locationQuery, area.state, ...area.nearbyTowns]
-      .map(normalize)
-      .filter(Boolean);
-
-    return areaTerms.some((term) => businessText.includes(term));
-  });
-}
-
-function addBusinessCoordinateFallbacks(
-  businesses: Business[],
-  areas: RideArea[],
-  activeArea?: RideArea,
-): Business[] {
-  return businesses
-    .map((business, index) => {
-      if (hasBusinessCoordinates(business)) return business;
-
-      const fallbackArea = activeArea ?? findBusinessArea(business, areas);
-      if (!fallbackArea) return business;
-
-      const angle = ((business.id || index + 1) % 12) * ((Math.PI * 2) / 12);
-      const ring = 0.018 + ((business.id || index) % 4) * 0.006;
-
-      return {
-        ...business,
-        latitude: fallbackArea.latitude + Math.sin(angle) * ring,
-        longitude: fallbackArea.longitude + Math.cos(angle) * ring,
-      };
-    });
 }
 
 function getMapBounds(
@@ -296,12 +221,21 @@ export function RideAreaMap({
 }: Props) {
   const activeArea = areas.find((area) => area.slug === activeSlug);
   const mapPoints = getMapPoints(areas, reviews, activeArea);
-  const mapBusinesses = addBusinessCoordinateFallbacks(
-    businesses,
-    activeArea ? [activeArea] : areas,
-    activeArea,
-  ).filter(hasBusinessCoordinates);
-  const mapFeatures = (activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures));
+  const mapBusinesses = businesses.filter(hasBusinessCoordinates);
+  const baseMapFeatures = activeArea ? activeArea.mapFeatures : areas.flatMap((area) => area.mapFeatures);
+  const fishFeatures = activeArea
+    ? appalachianRiverFishPopulations.filter((feature) => feature.areaSlug === activeArea.slug)
+    : appalachianRiverFishPopulations;
+  const waterAccessFeatures = activeArea
+    ? appalachianWaterAccess.filter((feature) => feature.areaSlug === activeArea.slug)
+    : appalachianWaterAccess;
+  const gaugeFeatures = activeArea
+    ? appalachianRiverGauges.filter((feature) => feature.areaSlug === activeArea.slug)
+    : appalachianRiverGauges;
+  const wmaFeatures = activeArea
+    ? appalachianWildlifeManagementAreas.filter((feature) => feature.areaSlug === activeArea.slug)
+    : appalachianWildlifeManagementAreas;
+  const mapFeatures = [...baseMapFeatures, ...fishFeatures, ...waterAccessFeatures, ...gaugeFeatures, ...wmaFeatures];
   const mapConditionReports = getMapConditionReports(conditionReports, areas, activeArea);
   const mapRiderPhotos = reviews.filter((review) => review.photoUrl);
   const mapBounds = getMapBounds(mapPoints, mapBusinesses, mapFeatures, mapConditionReports);

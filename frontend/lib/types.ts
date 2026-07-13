@@ -603,7 +603,12 @@ export type RideEvent = {
   official_url: string;
   registration_url: string;
   facebook_url: string;
+  instagram_url: string;
   image_url: string;
+  difficulty: string;
+  family_friendly?: boolean | null;
+  estimated_attendance?: number | null;
+  trail_area_slug: string;
   verification_source: string;
   verified_at?: string | null;
   is_verified: boolean;
@@ -616,7 +621,23 @@ export type RideEvent = {
   updated_at: string;
 };
 
-export type EventSubmissionInput = Omit<RideEvent, "id" | "slug" | "verification_source" | "verified_at" | "is_verified" | "is_featured" | "status" | "admin_notes" | "created_at" | "updated_at"> & {
+export type DestinationBusiness = {
+  id: number; name: string; slug: string; category: string; group: string; description: string;
+  phone: string; website_url: string; photo_url: string; distance_miles: number; rating?: number | null;
+  review_count: number; is_partner: boolean; is_sponsored: boolean; placement: string;
+  disclosure: string; has_booking: boolean;
+};
+
+export type EventDestination = {
+  event: RideEvent; businesses: DestinationBusiness[];
+  itinerary: { day: string; items: { label: string; business_slug?: string | null }[] }[];
+  weather: { available: boolean; current?: Record<string, number>; daily?: Record<string, Array<string | number>>; message?: string };
+  conditions: { id: number; type: string; severity: string; trail: string; note: string; created_at: string }[];
+  discussions: { id: number; kind: string; message: string; created_at: string }[];
+  media: { id: number; type: "photo" | "video"; url: string; caption: string }[];
+};
+
+export type EventSubmissionInput = Omit<RideEvent, "id" | "slug" | "verification_source" | "verified_at" | "is_verified" | "is_featured" | "status" | "admin_notes" | "created_at" | "updated_at" | "instagram_url" | "difficulty" | "family_friendly" | "estimated_attendance" | "trail_area_slug"> & {
   submitted_by_name: string;
   submitted_by_email: string;
 };
@@ -659,4 +680,25 @@ export type EventEngagement = {
   attendance: "" | "going" | "interested" | "not_going";
   going: number;
   interested: number;
+};
+
+export type EventSource = {
+  id: number; name: string; source_type: string; base_url: string; feed_url: string;
+  state: string; organizer_name: string; is_active: boolean; is_trusted: boolean;
+  scan_frequency: string; last_scanned_at?: string | null; last_success_at?: string | null;
+  last_error: string; consecutive_failures: number; notes: string; candidate_count: number;
+  scan_count: number; success_rate?: number | null;
+};
+
+export type EventCandidate = {
+  id: number; source_id: number; source_url: string; title: string; organizer: string;
+  state: string; city: string; venue: string; start_date?: string | null; end_date?: string | null;
+  confidence_score: number; confidence_reasons: string[]; duplicate_event_id?: number | null;
+  change_summary: Record<string, unknown>; status: string; admin_notes: string;
+};
+
+export type EventsIntelligence = {
+  new_candidates: number; high_confidence: number; possible_duplicates: number;
+  possible_updates: number; source_failures: number; needs_reverification: number;
+  starting_within_30_days: number;
 };
