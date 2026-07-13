@@ -31,8 +31,16 @@ export function BusinessImporter({ adminPassword, onImported }: { adminPassword:
     if (!rows.length) return;
     setWorking(true); setStatus("Importing selected businesses…");
     try {
-      const result = await importOpenStreetMapBusinesses(rows, adminPassword);
-      setStatus(`Imported ${result.imported}; skipped ${result.skipped}. Listings are pending admin approval.`);
+      let imported = 0;
+      let skipped = 0;
+      for (let index = 0; index < rows.length; index += 250) {
+        const batch = rows.slice(index, index + 250);
+        setStatus(`Importing ${index + 1}–${index + batch.length} of ${rows.length}…`);
+        const result = await importOpenStreetMapBusinesses(batch, adminPassword);
+        imported += result.imported;
+        skipped += result.skipped;
+      }
+      setStatus(`Imported ${imported}; skipped ${skipped}. Listings are pending admin approval.`);
       setSelected([]); await onImported();
     } catch (error) { setStatus(error instanceof Error ? error.message : "Import failed"); }
     finally { setWorking(false); }
