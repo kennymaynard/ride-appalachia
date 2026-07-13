@@ -274,6 +274,25 @@ export type Business = {
   bookings?: Booking[];
 };
 
+export type BusinessImportCandidate = {
+  source_provider: "openstreetmap";
+  source_id: string;
+  source_url: string;
+  area_slug: string;
+  area_name: string;
+  name: string;
+  category: Category;
+  description: string;
+  phone: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  website_url: string;
+  distance_miles: number;
+  duplicate_business_id?: number | null;
+  duplicate_reason: string;
+};
+
 export type BusinessCreateInput = {
   name: string;
   slug: string;

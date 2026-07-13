@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { AdminEventsPanel } from "./AdminEventsPanel";
 import { EventsIntelligencePanel } from "./EventsIntelligencePanel";
+import { BusinessImporter } from "./BusinessImporter";
 import {
   approveBusiness,
   deleteAdminBusiness,
@@ -1315,6 +1316,11 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <p className="empty-state">No new lodging service requests.</p>
         )}
       </div>
+
+      <BusinessImporter
+        adminPassword={adminPassword}
+        onImported={() => reloadAdminBusinesses()}
+      />
 
       <div className="admin-list">
         {businesses.map((business) => (

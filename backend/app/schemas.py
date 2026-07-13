@@ -740,8 +740,49 @@ class BusinessRead(BusinessBase):
     partner_tax_agreement_accepted_at: Optional[datetime] = None
     view_clicks: int
     action_clicks: int
+    source_provider: Optional[str] = None
+    source_id: Optional[str] = None
+    source_url: str = ""
+    imported_at: Optional[datetime] = None
     deals: list[DealRead] = []
     campaigns: list[CampaignRead] = []
+
+
+class BusinessImportScanRequest(BaseModel):
+    area_slug: str = Field(min_length=2, max_length=120)
+    area_name: str = Field(min_length=2, max_length=160)
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    radius_miles: float = Field(default=25, ge=1, le=50)
+
+
+class BusinessImportCandidate(BaseModel):
+    source_provider: str = "openstreetmap"
+    source_id: str
+    source_url: str
+    area_slug: str
+    area_name: str
+    name: str
+    category: str
+    description: str
+    phone: str = ""
+    location: str
+    latitude: float
+    longitude: float
+    website_url: str = ""
+    distance_miles: float
+    duplicate_business_id: Optional[int] = None
+    duplicate_reason: str = ""
+
+
+class BusinessImportRequest(BaseModel):
+    candidates: list[BusinessImportCandidate] = Field(min_length=1, max_length=250)
+
+
+class BusinessImportResult(BaseModel):
+    imported: int
+    skipped: int
+    business_ids: list[int]
 
 
 class BusinessDashboardRead(BusinessRead):

@@ -1129,6 +1129,32 @@ export async function getAdminBusinesses(adminPassword?: string, includeDeleted 
   return response.json();
 }
 
+export async function scanOpenStreetMapBusinesses(
+  payload: { area_slug: string; area_name: string; latitude: number; longitude: number; radius_miles: number },
+  adminPassword: string,
+): Promise<import("./types").BusinessImportCandidate[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-import/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to scan OpenStreetMap businesses");
+  return response.json();
+}
+
+export async function importOpenStreetMapBusinesses(
+  candidates: import("./types").BusinessImportCandidate[],
+  adminPassword: string,
+): Promise<{ imported: number; skipped: number; business_ids: number[] }> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-import/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) },
+    body: JSON.stringify({ candidates }),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to import businesses");
+  return response.json();
+}
+
 export async function getStoreProducts(): Promise<StoreProduct[]> {
   const response = await apiFetch("/api/store/products", {
     cache: "no-store",

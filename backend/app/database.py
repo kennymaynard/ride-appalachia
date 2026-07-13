@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     printify_shop_id: str = ""
     printify_auto_submit_orders: bool = False
     printify_send_shipping_notification: bool = False
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
 
 
 @lru_cache

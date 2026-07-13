@@ -94,6 +94,10 @@ class Business(Base):
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     photo_url: Mapped[str] = mapped_column(Text)
     website_url: Mapped[str] = mapped_column(Text, default="")
+    source_provider: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    source_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    source_url: Mapped[str] = mapped_column(Text, default="")
+    imported_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     owner_email: Mapped[str] = mapped_column(String(180), default="", index=True)
     owner_access_token: Mapped[str] = mapped_column(String(80), default="", index=True)
     owner_passcode_hash: Mapped[str] = mapped_column(Text, default="")
@@ -118,6 +122,10 @@ class Business(Base):
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("source_provider", "source_id", name="uq_business_source"),
+    )
 
     deals: Mapped[list["Deal"]] = relationship(back_populates="business", cascade="all, delete-orphan")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="business", cascade="all, delete-orphan")
