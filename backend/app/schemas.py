@@ -584,6 +584,8 @@ class EventRead(EventBase):
     status: str
     created_at: datetime
     updated_at: datetime
+    last_checked_at: Optional[datetime] = None
+    reverify_after: Optional[datetime] = None
 
 
 class AdminEventRead(EventRead):

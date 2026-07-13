@@ -78,6 +78,7 @@ export function TrailTalkEvents({ initialEvents }: { initialEvents: RideEvent[] 
         <p>{event.description}</p><p>Organizer: {event.organizer || "Not listed"}</p>
         {event.vehicle_types.length ? <p>Vehicles: {event.vehicle_types.join(", ")}</p> : null}
         <div className="hero-actions">
+          <a href={`/trail-talk/rides/${event.slug}`}>View Ride</a>
           {event.official_url ? <a href={event.official_url} target="_blank" rel="noreferrer">Official event</a> : null}
           {event.registration_url ? <a href={event.registration_url} target="_blank" rel="noreferrer">Register</a> : null}
           <button type="button" onClick={() => planRide(event)}>Plan This Ride</button>

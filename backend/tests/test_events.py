@@ -80,7 +80,7 @@ class EventSystemTests(unittest.TestCase):
     def test_haversine_and_planner_sponsored_sort(self):
         event = self.add_event(latitude=37.5, longitude=-82.5, is_verified=True, verification_source="https://example.com")
         standard = Business(name="Near Standard", slug="near-standard", category="food", description="Food", phone="6065550100", location="Town", latitude=37.51, longitude=-82.5, photo_url="", listing_status="approved", is_approved=True)
-        featured = Business(name="Featured", slug="featured", category="lodging", description="Stay", phone="6065550101", location="Town", latitude=37.52, longitude=-82.5, photo_url="", listing_status="approved", is_approved=True, is_featured=True)
+        featured = Business(name="Featured", slug="featured", category="lodging", description="Stay", phone="6065550101", location="Town", latitude=37.52, longitude=-82.5, photo_url="", listing_status="approved", is_approved=True, is_featured=True, subscription_status="active")
         self.db.add_all([standard, featured]); self.db.commit()
         result = plan_event_ride(event.slug, radius=25, db=self.db)
         self.assertGreater(haversine_miles(37.5, -82.5, 37.6, -82.5), 0)

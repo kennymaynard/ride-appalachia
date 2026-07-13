@@ -653,3 +653,10 @@ export type EventPlannerResult = {
   radius_miles: number;
   businesses: EventPlannerBusiness[];
 };
+
+export type EventEngagement = {
+  saved: boolean;
+  attendance: "" | "going" | "interested" | "not_going";
+  going: number;
+  interested: number;
+};
