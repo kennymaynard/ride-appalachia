@@ -2337,19 +2337,6 @@ function buildMapFeatures(area: RawRideArea, outdoorStops: OutdoorStop[]): RideM
       updatedAt: nowLabel,
       url: "/rider/login",
     },
-    {
-      ...offsetCoordinate(area, 9),
-      id: `${area.slug}-local-deals`,
-      areaSlug: area.slug,
-      areaName: area.name,
-      title: "Local deals",
-      layer: "deal",
-      summary: "Food, fuel, lodging, and repair offers",
-      detail: "Highlight rider deals and bookable local businesses near the trails.",
-      status: "Marketplace",
-      updatedAt: nowLabel,
-      url: `/deals?area=${encodeURIComponent(area.locationQuery)}`,
-    },
   ];
 
   const scenicStops: RideMapFeature[] = outdoorStops.slice(0, 4).map((stop, index) => ({
