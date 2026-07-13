@@ -67,9 +67,13 @@ const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
   { id: "water_access", label: "Boat / kayak" },
   { id: "river_level", label: "River levels" },
   { id: "wma", label: "WMA" },
+<<<<<<< HEAD
   { id: "ky_elk", label: "Elk hunting areas" },
   { id: "ky_elk_ra", label: "Elk regulated areas (RA)" },
   { id: "ky_elk_viewing", label: "Elk viewing areas" },
+=======
+  { id: "ky_elk", label: "KY elk units" },
+>>>>>>> origin/main
 ];
 
 const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
@@ -88,8 +92,11 @@ const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
   river_level: "Live river level",
   wma: "Wildlife management area",
   ky_elk: "Kentucky elk hunting area",
+<<<<<<< HEAD
   ky_elk_ra: "Kentucky elk regulated area",
   ky_elk_viewing: "Kentucky elk viewing area",
+=======
+>>>>>>> origin/main
 };
 
 function escapeXml(value: string) {
