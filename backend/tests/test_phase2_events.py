@@ -33,8 +33,13 @@ class Phase2EventTests(unittest.TestCase):
         self.assertEqual(result["going"], 1); self.assertNotIn("email", result); self.assertNotIn("phone", result)
 
     def test_ics_is_valid_and_stable(self):
+        self.event.title = "Future Ride, Spring; Edition"
+        self.event.description = "Line one\\path\nLine two"
+        self.db.commit()
         response = event_calendar(self.event.slug, self.db); text = response.body.decode()
         self.assertIn("BEGIN:VCALENDAR", text); self.assertIn(f"UID:event-{self.event.id}@appalachiaoffroadapp.com", text); self.assertIn("END:VCALENDAR", text)
+        self.assertIn(r"SUMMARY:Future Ride\, Spring\; Edition", text)
+        self.assertIn(r"DESCRIPTION:Line one\\path\nLine two", text)
 
     def test_plan_share_excludes_rider_private_data(self):
         result = create_ride_plan(self.event.id, {"arrival_date": self.event.start_date.isoformat(), "departure_date": self.event.end_date.isoformat(), "items": [{"day": 1, "label": "Check-in"}]}, "rider-token", self.db)
@@ -52,6 +57,35 @@ class Phase2EventTests(unittest.TestCase):
     def test_pending_event_cannot_be_saved(self):
         self.event.status = "pending"; self.db.commit()
         with self.assertRaises(HTTPException): save_event(self.event.id, "rider-token", self.db)
+
+    def test_invalid_reminder_days_return_400(self):
+        for days in (["tomorrow"], None, [True]):
+            with self.subTest(days=days), self.assertRaises(HTTPException) as error:
+                set_reminders(self.event.id, {"days": days}, "rider-token", self.db)
+            self.assertEqual(error.exception.status_code, 400)
+
+    @patch("app.routes.events.send_sms")
+    def test_sms_only_reminder_is_sent(self, send_sms_mock):
+        self.rider.alert_email_opt_in = False
+        self.rider.alert_phone_opt_in = True
+        self.rider.phone = "6065550100"
+        self.db.commit()
+        send_sms_mock.return_value.sent = True
+        set_reminders(self.event.id, {"days": [7]}, "rider-token", self.db)
+        self.assertEqual(process_reminders(None, self.db)["sent"], 1)
+
+    @patch("app.routes.events.send_sms")
+    @patch("app.routes.events.send_trip_plan_email")
+    def test_partial_delivery_does_not_resend_successful_channel(self, send_email, send_sms_mock):
+        self.rider.alert_phone_opt_in = True
+        self.rider.phone = "6065550100"
+        self.db.commit()
+        send_email.return_value.sent = True
+        send_sms_mock.return_value.sent = False
+        set_reminders(self.event.id, {"days": [7]}, "rider-token", self.db)
+        self.assertEqual(process_reminders(None, self.db)["sent"], 1)
+        self.assertEqual(process_reminders(None, self.db)["sent"], 0)
+        send_email.assert_called_once()
 
 
 if __name__ == "__main__": unittest.main()

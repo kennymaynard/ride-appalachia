@@ -30,6 +30,12 @@ RADIUS_OPTIONS = {10, 25, 50, 100}
 PLANNER_CATEGORIES = {"lodging", "food", "fuel", "rentals", "repairs", "services"}
 ATTENDANCE_STATUSES = {"going", "interested", "not_going"}
 REMINDER_DAYS = {1, 3, 7}
+ROCK_RIDGE_RESORT_SLUG = "rock-ridge-resort"
+
+
+def escape_ics_text(value: str | None) -> str:
+    """Escape text values according to RFC 5545 section 3.3.11."""
+    return (value or "").replace("\\", "\\\\").replace("\r\n", "\\n").replace("\r", "\\n").replace("\n", "\\n").replace(";", "\\;").replace(",", "\\,")
 
 
 def rider_from_token(token: str, db: Session) -> Rider:
@@ -186,7 +192,7 @@ def plan_event_ride(slug: str, radius: int = Query(default=25), db: Session = De
         active_subscription = business.subscription_status in {"active", "trialing"}
         relevant = business.category in PLANNER_CATEGORIES
         sponsored = relevant and active_subscription and (business.is_featured or any(campaign.status == "active" for campaign in business.campaigns))
-        if business.name.lower().startswith("rock ridge resort") and event.state != "TN":
+        if business.slug == ROCK_RIDGE_RESORT_SLUG and event.state != "TN":
             sponsored = False
         results.append(EventPlannerBusiness(
             id=business.id, name=business.name, slug=business.slug, category=business.category,
@@ -195,9 +201,6 @@ def plan_event_ride(slug: str, radius: int = Query(default=25), db: Session = De
             distance_miles=round(distance, 1), is_featured=business.is_featured,
             is_sponsored=sponsored, has_active_deal=any(deal.is_active for deal in business.deals),
         ))
-        db.add(EventMetric(event_id=event.id, business_id=business.id, action="planner_impression"))
-    if results:
-        db.commit()
     results.sort(key=lambda item: (not item.is_sponsored, item.distance_miles, item.name.lower()))
     return EventPlannerResult(event=event, radius_miles=radius, businesses=results)
 
@@ -257,7 +260,7 @@ def event_calendar(slug: str, db: Session = Depends(get_db)) -> Response:
     event = get_public_event_or_404(slug, db); db.add(EventMetric(event_id=event.id, action="calendar_download")); db.commit()
     start = event.start_date.strftime("%Y%m%d"); end = (event.end_date + timedelta(days=1)).strftime("%Y%m%d")
     location = ", ".join(filter(None, [event.venue, event.address, f"{event.city}, {event.state}"]))
-    body = "\r\n".join(["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Appalachia Offroad//Events//EN", "BEGIN:VEVENT", f"UID:event-{event.id}@appalachiaoffroadapp.com", f"DTSTART;VALUE=DATE:{start}", f"DTEND;VALUE=DATE:{end}", f"SUMMARY:{event.title}", f"LOCATION:{location}", f"DESCRIPTION:{event.description}", f"URL:{event.official_url or event.verification_source}", "END:VEVENT", "END:VCALENDAR", ""])
+    body = "\r\n".join(["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Appalachia Offroad//Events//EN", "BEGIN:VEVENT", f"UID:event-{event.id}@appalachiaoffroadapp.com", f"DTSTART;VALUE=DATE:{start}", f"DTEND;VALUE=DATE:{end}", f"SUMMARY:{escape_ics_text(event.title)}", f"LOCATION:{escape_ics_text(location)}", f"DESCRIPTION:{escape_ics_text(event.description)}", f"URL:{event.official_url or event.verification_source}", "END:VEVENT", "END:VCALENDAR", ""])
     return Response(body, media_type="text/calendar", headers={"Content-Disposition": f'attachment; filename="{event.slug}.ics"'})
 
 
@@ -288,7 +291,14 @@ def shared_plan(share_token: str, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/events/{event_id}/reminders")
 def set_reminders(event_id: int, payload: dict = Body(...), x_rider_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
-    event = public_event_id(event_id, db); rider = rider_from_token(x_rider_token, db); days = {int(x) for x in payload.get("days", [])}
+    event = public_event_id(event_id, db); rider = rider_from_token(x_rider_token, db)
+    try:
+        raw_days = payload.get("days", [])
+        if not isinstance(raw_days, list) or any(isinstance(value, bool) for value in raw_days):
+            raise TypeError
+        days = {int(value) for value in raw_days}
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise HTTPException(status_code=400, detail="Reminder days must be 1, 3, or 7") from exc
     if not days.issubset(REMINDER_DAYS): raise HTTPException(status_code=400, detail="Reminder days must be 1, 3, or 7")
     db.query(EventReminder).filter_by(event_id=event.id, rider_id=rider.id).delete()
     db.add_all([EventReminder(event_id=event.id, rider_id=rider.id, days_before=d) for d in days]); db.commit()
@@ -301,12 +311,14 @@ def process_reminders(_: None = Depends(require_admin), db: Session = Depends(ge
     rows = db.query(EventReminder).join(Event).join(Rider).filter(EventReminder.sent_at.is_(None), Event.status == "approved", Event.end_date >= today).all()
     for reminder in rows:
         event = db.get(Event, reminder.event_id); rider = db.get(Rider, reminder.rider_id)
-        if event and rider and rider.alert_email_opt_in and event.start_date == today + timedelta(days=reminder.days_before):
+        if event and rider and event.start_date == today + timedelta(days=reminder.days_before):
             text = f"{event.title} starts in {reminder.days_before} day(s), on {event.start_date}. Confirm details with the organizer: {event.official_url or event.verification_source}"
             deliveries = []
             if rider.alert_email_opt_in: deliveries.append(send_trip_plan_email(rider.email, event.title, text).sent)
             if rider.alert_phone_opt_in and rider.phone: deliveries.append(send_sms(rider.phone, text).sent)
-            if deliveries and all(deliveries): reminder.sent_at = datetime.utcnow(); sent += 1
+            # A reminder is complete once at least one requested channel succeeds.
+            # This prevents a successful channel from being duplicated when another fails.
+            if any(deliveries): reminder.sent_at = datetime.utcnow(); sent += 1
     db.commit(); return {"sent": sent}
 
 

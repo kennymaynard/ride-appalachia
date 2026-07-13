@@ -11,6 +11,6 @@ POST https://<backend-host>/api/admin/event-reminders/run
 X-Admin-Password: <ADMIN_PASSWORD>
 ```
 
-Recommended schedule: `15 12 * * *` (daily at 12:15 UTC). The processor selects approved future events, respects rider email/SMS preferences, and records `sent_at` so retries do not duplicate successfully delivered reminders.
+Recommended schedule: `15 12 * * *` (daily at 12:15 UTC). The processor selects approved future events, respects rider email/SMS preferences, and records `sent_at` after any requested channel succeeds so retries do not duplicate a successful delivery.
 
-Monitor failed deliveries in application logs. Failed sends remain unsent and are eligible for the next scheduler retry.
+Monitor failed deliveries in application logs. Reminders for which every requested delivery fails remain unsent and are eligible for the next scheduler retry.
