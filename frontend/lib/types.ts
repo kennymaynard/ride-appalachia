@@ -660,3 +660,24 @@ export type EventEngagement = {
   going: number;
   interested: number;
 };
+
+export type EventSource = {
+  id: number; name: string; source_type: string; base_url: string; feed_url: string;
+  state: string; organizer_name: string; is_active: boolean; is_trusted: boolean;
+  scan_frequency: string; last_scanned_at?: string | null; last_success_at?: string | null;
+  last_error: string; consecutive_failures: number; notes: string; candidate_count: number;
+  scan_count: number; success_rate?: number | null;
+};
+
+export type EventCandidate = {
+  id: number; source_id: number; source_url: string; title: string; organizer: string;
+  state: string; city: string; venue: string; start_date?: string | null; end_date?: string | null;
+  confidence_score: number; confidence_reasons: string[]; duplicate_event_id?: number | null;
+  change_summary: Record<string, unknown>; status: string; admin_notes: string;
+};
+
+export type EventsIntelligence = {
+  new_candidates: number; high_confidence: number; possible_duplicates: number;
+  possible_updates: number; source_failures: number; needs_reverification: number;
+  starting_within_30_days: number;
+};

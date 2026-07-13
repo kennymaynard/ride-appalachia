@@ -305,6 +305,95 @@ class EventMetric(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class EventSource(Base):
+    __tablename__ = "event_sources"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(180))
+    source_type: Mapped[str] = mapped_column(String(40), index=True)
+    base_url: Mapped[str] = mapped_column(Text)
+    feed_url: Mapped[str] = mapped_column(Text, default="")
+    state: Mapped[str] = mapped_column(String(2), index=True)
+    organizer_name: Mapped[str] = mapped_column(String(180), default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_trusted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    scan_frequency: Mapped[str] = mapped_column(String(30), default="daily")
+    last_scanned_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str] = mapped_column(Text, default="")
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
+    scan_locked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EventCandidate(Base):
+    __tablename__ = "event_candidates"
+    __table_args__ = (UniqueConstraint("source_id", "external_id", name="uq_event_candidate_source_external"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("event_sources.id"), index=True)
+    external_id: Mapped[str] = mapped_column(String(240))
+    source_url: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(String(180), index=True)
+    organizer: Mapped[str] = mapped_column(String(180), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    state: Mapped[str] = mapped_column(String(2), index=True)
+    city: Mapped[str] = mapped_column(String(120), default="")
+    venue: Mapped[str] = mapped_column(String(180), default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    category: Mapped[str] = mapped_column(String(80), default="group_ride")
+    vehicle_types: Mapped[list[str]] = mapped_column(JSON, default=list)
+    official_url: Mapped[str] = mapped_column(Text, default="")
+    registration_url: Mapped[str] = mapped_column(Text, default="")
+    facebook_url: Mapped[str] = mapped_column(Text, default="")
+    image_url: Mapped[str] = mapped_column(Text, default="")
+    raw_text: Mapped[str] = mapped_column(Text, default="")
+    raw_metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    confidence_score: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    confidence_reasons: Mapped[list[str]] = mapped_column(JSON, default=list)
+    duplicate_event_id: Mapped[int | None] = mapped_column(ForeignKey("events.id"), nullable=True, index=True)
+    change_detected: Mapped[bool] = mapped_column(Boolean, default=False)
+    change_summary: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="new", index=True)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reviewed_by: Mapped[str] = mapped_column(String(120), default="")
+    admin_notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class EventSourceScan(Base):
+    __tablename__ = "event_source_scans"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("event_sources.id"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="running", index=True)
+    items_seen: Mapped[int] = mapped_column(Integer, default=0)
+    candidates_created: Mapped[int] = mapped_column(Integer, default=0)
+    candidates_updated: Mapped[int] = mapped_column(Integer, default=0)
+    errors: Mapped[list[str]] = mapped_column(JSON, default=list)
+    response_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class EventVerificationHistory(Base):
+    __tablename__ = "event_verification_history"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), index=True)
+    candidate_id: Mapped[int | None] = mapped_column(ForeignKey("event_candidates.id"), nullable=True, index=True)
+    source_url: Mapped[str] = mapped_column(Text)
+    admin_name: Mapped[str] = mapped_column(String(120), default="admin")
+    action: Mapped[str] = mapped_column(String(40), index=True)
+    previous_values: Mapped[dict] = mapped_column(JSON, default=dict)
+    new_values: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class LodgingServiceRequest(Base):
     __tablename__ = "lodging_service_requests"
 

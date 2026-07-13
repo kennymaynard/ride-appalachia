@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { AdminEventsPanel } from "./AdminEventsPanel";
+import { EventsIntelligencePanel } from "./EventsIntelligencePanel";
 import {
   approveBusiness,
   deleteAdminBusiness,
@@ -628,6 +629,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         </article>
       </div>
       <AdminEventsPanel adminPassword={adminPassword} />
+      <EventsIntelligencePanel adminPassword={adminPassword} />
 
       {analytics ? (
         <section className="dashboard-card admin-analytics-card">

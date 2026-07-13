@@ -1518,3 +1518,46 @@ export async function updateAdminBusiness(
 
   return response.json();
 }
+
+export async function getEventSources(adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/event-sources`, { headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error("Unable to load event sources");
+  return response.json();
+}
+
+export async function createEventSource(payload: Record<string, unknown>, adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/event-sources`, { method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error(await response.text() || "Unable to create event source");
+  return response.json();
+}
+
+export async function updateEventSource(sourceId: number, payload: Record<string, unknown>, adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/event-sources/${sourceId}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error("Unable to update event source");
+  return response.json();
+}
+
+export async function getEventCandidates(adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/event-candidates`, { headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error("Unable to load event candidates");
+  return response.json();
+}
+
+export async function reviewEventCandidate(candidateId: number, payload: Record<string, unknown>, adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/event-candidates/${candidateId}/review`, { method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error(await response.text() || "Unable to review candidate");
+  return response.json();
+}
+
+export async function runEventDiscovery(sourceId: number | undefined, adminPassword: string) {
+  const query = sourceId ? `?source_id=${sourceId}` : "";
+  const response = await fetch(`${getApiUrl()}/api/admin/event-discovery/run${query}`, { method: "POST", headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error("Unable to run event discovery");
+  return response.json();
+}
+
+export async function getEventsIntelligence(adminPassword: string) {
+  const response = await fetch(`${getApiUrl()}/api/admin/events-intelligence`, { headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error("Unable to load events intelligence");
+  return response.json();
+}
