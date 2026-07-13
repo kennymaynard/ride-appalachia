@@ -14,6 +14,8 @@ import {
 } from "react-leaflet";
 import type { Business, Category, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapConditionReport, MapPoint } from "./RideAreaMap";
+import { RiverGaugeReadout } from "./RiverGaugeReadout";
+import { KentuckyElkLayers } from "./KentuckyElkLayers";
 
 type Props = {
   activeTitle: string;
@@ -28,7 +30,7 @@ type Props = {
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
-type IntelligenceLayer = RideMapFeature["layer"];
+type IntelligenceLayer = RideMapFeature["layer"] | "ky_elk_ra" | "ky_elk_viewing";
 
 const businessLayerOptions: { id: BusinessLayer; label: string }[] = [
   { id: "food", label: "Food" },
@@ -61,6 +63,13 @@ const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
   { id: "group", label: "Group" },
   { id: "passport", label: "Passport" },
   { id: "deal", label: "Deals" },
+  { id: "fish", label: "River fish" },
+  { id: "water_access", label: "Boat / kayak" },
+  { id: "river_level", label: "River levels" },
+  { id: "wma", label: "WMA" },
+  { id: "ky_elk", label: "Elk hunting areas" },
+  { id: "ky_elk_ra", label: "Elk regulated areas (RA)" },
+  { id: "ky_elk_viewing", label: "Elk viewing areas" },
 ];
 
 const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
@@ -74,6 +83,13 @@ const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
   parking: "Trailer parking",
   passport: "Ride passport",
   scenic: "Photo / nature",
+  fish: "River fish population",
+  water_access: "Boat / kayak access",
+  river_level: "Live river level",
+  wma: "Wildlife management area",
+  ky_elk: "Kentucky elk hunting area",
+  ky_elk_ra: "Kentucky elk regulated area",
+  ky_elk_viewing: "Kentucky elk viewing area",
 };
 
 function escapeXml(value: string) {
@@ -337,30 +353,23 @@ export function TrailLeafletMap({
   riderPhotos = [],
   conditionReports = [],
 }: Props) {
-  const [showOhv, setShowOhv] = useState(true);
-  const [showHiking, setShowHiking] = useState(true);
-  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([
-    "food",
-    "fuel",
-    "lodging",
-    "repairs",
-    "rentals",
-    "services",
-    "deals",
-  ]);
-  const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([
-    "condition",
-    "parking",
-    "emergency",
-    "scenic",
-    "deal",
-  ]);
+  const [showOhv, setShowOhv] = useState(false);
+  const [showHiking, setShowHiking] = useState(false);
+  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([]);
+  const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [controlsOpen, setControlsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number]>();
   const [trackingStatus, setTrackingStatus] = useState("Track me");
+  const [waterAccessTypes, setWaterAccessTypes] = useState<Array<"trailer" | "carry_down" | "shoreline">>([
+    "trailer",
+    "carry_down",
+    "shoreline",
+  ]);
+  const [putInId, setPutInId] = useState<string>();
+  const [takeOutId, setTakeOutId] = useState<string>();
   const center: [number, number] = [
     (bounds[0][0] + bounds[1][0]) / 2,
     (bounds[0][1] + bounds[1][1]) / 2,
@@ -397,8 +406,14 @@ export function TrailLeafletMap({
     () =>
       selectedTrailId
         ? []
-        : features.filter((feature) => intelligenceLayers.includes(feature.layer)),
-    [features, intelligenceLayers, selectedTrailId],
+        : features.filter(
+            (feature) =>
+              intelligenceLayers.includes(feature.layer) &&
+              (feature.layer !== "water_access" ||
+                !feature.waterAccessType ||
+                waterAccessTypes.includes(feature.waterAccessType)),
+          ),
+    [features, intelligenceLayers, selectedTrailId, waterAccessTypes],
   );
   const visibleConditionReports = useMemo(
     () =>
@@ -463,6 +478,29 @@ export function TrailLeafletMap({
     );
   };
 
+  const clearAllLayers = () => {
+    setShowOhv(false);
+    setShowHiking(false);
+    setBusinessLayers([]);
+    setIntelligenceLayers([]);
+    setSelectedTrailId(undefined);
+  };
+  const toggleWaterAccessType = (type: "trailer" | "carry_down" | "shoreline") => {
+    setWaterAccessTypes((current) =>
+      current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
+    );
+  };
+  const putIn = features.find((feature) => feature.id === putInId);
+  const takeOut = features.find((feature) => feature.id === takeOutId);
+  const handleDownloadRiverPack = () => {
+    if (!putIn || !takeOut) return;
+    downloadTextFile(
+      `${slugify(putIn.title)}-to-${slugify(takeOut.title)}-river-pack.json`,
+      JSON.stringify({ generatedAt: new Date().toISOString(), putIn, takeOut }, null, 2),
+      "application/json;charset=utf-8",
+    );
+  };
+
   return (
     <div className={isExpanded ? "trail-leaflet-map is-expanded" : "trail-leaflet-map"}>
       <div className="trail-layer-controls" aria-label="Trail map layers">
@@ -492,8 +530,12 @@ export function TrailLeafletMap({
           ) : null}
         </div>
         <div className={controlsOpen ? "trail-layer-drawer is-open" : "trail-layer-drawer"}>
+          <button type="button" onClick={clearAllLayers}>
+            Turn all layers off
+          </button>
           <span>Trails</span>
           <button
+            aria-pressed={showOhv}
             className={showOhv ? "is-active" : ""}
             type="button"
             onClick={() => setShowOhv((current) => !current)}
@@ -501,6 +543,7 @@ export function TrailLeafletMap({
             OHV / ride
           </button>
           <button
+            aria-pressed={showHiking}
             className={showHiking ? "is-active is-hiking" : "is-hiking"}
             type="button"
             onClick={() => setShowHiking((current) => !current)}
@@ -519,6 +562,7 @@ export function TrailLeafletMap({
           <span>Nearby</span>
           {businessLayerOptions.map((layer) => (
             <button
+              aria-pressed={businessLayers.includes(layer.id)}
               className={
                 businessLayers.includes(layer.id)
                   ? "is-active is-business"
@@ -534,6 +578,7 @@ export function TrailLeafletMap({
           <span>Ride intel</span>
           {intelligenceLayerOptions.map((layer) => (
             <button
+              aria-pressed={intelligenceLayers.includes(layer.id)}
               className={
                 intelligenceLayers.includes(layer.id)
                   ? "is-active is-intel"
@@ -546,6 +591,29 @@ export function TrailLeafletMap({
               {layer.label}
             </button>
           ))}
+          {intelligenceLayers.includes("water_access") ? (
+            <>
+              <span>Launch type</span>
+              {([
+                ["trailer", "Boat ramp"],
+                ["carry_down", "Kayak carry"],
+                ["shoreline", "Shoreline"],
+              ] as const).map(([type, label]) => (
+                <button
+                  className={waterAccessTypes.includes(type) ? "is-active is-intel" : "is-intel"}
+                  key={type}
+                  type="button"
+                  onClick={() => toggleWaterAccessType(type)}
+                >
+                  {label}
+                </button>
+              ))}
+              {putIn || takeOut ? <span>Float plan</span> : null}
+              {putIn ? <button type="button" onClick={() => setPutInId(undefined)}>Put-in: {putIn.title}</button> : null}
+              {takeOut ? <button type="button" onClick={() => setTakeOutId(undefined)}>Take-out: {takeOut.title}</button> : null}
+              {putIn && takeOut ? <button type="button" onClick={handleDownloadRiverPack}>Offline river pack</button> : null}
+            </>
+          ) : null}
           {selectedTrail && hasExactRoute ? (
             <>
               <span>Save</span>
@@ -660,6 +728,15 @@ export function TrailLeafletMap({
             </Tooltip>
           </CircleMarker>
         ) : null}
+        {intelligenceLayers.some((layer) => layer.startsWith("ky_elk")) ? (
+          <KentuckyElkLayers
+            groups={[
+              ...(intelligenceLayers.includes("ky_elk") ? ["hunting" as const] : []),
+              ...(intelligenceLayers.includes("ky_elk_ra") ? ["regulated" as const] : []),
+              ...(intelligenceLayers.includes("ky_elk_viewing") ? ["viewing" as const] : []),
+            ]}
+          />
+        ) : null}
         {visiblePoints.map((point, index) => (
           <Marker
             icon={makeIcon(point)}
@@ -741,7 +818,7 @@ export function TrailLeafletMap({
               <div className="trail-popup">
                 {(() => {
                   const riderPhoto = photoByArea.get(feature.areaSlug);
-                  return riderPhoto ? (
+                  return feature.layer === "fish" || feature.layer === "water_access" || feature.layer === "wma" ? null : riderPhoto ? (
                     <figure className="trail-popup-rider-photo">
                       <img
                         alt={riderPhoto.photoCaption || `${feature.areaName} rider photo`}
@@ -763,15 +840,39 @@ export function TrailLeafletMap({
                 <p>{feature.summary}</p>
                 <p>{feature.detail}</p>
                 {feature.status ? <p>{feature.status}</p> : null}
+                {feature.usgsSiteId ? <RiverGaugeReadout siteId={feature.usgsSiteId} /> : null}
+                {feature.amenities?.length ? <p>Amenities: {feature.amenities.join(", ")}</p> : null}
                 {feature.vehicleTypes?.length ? (
                   <p>Fits: {feature.vehicleTypes.join(", ")}</p>
                 ) : null}
-                <a href={`/ride-areas/${feature.areaSlug}#trail-reviews`}>
-                  Add rider photo
-                </a>
+                {feature.layer !== "fish" && feature.layer !== "water_access" && feature.layer !== "wma" ? (
+                  <a href={`/ride-areas/${feature.areaSlug}#trail-reviews`}>
+                    Add rider photo
+                  </a>
+                ) : null}
+                {feature.layer === "water_access" ? (
+                  <>
+                    <button type="button" onClick={() => setPutInId(feature.id)}>Set as put-in</button>
+                    <button type="button" onClick={() => setTakeOutId(feature.id)}>Set as take-out</button>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${feature.latitude},${feature.longitude}`}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Directions
+                    </a>
+                    <a href={`/ride-areas/${feature.areaSlug}#trail-conditions`}>Report access condition</a>
+                  </>
+                ) : null}
                 {feature.url ? (
                   <a href={feature.url} rel="noreferrer" target="_blank">
-                    Open
+                    {feature.layer === "fish"
+                      ? "Open fisheries source"
+                      : feature.layer === "water_access"
+                        ? "Open access source"
+                        : feature.layer === "wma"
+                          ? "Open official WMA map / rules"
+                        : "Open"}
                   </a>
                 ) : null}
               </div>
