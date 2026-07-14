@@ -1664,7 +1664,13 @@ export async function getEventsIntelligence(adminPassword: string) {
 }
 
 export async function getEventDestination(slug: string): Promise<import("./types").EventDestination | null> {
-  const response = await fetch(`${getApiUrl()}/api/events/${encodeURIComponent(slug)}/destination`, { next: { revalidate: 900 } });
+  const cacheOptions: RequestInit & { next: { revalidate: number } } = {
+    next: { revalidate: 900 },
+  };
+  const response = await fetch(
+    `${getApiUrl()}/api/events/${encodeURIComponent(slug)}/destination`,
+    cacheOptions,
+  );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("Unable to load event destination");
   return response.json();

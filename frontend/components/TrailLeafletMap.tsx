@@ -299,12 +299,16 @@ function hasActiveDeal(business: Business) {
   return business.deals?.some((deal) => deal.is_active) ?? false;
 }
 
+function hasMapCoordinates(business: Business) {
+  return Number.isFinite(business.latitude) && Number.isFinite(business.longitude);
+}
+
 function makeBusinessIcon(business: Business) {
   const label = business.name.length > 24 ? `${business.name.slice(0, 21)}...` : business.name;
   const layer = getBusinessLayer(business);
 
   return L.divIcon({
-    className: `leaflet-business-pin is-${layer}`,
+    className: `leaflet-business-pin is-${layer}${business.is_featured ? " is-featured" : ""}`,
     html: `<span></span><strong>${escapeXml(label)}</strong>`,
     iconAnchor: [12, 12],
     popupAnchor: [0, -12],
@@ -356,6 +360,7 @@ export function TrailLeafletMap({
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
   const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([]);
+  const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(false);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
@@ -394,13 +399,15 @@ export function TrailLeafletMap({
       selectedTrailId
         ? []
         : businesses.filter((business) => {
+            if (!hasMapCoordinates(business)) return false;
             const layer = getBusinessLayer(business);
             return (
+              (showFeaturedBusinesses && business.is_featured) ||
               businessLayers.includes(layer) ||
               (businessLayers.includes("deals") && hasActiveDeal(business))
             );
           }),
-    [businessLayers, businesses, selectedTrailId],
+    [businessLayers, businesses, selectedTrailId, showFeaturedBusinesses],
   );
   const visibleFeatures = useMemo(
     () =>
@@ -490,6 +497,7 @@ export function TrailLeafletMap({
     setShowOhv(false);
     setShowHiking(false);
     setBusinessLayers([]);
+    setShowFeaturedBusinesses(false);
     setIntelligenceLayers([]);
     setSelectedTrailId(undefined);
   };
@@ -568,6 +576,18 @@ export function TrailLeafletMap({
             {mapStyle === "topo" ? "Topo map" : "Roads + towns"}
           </button>
           <span>Nearby</span>
+          <button
+            aria-pressed={showFeaturedBusinesses}
+            className={
+              showFeaturedBusinesses
+                ? "is-active is-business is-featured-business"
+                : "is-business is-featured-business"
+            }
+            type="button"
+            onClick={() => setShowFeaturedBusinesses((current) => !current)}
+          >
+            Featured businesses
+          </button>
           {businessLayerOptions.map((layer) => (
             <button
               aria-pressed={businessLayers.includes(layer.id)}
@@ -806,6 +826,7 @@ export function TrailLeafletMap({
             <Popup>
               <div className="trail-popup">
                 <strong>{business.name}</strong>
+                {business.is_featured ? <span>Featured business</span> : null}
                 <span>
                   {businessLayerLabels[getBusinessLayer(business)]} • {business.location}
                 </span>
