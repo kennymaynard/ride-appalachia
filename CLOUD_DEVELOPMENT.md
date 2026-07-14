@@ -3,6 +3,20 @@
 GitHub Codespaces is the primary development and Docker build environment for this repository.
 Render remains the production host.
 
+## Service record
+
+| Purpose | Service | Status |
+| --- | --- | --- |
+| Cloud development | GitHub Codespaces | Primary |
+| Docker builds and automated verification | GitHub Codespaces | Primary |
+| Source control and pull requests | GitHub | Primary |
+| Production deployment and hosting | Render | Primary |
+
+The Codespace configuration is version-controlled in `.devcontainer/devcontainer.json`. A
+Codespace should be created from the branch being developed, stopped when work is finished, and
+recreated from the repository when a clean environment is needed. Codespaces are development
+environments and are not the production host or the permanent home of production data.
+
 ## Create the cloud workspace
 
 1. Open the repository on GitHub.
