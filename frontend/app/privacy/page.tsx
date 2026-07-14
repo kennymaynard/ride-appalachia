@@ -1,5 +1,5 @@
 export default function PrivacyPage() {
-  const updatedAt = "July 9, 2026";
+  const updatedAt = "July 14, 2026";
 
   return (
     <main className="page">
@@ -69,6 +69,19 @@ export default function PrivacyPage() {
             saved trips, selected stops, booking lookups, reviews, partner visit
             activity, badges, and communication preferences. Trip-planning data
             is used to provide saved plans and improve rider tools.
+          </p>
+        </article>
+        <article>
+          <h2>Private Rider Safety and Precise Location</h2>
+          <p>
+            Rider Safety collects precise coordinates, device-recorded and server-received times,
+            location accuracy, and optional heading, speed, or battery information only after a
+            rider explicitly starts a sharing session. Ride-specific links reveal this information
+            only to people who possess the private link. Location is not displayed to businesses,
+            sold, used for advertising, or placed on the public trail map. Riders can stop sharing
+            or delete a ride&apos;s stored coordinates. Raw coordinates are otherwise automatically
+            removed after 72 hours. Limited security and delivery records may be retained to prevent
+            abuse and document safety notifications.
           </p>
         </article>
         <article>
@@ -161,7 +174,8 @@ export default function PrivacyPage() {
           <p>
             We keep information as long as needed to operate the app, comply
             with legal and payment obligations, resolve disputes, prevent abuse,
-            and maintain accurate marketplace records. Some information may be
+            and maintain accurate marketplace records. Raw Rider Safety location updates are
+            deleted after 72 hours by default and may be deleted sooner by the rider. Some information may be
             retained in backups or logs for a limited time after deletion.
           </p>
         </article>

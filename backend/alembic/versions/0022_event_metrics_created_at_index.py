@@ -10,8 +10,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_index("ix_event_metrics_created_at", "event_metrics", ["created_at"])
+    # Some early databases were initialized from SQLAlchemy metadata, which
+    # already created this model-declared index before Alembic reached 0022.
+    op.execute("CREATE INDEX IF NOT EXISTS ix_event_metrics_created_at ON event_metrics (created_at)")
 
 
 def downgrade() -> None:
-    op.drop_index("ix_event_metrics_created_at", table_name="event_metrics")
+    op.execute("DROP INDEX IF EXISTS ix_event_metrics_created_at")

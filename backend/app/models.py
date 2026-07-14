@@ -541,6 +541,129 @@ class Rider(Base):
     business_reviews: Mapped[list["BusinessReview"]] = relationship(back_populates="rider", cascade="all, delete-orphan")
 
 
+class TrackingSession(Base):
+    __tablename__ = "tracking_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    title: Mapped[str] = mapped_column(String(180), default="Off-road ride")
+    expected_return_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="active", index=True)
+    share_token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    consent_version: Mapped[str] = mapped_column(String(20), default="2026-07")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    rider: Mapped[Rider] = relationship()
+    locations: Mapped[list["TrackingLocationUpdate"]] = relationship(cascade="all, delete-orphan")
+    messages: Mapped[list["TrackingMessage"]] = relationship(cascade="all, delete-orphan")
+
+
+class TrackingLocationUpdate(Base):
+    __tablename__ = "tracking_location_updates"
+    __table_args__ = (UniqueConstraint("session_id", "sequence", name="uq_tracking_location_sequence"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("tracking_sessions.id"), index=True)
+    sequence: Mapped[str] = mapped_column(String(80))
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    accuracy_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    heading: Mapped[float | None] = mapped_column(Float, nullable=True)
+    speed_mps: Mapped[float | None] = mapped_column(Float, nullable=True)
+    battery_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    device_recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    server_received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+
+
+class TrackingMessage(Base):
+    __tablename__ = "tracking_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("tracking_sessions.id"), index=True)
+    message_type: Mapped[str] = mapped_column(String(30), index=True)
+    text: Mapped[str] = mapped_column(String(240))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+
+
+class TrackingViewAudit(Base):
+    __tablename__ = "tracking_view_audit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("tracking_sessions.id"), index=True)
+    viewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+
+
+class RiderCircle(Base):
+    __tablename__ = "rider_circles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120), default="Trusted riders")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class RiderCircleMember(Base):
+    __tablename__ = "rider_circle_members"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    circle_id: Mapped[int] = mapped_column(ForeignKey("rider_circles.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    email: Mapped[str] = mapped_column(String(180), default="")
+    phone: Mapped[str] = mapped_column(String(40), default="")
+    status: Mapped[str] = mapped_column(String(30), default="invited", index=True)
+    invite_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class TrackingEmergencyContact(Base):
+    __tablename__ = "tracking_emergency_contacts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey("riders.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    email: Mapped[str] = mapped_column(String(180), default="")
+    phone: Mapped[str] = mapped_column(String(40), default="")
+    sms_opt_in: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_opt_in: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class TrackingCheckpoint(Base):
+    __tablename__ = "tracking_checkpoints"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("tracking_sessions.id"), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    grace_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    arrived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    alert_status: Mapped[str] = mapped_column(String(30), default="scheduled", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class TrackingAlert(Base):
+    __tablename__ = "tracking_alerts"
+    __table_args__ = (UniqueConstraint("checkpoint_id", "alert_type", name="uq_tracking_checkpoint_alert"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("tracking_sessions.id"), index=True)
+    checkpoint_id: Mapped[int | None] = mapped_column(ForeignKey("tracking_checkpoints.id"), nullable=True, index=True)
+    alert_type: Mapped[str] = mapped_column(String(40), index=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class TrackingNotificationDelivery(Base):
+    __tablename__ = "tracking_notification_deliveries"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    alert_id: Mapped[int] = mapped_column(ForeignKey("tracking_alerts.id"), index=True)
+    contact_id: Mapped[int | None] = mapped_column(ForeignKey("tracking_emergency_contacts.id"), nullable=True)
+    channel: Mapped[str] = mapped_column(String(20))
+    destination: Mapped[str] = mapped_column(String(180), default="")
+    status: Mapped[str] = mapped_column(String(30), index=True)
+    provider_message: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
 class RiderTrailProgress(Base):
     __tablename__ = "rider_trail_progress"
     __table_args__ = (

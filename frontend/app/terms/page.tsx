@@ -1,5 +1,5 @@
 export default function TermsPage() {
-  const updatedAt = "July 9, 2026";
+  const updatedAt = "July 14, 2026";
 
   return (
     <main className="page">
@@ -49,6 +49,18 @@ export default function TermsPage() {
             requirements, land access, safety conditions, and local laws before
             riding. Off-road riding can be dangerous, and each rider accepts the
             risks of their own travel and riding decisions.
+          </p>
+        </article>
+        <article>
+          <h2>Rider Safety Tools</h2>
+          <p>
+            Location sharing, checkpoints, missed check-in messages, trusted contacts, and SOS
+            notifications are best-effort planning aids. They can be delayed or fail because of
+            device settings, locked screens, browser restrictions, poor GPS, loss of service,
+            provider outages, or incorrect contact details. Appalachia Offroad does not monitor
+            rides, dispatch responders, or automatically contact 911. These tools do not replace
+            emergency services, a satellite communicator, a personal locator beacon, responsible
+            ride preparation, or direct communication with trusted contacts.
           </p>
         </article>
         <article>

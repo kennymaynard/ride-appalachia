@@ -1,6 +1,10 @@
 import type { TrailCoordinate } from "./types";
 import { hatfieldMcCoyTrailRoutes } from "./hatfield-mccoy-routes";
 import { rushTrailRouteSegments } from "./rush-trail-routes";
+import { redbirdCrestRouteSegments } from "./redbird-crest-routes";
+import { petersMillRouteSegments } from "./peters-mill-routes";
+import { taskersGapRouteSegments } from "./taskers-gap-routes";
+import { southPedlarRouteSegments } from "./south-pedlar-routes";
 
 type ImportedTrailRoute = {
   areaSlug: string;
@@ -14,6 +18,26 @@ const importedTrailRoutes: ImportedTrailRoute[] = [
     areaSlug: "rush-ky",
     trailName: "Rush Off-Road",
     segments: rushTrailRouteSegments,
+  },
+  {
+    areaSlug: "redbird-crest-ky",
+    trailName: "Redbird Crest Trail",
+    segments: redbirdCrestRouteSegments,
+  },
+  {
+    areaSlug: "peters-mill-taskers-gap-va",
+    trailName: "Peters Mill Run Trail",
+    segments: petersMillRouteSegments,
+  },
+  {
+    areaSlug: "peters-mill-taskers-gap-va",
+    trailName: "Taskers Gap Trails",
+    segments: taskersGapRouteSegments,
+  },
+  {
+    areaSlug: "south-pedlar-va",
+    trailName: "South Pedlar ATV Trail System",
+    segments: southPedlarRouteSegments,
   },
   {
     areaSlug: "first-frontier-ky",

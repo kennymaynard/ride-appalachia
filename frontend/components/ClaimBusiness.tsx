@@ -112,6 +112,10 @@ export function ClaimBusiness({ business }: Props) {
           <h2>{selectedTier.name}</h2>
         </div>
         <label>
+          Your full name
+          <input required value={claimantName} onChange={(event) => setClaimantName(event.target.value)} />
+        </label>
+        <label>
           Owner email
           <input
             required
@@ -156,7 +160,3 @@ export function ClaimBusiness({ business }: Props) {
     </section>
   );
 }
-        <label>
-          Your full name
-          <input required value={claimantName} onChange={(event) => setClaimantName(event.target.value)} />
-        </label>

@@ -168,6 +168,36 @@ def send_trip_plan_email(to_email: str, destination: str, plan_text: str) -> Ema
     return EmailResult(sent=False, message="Unable to send trip plan email.")
 
 
+def send_safety_email(to_email: str, subject: str, body: str) -> EmailResult:
+    """Send a plain safety notification without implying guaranteed delivery."""
+    settings = get_settings()
+    clean_to = clean_email_setting(to_email)
+    if not settings.resend_api_key or not clean_to:
+        return EmailResult(sent=False, message="Safety email is not configured.")
+    payload = {
+        "from": clean_email_setting(settings.email_from),
+        "to": [clean_to],
+        "subject": subject.strip()[:180],
+        "text": body.strip(),
+        "html": f"<p>{escape(body.strip()).replace(chr(10), '<br>')}</p>",
+    }
+    request = Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=get_resend_headers(settings.resend_api_key),
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return EmailResult(sent=True, message="Safety email sent.")
+    except HTTPError as exc:
+        return EmailResult(sent=False, message=get_resend_error_message("safety email", exc, settings.email_from))
+    except (URLError, TimeoutError) as exc:
+        return EmailResult(sent=False, message=f"Unable to send safety email: {exc}")
+    return EmailResult(sent=False, message="Unable to send safety email.")
+
+
 def build_business_approval_notification_payload(
     email_from: str,
     lead_notify_email: str,
