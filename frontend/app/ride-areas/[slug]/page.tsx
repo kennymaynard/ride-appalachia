@@ -23,13 +23,12 @@ export default async function RideAreaDetailPage({ params }: Props) {
     notFound();
   }
 
+  const allListings = await getListings("all");
   const nearbyListings = await getListings({
     category: "all",
     location: area.locationQuery,
   });
-  const fallbackListings = nearbyListings.length
-    ? nearbyListings
-    : await getListings("all");
+  const plannerListings = nearbyListings.length ? nearbyListings : allListings;
   let areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
   let areaConditionReports: TrailConditionReport[] = [];
   try {
@@ -60,7 +59,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <TrailPack area={area} listings={fallbackListings} />
+      <TrailPack area={area} listings={plannerListings} />
 
       <section className="page-section ride-area-control-panel">
         <details className="ride-area-accordion" open>
@@ -108,7 +107,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <RideAreaMap
             areas={rideAreas}
             activeSlug={area.slug}
-            businesses={fallbackListings}
+            businesses={allListings}
             compact
             reviews={areaReviews}
             conditionReports={areaConditionReports}
@@ -196,7 +195,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <h2>Useful stops around {area.name}</h2>
         </div>
         <MarketplaceGrid
-          listings={fallbackListings}
+          listings={plannerListings}
           emptyText="No nearby listings yet."
         />
       </section>
