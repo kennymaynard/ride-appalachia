@@ -5886,6 +5886,15 @@ button.tier-card.is-selected {
   color: #02150b;
 }
 
+.trail-layer-controls button.is-featured-business {
+  border-color: rgba(255, 200, 87, 0.7);
+}
+
+.trail-layer-controls button.is-featured-business.is-active {
+  background: #ffc857;
+  color: #211500;
+}
+
 .leaflet-feature-pin.is-fish span {
   background: #2b9ee8;
   border-color: #bce7ff;
@@ -6095,6 +6104,16 @@ button.tier-card.is-selected {
 .leaflet-business-pin.is-lodging span {
   background: #f26a1b;
   box-shadow: 0 0 0 0.18rem rgba(242, 106, 27, 0.25);
+}
+
+.leaflet-business-pin.is-featured {
+  border-color: rgba(255, 200, 87, 0.85);
+  background: rgba(40, 25, 0, 0.9);
+}
+
+.leaflet-business-pin.is-featured span {
+  background: #ffc857;
+  box-shadow: 0 0 0 0.2rem rgba(255, 200, 87, 0.3);
 }
 
 .leaflet-business-pin strong,

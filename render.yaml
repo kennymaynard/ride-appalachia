@@ -43,7 +43,7 @@ services:
       - key: PRINTIFY_SEND_SHIPPING_NOTIFICATION
         value: "false"
       - key: ADMIN_PASSWORD
-        generateValue: true
+        generateValue: false
 
   - type: web
     name: appalachia-offroad-frontend

@@ -293,6 +293,22 @@ export type BusinessImportCandidate = {
   duplicate_reason: string;
 };
 
+export type BusinessClaim = {
+  id: number;
+  business_id: number;
+  claimant_name: string;
+  claimant_email: string;
+  claimant_phone: string;
+  claimant_role: string;
+  proof_url: string;
+  proof_notes: string;
+  subscription_tier: string;
+  status: string;
+  admin_notes: string;
+  created_at: string;
+  reviewed_at?: string | null;
+};
+
 export type BusinessCreateInput = {
   name: string;
   slug: string;

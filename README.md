@@ -9,7 +9,15 @@ fuel, and deals across Appalachia.
 - Backend: FastAPI
 - Database: PostgreSQL
 - Payments: Stripe subscriptions
-- Hosting target: DigitalOcean or Render
+- Cloud development and Docker builds: GitHub Codespaces
+- Production hosting: Render
+
+## Cloud Services
+
+- **GitHub Codespaces** is the official cloud development, testing, and Docker build environment.
+- **Render** deploys the production application from the `main` branch.
+- Configuration: [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)
+- Setup and operating instructions: [`CLOUD_DEVELOPMENT.md`](CLOUD_DEVELOPMENT.md)
 
 ## Local Development
 

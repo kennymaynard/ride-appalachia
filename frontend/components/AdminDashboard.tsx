@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { AdminEventsPanel } from "./AdminEventsPanel";
 import { EventsIntelligencePanel } from "./EventsIntelligencePanel";
 import { BusinessImporter } from "./BusinessImporter";
+import { BusinessClaimsPanel } from "./BusinessClaimsPanel";
 import {
   approveBusiness,
   deleteAdminBusiness,
@@ -1321,6 +1322,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         adminPassword={adminPassword}
         onImported={() => reloadAdminBusinesses()}
       />
+      <BusinessClaimsPanel adminPassword={adminPassword} />
 
       <div className="admin-list">
         {businesses.map((business) => (

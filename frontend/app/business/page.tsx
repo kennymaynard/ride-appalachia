@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BusinessLeadForm } from "../../components/BusinessLeadForm";
 import { partnerTiers } from "../../lib/sample-data";
 
 const businessCategories = [
@@ -139,6 +140,22 @@ export default function BusinessWelcomePage() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="business-availability" id="check-availability">
+        <div>
+          <p className="eyebrow">Not ready to build it yourself?</p>
+          <h2>Tell us about your business.</h2>
+          <p>
+            Send your business name, category, and trail area. We will review
+            the fit and contact you about getting listed.
+          </p>
+          <div className="hero-actions">
+            <Link href="/business/join">Create my listing now</Link>
+            <Link href="/business/login">I already have a listing</Link>
+          </div>
+        </div>
+        <BusinessLeadForm />
       </section>
 
       <section className="business-final-cta">

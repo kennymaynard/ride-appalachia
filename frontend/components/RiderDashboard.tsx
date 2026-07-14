@@ -9,6 +9,8 @@ import {
   updateRiderAlerts,
 } from "../lib/api";
 import type { RideEvent, Rider, RiderActivity, RiderRideCard } from "../lib/types";
+import { RiderSafetyTracker } from "./RiderSafetyTracker";
+import { RiderSafetySetup } from "./RiderSafetySetup";
 
 type Props = {
   accessToken: string;
@@ -281,6 +283,9 @@ export function RiderDashboard({ accessToken }: Props) {
       {message ? <p className="form-success">{message}</p> : null}
 
       <article className="dashboard-card"><p className="eyebrow">Saved events</p><h2>Your upcoming rides</h2>{savedEvents.length ? savedEvents.map((event) => <p key={event.id}><a href={`/trail-talk/rides/${event.slug}`}>{event.title}</a> • {event.start_date}</p>) : <p className="empty-state">No saved events yet.</p>}</article>
+
+      <RiderSafetyTracker accessToken={accessToken} />
+      <RiderSafetySetup accessToken={accessToken} />
 
       <div className="rider-stat-grid">
         <StatCard label="Trails Finished" value={rideCard.completed_trails} />

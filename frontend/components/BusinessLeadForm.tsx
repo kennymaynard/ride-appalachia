@@ -47,7 +47,7 @@ export function BusinessLeadForm() {
 
   return (
     <form className="business-lead-form" onSubmit={submitLead}>
-      <h3>Check Availability</h3>
+      <h3>Have us contact you</h3>
       <label>
         Business name
         <input required name="business_name" placeholder="Your business" />
@@ -91,10 +91,10 @@ export function BusinessLeadForm() {
       </label>
       {error ? <p className="form-error">{error}</p> : null}
       {status === "sent" ? (
-        <p className="form-success">Got it. We will confirm your area and follow up.</p>
+        <p className="form-success">Got it. Your request was sent to our team for follow-up.</p>
       ) : null}
       <button type="submit" disabled={status === "saving"}>
-        {status === "saving" ? "Checking..." : "Check My Area"}
+        {status === "saving" ? "Sending..." : "Request a Call"}
       </button>
     </form>
   );

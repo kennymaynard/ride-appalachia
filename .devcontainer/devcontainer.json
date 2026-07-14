@@ -1,0 +1,39 @@
+{
+  "name": "Appalachia Offroad Cloud Development",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {},
+    "ghcr.io/devcontainers/features/sshd:1": {}
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [3000, 8000, 5433],
+  "portsAttributes": {
+    "3000": {
+      "label": "Appalachia Offroad website",
+      "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "Appalachia Offroad API",
+      "onAutoForward": "notify"
+    },
+    "5433": {
+      "label": "Development PostgreSQL",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

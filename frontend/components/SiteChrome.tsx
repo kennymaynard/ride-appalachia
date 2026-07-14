@@ -54,6 +54,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link href="/trail-runner">Game</Link>
             <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/rider/login">Rider Login</Link>
+            <Link href="/business">Add Your Business</Link>
           </nav>
         )}
         {businessSide ? (
@@ -119,6 +120,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link href="/trail-runner">Game</Link>
             <Link href="/trail-talk">Trail Talk</Link>
             <Link href="/rider/login">Rider Login</Link>
+            <Link href="/business">Add Your Business</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
           </nav>

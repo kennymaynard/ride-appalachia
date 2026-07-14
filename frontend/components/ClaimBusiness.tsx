@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { claimBusiness as submitBusinessClaim, createCheckout } from "../lib/api";
+import { claimBusiness as submitBusinessClaim } from "../lib/api";
 import { partnerTiers } from "../lib/sample-data";
 import type { Business, Tier } from "../lib/types";
 
@@ -16,8 +16,13 @@ export function ClaimBusiness({ business }: Props) {
       ? (business.subscription_tier as Tier["id"])
       : partnerTiers[0].id,
   );
+  const [claimantName, setClaimantName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState(business.owner_email || "");
-  const [phoneLast4, setPhoneLast4] = useState("");
+  const [claimantPhone, setClaimantPhone] = useState("");
+  const [claimantRole, setClaimantRole] = useState("");
+  const [proofUrl, setProofUrl] = useState("");
+  const [proofNotes, setProofNotes] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,30 +30,28 @@ export function ClaimBusiness({ business }: Props) {
     () => partnerTiers.find((item) => item.id === tier) || partnerTiers[0],
     [tier],
   );
-  const isFreeTier = tier === "veteran_owned";
-
   async function claimBusiness() {
     setError("");
     setIsSubmitting(true);
 
     try {
-      const claimedBusiness = await submitBusinessClaim(business.id, {
-        owner_email: ownerEmail.trim().toLowerCase(),
-        phone_last4: phoneLast4,
+      await submitBusinessClaim(business.id, {
+        claimant_name: claimantName.trim(),
+        claimant_email: ownerEmail.trim().toLowerCase(),
+        claimant_phone: claimantPhone.trim(),
+        claimant_role: claimantRole.trim(),
+        proof_url: proofUrl.trim(),
+        proof_notes: proofNotes.trim(),
         subscription_tier: tier,
       });
-      const checkoutUrl = await createCheckout(
-        tier,
-        claimedBusiness.id,
-        claimedBusiness.owner_access_token,
-      );
-      window.location.href = checkoutUrl;
+      setSubmitted(true);
+      setIsSubmitting(false);
     } catch (caughtError) {
       setIsSubmitting(false);
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to start checkout.",
+            : "Unable to submit ownership claim.",
       );
     }
   }
@@ -109,6 +112,10 @@ export function ClaimBusiness({ business }: Props) {
           <h2>{selectedTier.name}</h2>
         </div>
         <label>
+          Your full name
+          <input required value={claimantName} onChange={(event) => setClaimantName(event.target.value)} />
+        </label>
+        <label>
           Owner email
           <input
             required
@@ -119,33 +126,34 @@ export function ClaimBusiness({ business }: Props) {
           />
         </label>
         <label>
-          Business phone last 4
+          Your phone
           <input
-            inputMode="numeric"
-            maxLength={4}
-            minLength={4}
-            pattern="[0-9]{4}"
             required
-            value={phoneLast4}
-            onChange={(event) =>
-              setPhoneLast4(event.target.value.replace(/\D/g, "").slice(0, 4))
-            }
-            placeholder="0142"
+            value={claimantPhone}
+            onChange={(event) => setClaimantPhone(event.target.value)}
+            placeholder="(606) 555-0142"
           />
         </label>
+        <label>
+          Role at the business
+          <input required value={claimantRole} onChange={(event) => setClaimantRole(event.target.value)} placeholder="Owner, manager, authorized agent" />
+        </label>
+        <label>
+          Proof link
+          <input type="url" value={proofUrl} onChange={(event) => setProofUrl(event.target.value)} placeholder="Business website, registration, or document link" />
+        </label>
+        <label>
+          Ownership or management proof
+          <textarea required minLength={10} value={proofNotes} onChange={(event) => setProofNotes(event.target.value)} placeholder="Explain the proof provided and how an admin can verify your authority." />
+        </label>
+        {submitted ? <p className="form-success">Claim submitted. An admin must verify your proof before account access is granted.</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <button
           type="button"
-          disabled={isSubmitting || !ownerEmail.trim() || phoneLast4.length !== 4}
+          disabled={isSubmitting || submitted || !claimantName.trim() || !ownerEmail.trim() || !claimantRole.trim() || proofNotes.trim().length < 10}
           onClick={claimBusiness}
         >
-          {isSubmitting
-            ? isFreeTier
-              ? "Submitting..."
-              : "Starting Checkout..."
-            : isFreeTier
-              ? "Claim Free Veteran Listing"
-              : "Claim And Continue To Checkout"}
+          {isSubmitting ? "Submitting proof…" : submitted ? "Claim pending review" : "Submit ownership claim"}
         </button>
         <Link href={`/business/${business.slug}`}>Back to listing</Link>
       </div>

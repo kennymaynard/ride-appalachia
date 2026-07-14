@@ -811,8 +811,12 @@ class PartnerTaxAgreementRead(BaseModel):
 
 
 class BusinessClaimRequest(BaseModel):
-    owner_email: str
-    phone_last4: str = Field(min_length=4, max_length=4)
+    claimant_name: str = Field(min_length=2, max_length=160)
+    claimant_email: str = Field(min_length=5, max_length=180)
+    claimant_phone: str = Field(default="", max_length=40)
+    claimant_role: str = Field(min_length=2, max_length=80)
+    proof_url: str = Field(default="", max_length=1000)
+    proof_notes: str = Field(min_length=10, max_length=2000)
     subscription_tier: str
 
     @field_validator("subscription_tier")
@@ -820,6 +824,28 @@ class BusinessClaimRequest(BaseModel):
     def validate_claim_subscription_tier(cls, value: str) -> str:
         if value not in SUBSCRIPTION_TIERS:
             raise ValueError("Unknown subscription tier")
+        return value
+
+
+class BusinessClaimRead(BusinessClaimRequest):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    business_id: int
+    status: str
+    admin_notes: str = ""
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+
+
+class BusinessClaimReview(BaseModel):
+    action: str
+    admin_notes: str = ""
+
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, value: str) -> str:
+        if value not in {"approve", "reject"}:
+            raise ValueError("Action must be approve or reject")
         return value
 
 

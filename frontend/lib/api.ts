@@ -67,6 +67,59 @@ function apiFetch(path: string, init: RequestInit = {}) {
   });
 }
 
+export type SafetySession = {
+  id: number; title: string; status: string; expected_return_at: string; expires_at: string;
+  ended_at?: string | null; share_url?: string;
+};
+
+export async function createSafetySession(payload: { title: string; expected_return_at: string; consent: boolean }, token: string): Promise<SafetySession> {
+  const response = await apiFetch("/api/rider-safety/sessions", { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify(payload), signal: timeoutSignal(10000) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail || "Unable to start safety sharing");
+  return response.json();
+}
+
+export async function sendSafetyLocation(sessionId: number, payload: Record<string, unknown>, token: string) {
+  const response = await apiFetch(`/api/rider-safety/sessions/${sessionId}/locations`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify(payload), signal: timeoutSignal(10000) });
+  if (!response.ok) throw new Error("Location was not sent");
+  return response.json();
+}
+
+export async function sendSafetyMessage(sessionId: number, messageType: string, token: string) {
+  const response = await apiFetch(`/api/rider-safety/sessions/${sessionId}/messages`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": token }, body: JSON.stringify({ message_type: messageType }) });
+  if (!response.ok) throw new Error("Message was not sent");
+  return response.json();
+}
+
+export async function stopSafetySession(sessionId: number, token: string) {
+  const response = await apiFetch(`/api/rider-safety/sessions/${sessionId}/stop`, { method: "POST", headers: { "X-Rider-Token": token } });
+  if (!response.ok) throw new Error("Unable to stop sharing");
+  return response.json();
+}
+
+export async function getSharedSafetySession(shareToken: string) {
+  const response = await apiFetch(`/api/rider-safety/shared/${encodeURIComponent(shareToken)}`, { cache: "no-store", signal: timeoutSignal(10000) });
+  if (!response.ok) throw new Error("This shared ride is unavailable or has expired.");
+  return response.json();
+}
+
+async function riderSafetyFetch(path: string, token: string, init: RequestInit = {}) {
+  const response = await apiFetch(`/api/rider-safety${path}`, { ...init, headers: { "Content-Type": "application/json", "X-Rider-Token": token, ...(init.headers || {}) }, signal: timeoutSignal(15000) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail || "Unable to update rider safety settings");
+  return response.json();
+}
+
+export const getSafetyContacts = (token: string) => riderSafetyFetch("/contacts", token);
+export const addSafetyContact = (payload: Record<string, unknown>, token: string) => riderSafetyFetch("/contacts", token, { method: "POST", body: JSON.stringify(payload) });
+export const deleteSafetyContact = (id: number, token: string) => riderSafetyFetch(`/contacts/${id}`, token, { method: "DELETE" });
+export const getSafetyCircles = (token: string) => riderSafetyFetch("/circles", token);
+export const addSafetyCircle = (name: string, token: string) => riderSafetyFetch("/circles", token, { method: "POST", body: JSON.stringify({ name }) });
+export const inviteSafetyMember = (circleId: number, payload: Record<string, unknown>, token: string) => riderSafetyFetch(`/circles/${circleId}/invites`, token, { method: "POST", body: JSON.stringify(payload) });
+export const acceptSafetyInvite = (inviteToken: string) => apiFetch(`/api/rider-safety/invites/${encodeURIComponent(inviteToken)}/accept`, { method: "POST" }).then(async (response) => { if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail || "Invitation unavailable"); return response.json(); });
+export const addSafetyCheckpoint = (sessionId: number, payload: Record<string, unknown>, token: string) => riderSafetyFetch(`/sessions/${sessionId}/checkpoints`, token, { method: "POST", body: JSON.stringify(payload) });
+export const arriveSafetyCheckpoint = (sessionId: number, checkpointId: number, token: string) => riderSafetyFetch(`/sessions/${sessionId}/checkpoints/${checkpointId}/arrive`, token, { method: "POST" });
+export const sendSafetySos = (sessionId: number, token: string) => riderSafetyFetch(`/sessions/${sessionId}/sos`, token, { method: "POST", body: JSON.stringify({ confirmed: true }) });
+export const deleteSafetyLocationData = (sessionId: number, token: string) => riderSafetyFetch(`/sessions/${sessionId}/location-data`, token, { method: "DELETE" });
+
 function shouldSkipApiDuringBuild() {
   return typeof window === "undefined" && process.env.SKIP_API_DURING_BUILD === "1";
 }
@@ -531,8 +584,8 @@ export async function updateBusiness(
 
 export async function claimBusiness(
   businessId: number,
-  payload: { owner_email: string; phone_last4: string; subscription_tier: string },
-): Promise<Business> {
+  payload: { claimant_name: string; claimant_email: string; claimant_phone: string; claimant_role: string; proof_url: string; proof_notes: string; subscription_tier: string },
+): Promise<import("./types").BusinessClaim> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/claim`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -544,6 +597,28 @@ export async function claimBusiness(
     throw new Error(message || "Unable to verify business ownership");
   }
 
+  return response.json();
+}
+
+export async function activateExistingImportedBusinesses(adminPassword: string): Promise<{ activated: number }> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-import/activate-existing`, {
+    method: "POST", headers: getAdminHeaders(adminPassword),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to activate imported businesses");
+  return response.json();
+}
+
+export async function getAdminBusinessClaims(adminPassword: string): Promise<import("./types").BusinessClaim[]> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-claims`, { cache: "no-store", headers: getAdminHeaders(adminPassword) });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to load business claims");
+  return response.json();
+}
+
+export async function reviewAdminBusinessClaim(claimId: number, action: "approve" | "reject", adminNotes: string, adminPassword: string): Promise<import("./types").BusinessClaim> {
+  const response = await fetch(`${getApiUrl()}/api/admin/business-claims/${claimId}/review`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...getAdminHeaders(adminPassword) }, body: JSON.stringify({ action, admin_notes: adminNotes }),
+  });
+  if (!response.ok) throw new Error((await response.text()) || "Unable to review business claim");
   return response.json();
 }
 
@@ -1589,7 +1664,13 @@ export async function getEventsIntelligence(adminPassword: string) {
 }
 
 export async function getEventDestination(slug: string): Promise<import("./types").EventDestination | null> {
-  const response = await fetch(`${getApiUrl()}/api/events/${encodeURIComponent(slug)}/destination`, { next: { revalidate: 900 } });
+  const cacheOptions: RequestInit & { next: { revalidate: number } } = {
+    next: { revalidate: 900 },
+  };
+  const response = await fetch(
+    `${getApiUrl()}/api/events/${encodeURIComponent(slug)}/destination`,
+    cacheOptions,
+  );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("Unable to load event destination");
   return response.json();
