@@ -303,18 +303,6 @@ function hasMapCoordinates(business: Business) {
   return Number.isFinite(business.latitude) && Number.isFinite(business.longitude);
 }
 
-function makeBusinessIcon(business: Business) {
-  const label = business.name.length > 24 ? `${business.name.slice(0, 21)}...` : business.name;
-  const layer = getBusinessLayer(business);
-
-  return L.divIcon({
-    className: `leaflet-business-pin is-${layer}${business.is_featured ? " is-featured" : ""}`,
-    html: `<span></span><strong>${escapeXml(label)}</strong>`,
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
-  });
-}
-
 function makeFeatureIcon(feature: RideMapFeature) {
   const label = feature.title.length > 24 ? `${feature.title.slice(0, 21)}...` : feature.title;
 
@@ -815,10 +803,16 @@ export function TrailLeafletMap({
           </Marker>
         ))}
         {visibleBusinesses.map((business) => (
-          <Marker
-            icon={makeBusinessIcon(business)}
+          <CircleMarker
+            center={[business.latitude as number, business.longitude as number]}
             key={`business-${business.id}`}
-            position={[business.latitude as number, business.longitude as number]}
+            pathOptions={{
+              color: business.is_featured ? "#ffc857" : "#0b6b3a",
+              fillColor: business.is_featured ? "#ffc857" : "#3bb875",
+              fillOpacity: 0.95,
+              weight: 3,
+            }}
+            radius={business.is_featured ? 9 : 7}
           >
             <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
               {business.name}
@@ -839,7 +833,7 @@ export function TrailLeafletMap({
                 <a href={`/business/${business.slug}`}>View listing</a>
               </div>
             </Popup>
-          </Marker>
+          </CircleMarker>
         ))}
         {visibleFeatures.map((feature) => (
           <Marker
