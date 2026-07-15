@@ -34,6 +34,7 @@ from app.schemas import (
     LISTING_STATUSES,
     SUBSCRIPTION_TIERS,
     StoreOrderRead,
+    validate_embedded_photo_size,
 )
 from app.services.email_service import (
     build_business_approval_notification_payload,
@@ -77,6 +78,15 @@ def admin_choice(value: object, choices: set[str], default: str) -> str:
     return text if text in choices else default
 
 
+def admin_photo_url(value: object) -> str:
+    photo_url = admin_text(value, "", 0)
+    try:
+        return validate_embedded_photo_size(photo_url) or ""
+    except ValueError:
+        # Legacy rows can predate the current embedded-image upload limit.
+        return ""
+
+
 def admin_business_payload(business: Business) -> dict[str, object]:
     return {
         "id": business.id,
@@ -88,7 +98,7 @@ def admin_business_payload(business: Business) -> dict[str, object]:
         "location": admin_text(business.location, "Address unavailable", 2, 180),
         "latitude": business.latitude,
         "longitude": business.longitude,
-        "photo_url": admin_text(business.photo_url, "", 0),
+        "photo_url": admin_photo_url(business.photo_url),
         "website_url": admin_text(business.website_url, "", 0),
         "owner_email": admin_text(business.owner_email, "", 0),
         "owner_access_token": admin_text(business.owner_access_token, "", 0),
