@@ -1198,6 +1198,9 @@ export async function getAdminBusinesses(adminPassword?: string, includeDeleted 
     if (response.status === 403 || response.status === 0) {
       throw new Error("Admin API is blocked. Use appalachiaoffroadapp.com without www, or redeploy the backend.");
     }
+    if (response.status >= 500) {
+      throw new Error("Admin password was accepted, but the backend could not load the business dashboard. Check backend logs for the failing admin endpoint.");
+    }
     throw new Error(`Unable to load admin businesses. API returned ${response.status}.`);
   }
 

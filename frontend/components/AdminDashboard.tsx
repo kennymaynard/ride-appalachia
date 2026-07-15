@@ -164,26 +164,54 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     setIsLoading(true);
     try {
       const loadedBusinesses = await getAdminBusinesses(adminPassword, showDeletedBusinesses);
-      const loadedReviews = await getAdminTrailReviews(adminPassword);
-      const loadedConditionReports = await getAdminTrailConditionReports(adminPassword);
-      const loadedTrailTalkPosts = await getAdminTrailTalkPosts(adminPassword);
-      const loadedServiceRequests = await getAdminServiceRequests(adminPassword);
-      const loadedMarketingLeads = await getAdminMarketingLeads(adminPassword);
-      const loadedBookingTransfers = await getAdminBookingTransfers(adminPassword);
-      const loadedStoreOrders = await getAdminStoreOrders(adminPassword);
-      const loadedRiderAccounts = await getAdminRiders(adminPassword);
-      const loadedAnalytics = await getAdminAnalytics(adminPassword).catch(() => null);
       setBusinesses(loadedBusinesses);
-      setPendingReviews(loadedReviews);
-      setPendingConditionReports(loadedConditionReports);
-      setPendingTrailTalkPosts(loadedTrailTalkPosts);
-      setServiceRequests(loadedServiceRequests);
-      setMarketingLeads(loadedMarketingLeads);
-      setBookingTransfers(loadedBookingTransfers);
-      setStoreOrders(loadedStoreOrders);
-      setRiderAccounts(loadedRiderAccounts);
-      setAnalytics(loadedAnalytics);
       setIsUnlocked(true);
+
+      const [
+        reviewsResult,
+        conditionReportsResult,
+        trailTalkPostsResult,
+        serviceRequestsResult,
+        marketingLeadsResult,
+        bookingTransfersResult,
+        storeOrdersResult,
+        riderAccountsResult,
+        analyticsResult,
+      ] = await Promise.allSettled([
+        getAdminTrailReviews(adminPassword),
+        getAdminTrailConditionReports(adminPassword),
+        getAdminTrailTalkPosts(adminPassword),
+        getAdminServiceRequests(adminPassword),
+        getAdminMarketingLeads(adminPassword),
+        getAdminBookingTransfers(adminPassword),
+        getAdminStoreOrders(adminPassword),
+        getAdminRiders(adminPassword),
+        getAdminAnalytics(adminPassword),
+      ]);
+
+      const failedPanels: string[] = [];
+      if (reviewsResult.status === "fulfilled") setPendingReviews(reviewsResult.value);
+      else failedPanels.push("reviews");
+      if (conditionReportsResult.status === "fulfilled") setPendingConditionReports(conditionReportsResult.value);
+      else failedPanels.push("conditions");
+      if (trailTalkPostsResult.status === "fulfilled") setPendingTrailTalkPosts(trailTalkPostsResult.value);
+      else failedPanels.push("Trail Talk");
+      if (serviceRequestsResult.status === "fulfilled") setServiceRequests(serviceRequestsResult.value);
+      else failedPanels.push("service requests");
+      if (marketingLeadsResult.status === "fulfilled") setMarketingLeads(marketingLeadsResult.value);
+      else failedPanels.push("leads");
+      if (bookingTransfersResult.status === "fulfilled") setBookingTransfers(bookingTransfersResult.value);
+      else failedPanels.push("booking transfers");
+      if (storeOrdersResult.status === "fulfilled") setStoreOrders(storeOrdersResult.value);
+      else failedPanels.push("store orders");
+      if (riderAccountsResult.status === "fulfilled") setRiderAccounts(riderAccountsResult.value);
+      else failedPanels.push("riders");
+      if (analyticsResult.status === "fulfilled") setAnalytics(analyticsResult.value);
+      else setAnalytics(null);
+
+      if (failedPanels.length) {
+        setError(`Admin unlocked, but ${failedPanels.join(", ")} did not load. Business tools are available.`);
+      }
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
