@@ -9,7 +9,7 @@ from app.database import Base
 from app.models import Business, BusinessClaim
 from app.routes.admin import import_businesses, list_businesses, review_business_claim
 from app.routes.business import claim_business
-from app.schemas import BusinessClaimRequest, BusinessClaimReview, BusinessDashboardRead, BusinessImportRequest, BusinessImportScanRequest
+from app.schemas import MAX_EMBEDDED_PHOTO_CHARS, BusinessClaimRequest, BusinessClaimReview, BusinessDashboardRead, BusinessImportRequest, BusinessImportScanRequest
 from app.services.business_import import category_for, find_duplicate, scan_openstreetmap
 
 
@@ -68,6 +68,16 @@ class BusinessImportTests(unittest.TestCase):
         self.assertEqual(by_name["Unnamed business"].category, "services")
         self.assertEqual(by_name["Unnamed business"].phone, "Not listed")
         self.assertEqual(by_name["Unnamed business"].location, "Address unavailable")
+
+    def test_admin_businesses_survive_oversized_legacy_photo(self):
+        self.db.add(Business(name="Legacy Photo", slug="legacy-photo", category="services", description="Legacy listing", phone="6065550100", location="Town", photo_url="data:image/jpeg;base64," + ("a" * MAX_EMBEDDED_PHOTO_CHARS)))
+        self.db.commit()
+
+        rows = list_businesses(None, False, self.db)
+        row = next(item for item in rows if item["slug"] == "legacy-photo")
+
+        self.assertEqual(row["photo_url"], "")
+        BusinessDashboardRead.model_validate(row)
 
     @patch("app.routes.admin.send_business_login_email")
     def test_claim_requires_admin_proof_review_before_access(self, send_email):
