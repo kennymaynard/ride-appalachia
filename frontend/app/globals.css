@@ -5718,6 +5718,31 @@ button.tier-card.is-selected {
   touch-action: pan-x pan-y;
 }
 
+/* Keep Leaflet overlays above transformed map tiles, especially in Safari. */
+.trail-leaflet-map .leaflet-tile-pane {
+  z-index: 200;
+}
+
+.trail-leaflet-map .leaflet-overlay-pane {
+  z-index: 400;
+}
+
+.trail-leaflet-map .leaflet-shadow-pane {
+  z-index: 500;
+}
+
+.trail-leaflet-map .leaflet-marker-pane {
+  z-index: 600;
+}
+
+.trail-leaflet-map .leaflet-tooltip-pane {
+  z-index: 650;
+}
+
+.trail-leaflet-map .leaflet-popup-pane {
+  z-index: 700;
+}
+
 .trail-leaflet-map .leaflet-tile,
 .trail-leaflet-map .leaflet-marker-icon,
 .trail-leaflet-map .leaflet-marker-shadow {
