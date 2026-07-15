@@ -17,6 +17,7 @@ from app.schemas import (
     BusinessModerationUpdate,
     BusinessDashboardRead,
     BusinessRead,
+    BUSINESS_CATEGORIES,
     BusinessImportRequest,
     BusinessImportResult,
     BusinessImportScanRequest,
@@ -30,6 +31,8 @@ from app.schemas import (
     MarketingLeadRead,
     MarketingLeadStatusUpdate,
     PrintifyProductSyncRead,
+    LISTING_STATUSES,
+    SUBSCRIPTION_TIERS,
     StoreOrderRead,
 )
 from app.services.email_service import (
@@ -58,6 +61,67 @@ def require_admin(x_admin_password: str = Header(default="")) -> None:
     submitted_password = x_admin_password.strip()
     if not expected_password or not secrets.compare_digest(submitted_password, expected_password):
         raise HTTPException(status_code=401, detail="Admin password required")
+
+
+def admin_text(value: object, default: str = "", min_length: int = 0, max_length: int | None = None) -> str:
+    text = str(value or "").strip()
+    if len(text) < min_length:
+        text = default
+    if max_length is not None:
+        text = text[:max_length]
+    return text
+
+
+def admin_choice(value: object, choices: set[str], default: str) -> str:
+    text = str(value or "").strip()
+    return text if text in choices else default
+
+
+def admin_business_payload(business: Business) -> dict[str, object]:
+    return {
+        "id": business.id,
+        "name": admin_text(business.name, "Unnamed business", 2, 160),
+        "slug": admin_text(business.slug, f"business-{business.id}", 2, 180),
+        "category": admin_choice(business.category, BUSINESS_CATEGORIES, "services"),
+        "description": admin_text(business.description, "Imported business listing.", 0),
+        "phone": admin_text(business.phone, "Not listed", 7, 40),
+        "location": admin_text(business.location, "Address unavailable", 2, 180),
+        "latitude": business.latitude,
+        "longitude": business.longitude,
+        "photo_url": admin_text(business.photo_url, "", 0),
+        "website_url": admin_text(business.website_url, "", 0),
+        "owner_email": admin_text(business.owner_email, "", 0),
+        "owner_access_token": admin_text(business.owner_access_token, "", 0),
+        "listing_status": admin_choice(business.listing_status, LISTING_STATUSES, "pending"),
+        "admin_notes": admin_text(business.admin_notes, "", 0),
+        "is_approved": bool(business.is_approved),
+        "is_featured": bool(business.is_featured),
+        "is_deleted": bool(business.is_deleted),
+        "deleted_at": business.deleted_at,
+        "subscription_tier": admin_choice(business.subscription_tier, SUBSCRIPTION_TIERS, "local_business"),
+        "subscription_status": admin_text(business.subscription_status, "incomplete", 0, 40),
+        "stripe_customer_id": admin_text(business.stripe_customer_id, "", 0),
+        "stripe_subscription_id": admin_text(business.stripe_subscription_id, "", 0),
+        "stripe_connect_account_id": admin_text(business.stripe_connect_account_id, "", 0),
+        "stripe_connect_charges_enabled": bool(business.stripe_connect_charges_enabled),
+        "stripe_connect_payouts_enabled": bool(business.stripe_connect_payouts_enabled),
+        "stripe_connect_business_name": admin_text(business.stripe_connect_business_name, "", 0),
+        "stripe_connect_business_email": admin_text(business.stripe_connect_business_email, "", 0),
+        "stripe_connect_onboarding_complete": bool(business.stripe_connect_onboarding_complete),
+        "partner_tax_agreement_accepted": bool(business.partner_tax_agreement_accepted),
+        "partner_tax_agreement_accepted_at": business.partner_tax_agreement_accepted_at,
+        "view_clicks": int(business.view_clicks or 0),
+        "action_clicks": int(business.action_clicks or 0),
+        "source_provider": business.source_provider,
+        "source_id": business.source_id,
+        "source_url": admin_text(business.source_url, "", 0),
+        "imported_at": business.imported_at,
+        "deals": list(business.deals or []),
+        "campaigns": list(business.campaigns or []),
+        "service_requests": list(business.service_requests or []),
+        "bookable_listings": list(business.bookable_listings or []),
+        "bookings": list(business.bookings or []),
+    }
 
 
 @router.post("/test-email")
@@ -231,24 +295,27 @@ def list_businesses(
     _: None = Depends(require_admin),
     include_deleted: bool = False,
     db: Session = Depends(get_db),
-) -> list[Business]:
+) -> list[dict[str, object]]:
     query = (
         db.query(Business)
         .options(
             selectinload(Business.deals),
             selectinload(Business.campaigns),
             selectinload(Business.service_requests),
+            selectinload(Business.bookable_listings),
+            selectinload(Business.bookings),
         )
     )
     if not include_deleted:
         query = query.filter(Business.is_deleted.is_(False))
 
-    return query.order_by(
+    businesses = query.order_by(
         Business.is_deleted.asc(),
         (Business.listing_status == "pending").desc(),
         (Business.listing_status == "needs_changes").desc(),
         Business.created_at.desc(),
     ).all()
+    return [admin_business_payload(business) for business in businesses]
 
 
 @router.post("/business-import/scan", response_model=list[BusinessImportCandidate])

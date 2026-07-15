@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel", "services"}
+BUSINESS_CATEGORIES = {"lodging", "food", "rentals", "repairs", "fuel", "services", "deals"}
 SUBSCRIPTION_TIERS = {
     "local_business",
     "lodging_partner",

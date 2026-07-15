@@ -7,9 +7,9 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.models import Business, BusinessClaim
-from app.routes.admin import import_businesses, review_business_claim
+from app.routes.admin import import_businesses, list_businesses, review_business_claim
 from app.routes.business import claim_business
-from app.schemas import BusinessClaimRequest, BusinessClaimReview, BusinessImportRequest, BusinessImportScanRequest
+from app.schemas import BusinessClaimRequest, BusinessClaimReview, BusinessDashboardRead, BusinessImportRequest, BusinessImportScanRequest
 from app.services.business_import import category_for, find_duplicate, scan_openstreetmap
 
 
@@ -55,6 +55,19 @@ class BusinessImportTests(unittest.TestCase):
         self.assertEqual(first.imported, 1); self.assertEqual(second.skipped, 1)
         self.assertTrue(business.is_approved); self.assertEqual(business.listing_status, "approved")
         self.assertEqual(business.owner_email, ""); self.assertEqual(business.source_id, "node/101")
+
+    def test_admin_businesses_survive_incomplete_imported_rows(self):
+        self.db.add(Business(name="", slug="", category="unexpected", description="", phone="", location="", latitude=37.1, longitude=-82.1, photo_url="", subscription_tier="legacy"))
+        self.db.add(Business(name="Deal Marker", slug="deal-marker", category="deals", description="Deal", phone="Not listed", location="Town", latitude=37.2, longitude=-82.2, photo_url=""))
+        self.db.commit()
+        rows = list_businesses(None, False, self.db)
+        validated = [BusinessDashboardRead.model_validate(row) for row in rows]
+        self.assertEqual(len(validated), 2)
+        by_name = {row.name: row for row in validated}
+        self.assertEqual(by_name["Deal Marker"].category, "deals")
+        self.assertEqual(by_name["Unnamed business"].category, "services")
+        self.assertEqual(by_name["Unnamed business"].phone, "Not listed")
+        self.assertEqual(by_name["Unnamed business"].location, "Address unavailable")
 
     @patch("app.routes.admin.send_business_login_email")
     def test_claim_requires_admin_proof_review_before_access(self, send_email):
