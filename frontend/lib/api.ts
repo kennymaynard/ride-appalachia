@@ -232,6 +232,7 @@ export async function getListings(filters?: Category | "all" | ListingFilters): 
   try {
     const response = await apiFetch(`/api/listings?${params.toString()}`, {
       cache: "no-store",
+      signal: timeoutSignal(15000),
     });
     if (!response.ok) throw new Error("Unable to load listings");
     return response.json();
