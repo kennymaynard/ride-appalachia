@@ -348,7 +348,7 @@ export function TrailLeafletMap({
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
   const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([]);
-  const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(false);
+  const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(true);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
@@ -537,7 +537,6 @@ export function TrailLeafletMap({
           <button type="button" onClick={clearAllLayers}>
             Turn all layers off
           </button>
-          <span>Trails</span>
           <button
             aria-pressed={showOhv}
             className={showOhv ? "is-active" : ""}
@@ -563,7 +562,6 @@ export function TrailLeafletMap({
           >
             {mapStyle === "topo" ? "Topo map" : "Roads + towns"}
           </button>
-          <span>Nearby</span>
           <button
             aria-pressed={showFeaturedBusinesses}
             className={
