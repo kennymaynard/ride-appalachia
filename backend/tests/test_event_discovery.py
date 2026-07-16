@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.models import Event, EventCandidate, EventSource
-from app.routes.event_discovery import create_source, review_candidate, run_discovery
+from app.routes.event_discovery import create_source, review_candidate, run_discovery, update_source
 from app.services.event_discovery import candidate_status, event_changes, find_duplicate, scan_source, score_candidate
 
 class EventDiscoveryTests(unittest.TestCase):
@@ -32,6 +32,23 @@ class EventDiscoveryTests(unittest.TestCase):
         with self.assertRaises(HTTPException): create_source({"name": "Bad", "source_type": "rss", "base_url": "file:///etc/passwd", "state": "KY"}, None, self.db)
         created = create_source({"name": "Tourism", "source_type": "rss", "base_url": "https://tourism.example/feed?utm_source=x", "state": "WV"}, None, self.db)
         self.assertFalse(created["is_active"]); self.assertNotIn("utm_source", created["base_url"])
+
+    def test_source_must_be_trusted_before_activation(self):
+        source = self.source(is_active=False, is_trusted=False)
+        with self.assertRaises(HTTPException): update_source(source.id, {"is_active": True}, None, self.db)
+        update_source(source.id, {"is_trusted": True, "is_active": True}, None, self.db)
+        self.db.refresh(source); self.assertTrue(source.is_active)
+        update_source(source.id, {"is_trusted": False}, None, self.db)
+        self.db.refresh(source); self.assertFalse(source.is_active)
+
+    @patch("app.routes.event_discovery.scan_source")
+    def test_scheduled_discovery_scans_only_trusted_active_sources(self, scan):
+        trusted = self.source(name="Trusted", is_active=True, is_trusted=True)
+        self.source(name="Untrusted", base_url="https://other.example/events", is_active=True, is_trusted=False)
+        scan.return_value = type("Scan", (), {"status": "success", "candidates_created": 1, "candidates_updated": 0})()
+        result = run_discovery(None, "", 20, None, self.db)
+        self.assertEqual(result["sources_scanned"], 1)
+        self.assertEqual(scan.call_args.args[1].id, trusted.id)
 
     def test_confidence_is_transparent(self):
         score, reasons = score_candidate(self.item(), self.source())
