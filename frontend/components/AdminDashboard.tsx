@@ -127,6 +127,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [smsPhone, setSmsPhone] = useState("");
   const [smsAudience, setSmsAudience] = useState<"rider" | "business">("rider");
   const [sendingTestSms, setSendingTestSms] = useState(false);
+  const [businessSearch, setBusinessSearch] = useState("");
+  const [businessStatus, setBusinessStatus] = useState<"all" | "pending" | "approved" | "denied">("all");
+  const [businessCity, setBusinessCity] = useState("all");
+  const [businessType, setBusinessType] = useState("all");
 
   const stats = useMemo(
     () => ({
@@ -140,6 +144,21 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
 
   const storeItemRequests = marketingLeads.filter((lead) => lead.source === "store_vendor_request");
   const generalMarketingLeads = marketingLeads.filter((lead) => lead.source !== "store_vendor_request");
+  const businessCities = useMemo(
+    () => Array.from(new Set(businesses.map((business) => business.location?.split(",")[0]?.trim()).filter(Boolean))).sort(),
+    [businesses],
+  );
+  const filteredBusinesses = useMemo(() => businesses.filter((business) => {
+    const haystack = `${business.name} ${business.location} ${business.description}`.toLowerCase();
+    const matchesSearch = !businessSearch.trim() || haystack.includes(businessSearch.trim().toLowerCase());
+    const matchesStatus = businessStatus === "all"
+      || (businessStatus === "pending" && !business.is_deleted && !business.is_approved)
+      || (businessStatus === "approved" && !business.is_deleted && business.is_approved)
+      || (businessStatus === "denied" && (business.is_deleted || ["rejected", "unpublished"].includes(business.listing_status)));
+    const matchesCity = businessCity === "all" || business.location?.toLowerCase().startsWith(businessCity.toLowerCase());
+    const matchesType = businessType === "all" || business.category === businessType;
+    return matchesSearch && matchesStatus && matchesCity && matchesType;
+  }), [businessCity, businessSearch, businessStatus, businessType, businesses]);
 
   function replaceBusiness(updatedBusiness: Business) {
     setBusinesses((current) =>
@@ -658,7 +677,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <span>Queues</span>
         </article>
       </div>
-      <AdminEventsPanel adminPassword={adminPassword} />
+      <details className="admin-review-queue" open>
+        <summary className="admin-section-summary">Create ride / manage events</summary>
+        <AdminEventsPanel adminPassword={adminPassword} />
+      </details>
       <EventsIntelligencePanel adminPassword={adminPassword} />
 
       {analytics ? (
@@ -1346,6 +1368,20 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         )}
       </div>
 
+      <section className="admin-review-queue">
+        <div className="section-heading">
+          <p>Business directory</p>
+          <h2>Search, approve, deny, and edit businesses</h2>
+        </div>
+        <div className="admin-filter-bar">
+          <input aria-label="Search businesses" placeholder="Search business name or location" value={businessSearch} onChange={(event) => setBusinessSearch(event.target.value)} />
+          <select aria-label="Business status" value={businessStatus} onChange={(event) => setBusinessStatus(event.target.value as typeof businessStatus)}>
+            <option value="all">All businesses</option><option value="pending">Pending approval</option><option value="approved">Accepted</option><option value="denied">Denied</option>
+          </select>
+          <select aria-label="Business city" value={businessCity} onChange={(event) => setBusinessCity(event.target.value)}><option value="all">All cities</option>{businessCities.map((city) => <option key={city} value={city}>{city}</option>)}</select>
+          <select aria-label="Business type" value={businessType} onChange={(event) => setBusinessType(event.target.value)}><option value="all">All types</option>{["lodging","food","fuel","repairs","rentals","services"].map((type) => <option key={type} value={type}>{type}</option>)}</select>
+        </div>
+      </section>
       <BusinessImporter
         adminPassword={adminPassword}
         onImported={() => reloadAdminBusinesses()}
@@ -1353,7 +1389,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       <BusinessClaimsPanel adminPassword={adminPassword} />
 
       <div className="admin-list">
-        {businesses.map((business) => (
+        {filteredBusinesses.map((business) => (
           <article className="admin-business-card" key={business.id}>
             {editingId === business.id ? (
               <form onSubmit={(event) => saveAdminEdit(event, business.id)}>

@@ -7012,6 +7012,24 @@ button.tier-card.is-selected {
   margin: 1rem auto 0;
 }
 
+.admin-section-summary {
+  cursor: pointer;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.admin-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2fr) repeat(3, minmax(8rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 760px) {
+  .admin-filter-bar { grid-template-columns: 1fr 1fr; }
+}
+
 .admin-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
