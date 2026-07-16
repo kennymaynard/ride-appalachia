@@ -31,7 +31,9 @@ def create_source(payload: dict = Body(...), _: None = Depends(require_admin), d
     if state not in TERRITORY: raise HTTPException(400, "Source state must be KY, WV, VA, TN, or NC")
     try: base_url = safe_url(str(payload.get("base_url", ""))); feed_url = safe_url(str(payload["feed_url"])) if payload.get("feed_url") else ""
     except ValueError as exc: raise HTTPException(400, str(exc)) from exc
-    row = EventSource(name=str(payload.get("name", "")).strip()[:180], source_type=source_type, base_url=base_url, feed_url=feed_url, state=state, organizer_name=str(payload.get("organizer_name", ""))[:180], is_active=bool(payload.get("is_active", False)), is_trusted=bool(payload.get("is_trusted", False)), scan_frequency=str(payload.get("scan_frequency", "daily")), notes=str(payload.get("notes", "")))
+    is_trusted = bool(payload.get("is_trusted", False)); is_active = bool(payload.get("is_active", False))
+    if is_active and not is_trusted: raise HTTPException(400, "A source must be trusted before activation")
+    row = EventSource(name=str(payload.get("name", "")).strip()[:180], source_type=source_type, base_url=base_url, feed_url=feed_url, state=state, organizer_name=str(payload.get("organizer_name", ""))[:180], is_active=is_active, is_trusted=is_trusted, scan_frequency=str(payload.get("scan_frequency", "twice_daily")), notes=str(payload.get("notes", "")))
     if not row.name: raise HTTPException(400, "Source name is required")
     db.add(row); db.commit(); db.refresh(row); return source_dict(row, db)
 
@@ -41,6 +43,8 @@ def update_source(source_id: int, payload: dict = Body(...), _: None = Depends(r
     if not row: raise HTTPException(404, "Source not found")
     for field in ("name", "organizer_name", "scan_frequency", "notes", "is_active", "is_trusted"):
         if field in payload: setattr(row, field, payload[field])
+    if payload.get("is_trusted") is False: row.is_active = False
+    if row.is_active and not row.is_trusted: raise HTTPException(400, "A source must be trusted before activation")
     if "base_url" in payload: row.base_url = safe_url(str(payload["base_url"]))
     if "feed_url" in payload: row.feed_url = safe_url(str(payload["feed_url"])) if payload["feed_url"] else ""
     db.commit(); return source_dict(row, db)
@@ -53,7 +57,7 @@ def list_candidates(candidate_status: str = Query("", alias="status"), _: None =
 
 @router.post("/event-discovery/run")
 def run_discovery(source_id: int | None = None, state: str = "", max_sources: int = Query(20, ge=1, le=100), _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
-    query = db.query(EventSource).filter(EventSource.is_active.is_(True))
+    query = db.query(EventSource).filter(EventSource.is_active.is_(True), EventSource.is_trusted.is_(True))
     if source_id: query = query.filter(EventSource.id == source_id)
     if state: query = query.filter(EventSource.state == state.upper())
     sources = query.order_by(EventSource.last_scanned_at.asc().nullsfirst()).limit(max_sources).all(); results = []

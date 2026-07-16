@@ -60,6 +60,22 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: https://api.appalachiaoffroadapp.com
 
+  - type: cron
+    name: appalachia-offroad-ride-scanner
+    runtime: python
+    rootDir: backend
+    plan: starter
+    schedule: "0 11,23 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/scan_events.py
+    envVars:
+      - key: BACKEND_URL
+        value: https://api.appalachiaoffroadapp.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: EVENT_SCAN_MAX_SOURCES
+        value: "100"
+
 databases:
   - name: appalachia-offroad-db
     plan: basic-256mb

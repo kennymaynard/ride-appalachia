@@ -4,14 +4,22 @@ Event discovery is allow-list-only. Admins add a public HTTP(S) source, review i
 
 ## Render cron
 
-Create a Render cron job that sends:
+The Render Blueprint creates `appalachia-offroad-ride-scanner`, which sends:
 
 ```text
-POST https://<backend-host>/api/admin/event-discovery/run?max_sources=20
+POST https://<backend-host>/api/admin/event-discovery/run?max_sources=100
 X-Admin-Password: <ADMIN_PASSWORD>
 ```
 
-Recommended cadence is every 12 hours. Official calendars can run daily; active event pages every 12 hours; slower tourism feeds daily or weekly. The endpoint locks each source for 30 minutes, upserts by source/external ID, records every scan, applies timeouts, and deactivates a source after five consecutive failures.
+The configured schedule is `0 11,23 * * *`, twice daily at 11:00 and 23:00 UTC. Add the same `ADMIN_PASSWORD` used by the backend to the cron service in Render. The endpoint locks each source for 30 minutes, upserts by source/external ID, records every scan, applies timeouts, and deactivates a source after five consecutive failures.
+
+The scanner covers active, admin-approved sources in KY, WV, VA, TN, and NC. Sources must first be added, trusted, and activated in Admin → Events Intelligence. A successful run with zero scanned sources means the source registry is still empty or every source is inactive.
+
+Run it manually with:
+
+```bash
+BACKEND_URL=https://api.appalachiaoffroadapp.com ADMIN_PASSWORD=... python backend/scripts/scan_events.py
+```
 
 ## Compliance
 
