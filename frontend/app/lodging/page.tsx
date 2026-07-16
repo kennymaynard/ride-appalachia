@@ -10,7 +10,9 @@ type Props = {
 
 export default async function LodgingPage({ searchParams }: Props) {
   const { area } = await searchParams;
-  const listings = await getListings({ category: "lodging", location: area });
+  const listings = (await getListings({ category: "lodging", location: area })).sort(
+    (a, b) => Number(b.is_featured) - Number(a.is_featured),
+  );
 
   return (
     <main className="page">
