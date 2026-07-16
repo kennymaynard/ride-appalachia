@@ -6,9 +6,16 @@ from app.database import Settings
 
 
 TIER_LABELS = {
-    "local_business": "$29 Local Business",
-    "lodging_partner": "$59 Lodging Partner",
+    "local_business": "$29 first month, then $9.99/month Local Business",
+    "lodging_partner": "$59 one-time, then $9/month Founding Lodging Partner",
     "veteran_owned": "$0 Veteran Owned",
+}
+
+INTRODUCTORY_FEES = {
+    # Recurring prices are $9.99 and $9.00; these one-time amounts bring the
+    # first checkout totals to $29 and $59 respectively.
+    "local_business": 1901,
+    "lodging_partner": 5000,
 }
 
 
@@ -45,7 +52,17 @@ def create_checkout_session(
     session_params = {
         "mode": "subscription",
         "allow_promotion_codes": True,
-        "line_items": [{"price": price_id, "quantity": 1}],
+        "line_items": [
+            {"price": price_id, "quantity": 1},
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": f"{TIER_LABELS.get(tier, tier)} introductory fee"},
+                    "unit_amount": INTRODUCTORY_FEES[tier],
+                },
+                "quantity": 1,
+            },
+        ],
         "success_url": success_url,
         "cancel_url": cancel_url,
         "metadata": {

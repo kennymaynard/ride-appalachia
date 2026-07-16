@@ -19,7 +19,6 @@ export function TierCard({ tier }: Props) {
         <p>{tier.name}</p>
         <h3>
           {tier.price}
-          {isFreeTier ? null : <span>/mo</span>}
         </h3>
         <strong>{tier.description}</strong>
       </div>

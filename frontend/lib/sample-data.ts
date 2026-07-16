@@ -2673,14 +2673,14 @@ export const partnerTiers: Tier[] = [
   {
     id: "local_business",
     name: "Local Business",
-    price: "$29",
+    price: "$29 first month, then $9.99/month",
     description: "For restaurants, repair shops, recovery services, fuel stops, outfitters, and local rider businesses.",
     features: ["Marketplace listing", "Phone and location CTA", "Deal or coupon", "Basic click stats"],
   },
   {
     id: "lodging_partner",
-    name: "Lodging Partner",
-    price: "$59",
+    name: "Founding Lodging Partner",
+    price: "$59 one-time, then $9/month",
     description: "For cabins, campgrounds, hotels, and rider-friendly stays.",
     features: ["Everything in Local", "Lodging category placement", "Photo-forward listing", "Priority review badge"],
   },
