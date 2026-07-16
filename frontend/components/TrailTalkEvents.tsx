@@ -79,6 +79,13 @@ export function TrailTalkEvents({ initialEvents }: { initialEvents: RideEvent[] 
         {event.vehicle_types.length ? <p>Vehicles: {event.vehicle_types.join(", ")}</p> : null}
         <div className="hero-actions">
           <a href={`/trail-talk/rides/${event.slug}`}>View Ride</a>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://appalachiaoffroadapp.com/trail-talk/rides/${event.slug}`)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Share to Facebook
+          </a>
           {event.official_url ? <a href={event.official_url} target="_blank" rel="noreferrer">Official event</a> : null}
           {event.registration_url ? <a href={event.registration_url} target="_blank" rel="noreferrer">Register</a> : null}
           <button type="button" onClick={() => planRide(event)}>Plan This Ride</button>
