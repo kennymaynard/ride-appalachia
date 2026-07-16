@@ -5894,6 +5894,14 @@ button.tier-card.is-selected {
   cursor: pointer;
 }
 
+.business-map-diagnostic {
+  display: block;
+  flex-basis: 100%;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .trail-layer-controls button.is-active {
   background: rgba(242, 106, 27, 0.95);
   color: #130600;

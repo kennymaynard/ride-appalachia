@@ -410,6 +410,7 @@ export function TrailLeafletMap({
           }),
     [businessLayers, businesses, selectedTrailId, showFeaturedBusinesses],
   );
+  const businessesWithCoordinates = businesses.filter(hasMapCoordinates).length;
   const visibleFeatures = useMemo(
     () =>
       selectedTrailId
@@ -521,6 +522,9 @@ export function TrailLeafletMap({
   return (
     <div className={isExpanded ? "trail-leaflet-map is-expanded" : "trail-leaflet-map"}>
       <div className="trail-layer-controls" aria-label="Trail map layers">
+        <small className="business-map-diagnostic">
+          Businesses loaded: {businesses.length} · Coordinates: {businessesWithCoordinates} · Visible markers: {visibleBusinesses.length}
+        </small>
         <div className="trail-layer-primary">
           <button
             aria-pressed={isExpanded}
