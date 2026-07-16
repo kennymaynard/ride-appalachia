@@ -347,7 +347,9 @@ export function TrailLeafletMap({
 }: Props) {
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
-  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>([]);
+  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>(
+    businessLayerOptions.map((layer) => layer.id),
+  );
   const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(true);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
