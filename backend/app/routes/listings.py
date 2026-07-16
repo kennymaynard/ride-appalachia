@@ -134,7 +134,7 @@ def get_listing(slug: str, db: Session = Depends(get_db)) -> Business:
     business.view_clicks += 1
     db.commit()
     db.refresh(business)
-    return business
+    return compact_listing(business)
 
 
 @router.post("/listings/{business_id}/action-click")
