@@ -5887,8 +5887,8 @@ button.tier-card.is-selected {
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.75);
   color: var(--text);
-  padding: 0.5rem 0.7rem;
-  font-size: 0.72rem;
+  padding: 0.38rem 0.58rem;
+  font-size: 0.66rem;
   font-weight: 950;
   text-transform: uppercase;
   cursor: pointer;
