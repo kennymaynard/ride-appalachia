@@ -5811,21 +5811,65 @@ button.tier-card.is-selected {
 
 .trail-layer-controls {
   position: absolute;
-  bottom: 0.75rem;
-  left: 3.6rem;
+  bottom: auto;
+  left: auto;
   right: 0.75rem;
+  top: 3.45rem;
+  width: min(32rem, calc(100% - 4.35rem));
   z-index: 900;
   display: grid;
   gap: 0.45rem;
   align-items: start;
   pointer-events: none;
+  justify-items: end;
 }
+
+.map-corner-controls {
+  align-items: stretch;
+  display: flex;
+  gap: 0.4rem;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  z-index: 900;
+}
+
+.map-style-switch {
+  background: rgba(5, 14, 9, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+}
+
+.map-corner-controls button {
+  background: rgba(5, 14, 9, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 850;
+  min-height: 2.15rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.map-style-switch button {
+  border: 0;
+  border-radius: 0;
+}
+
+.map-style-switch button + button { border-left: 1px solid rgba(255, 255, 255, 0.2); }
+.map-corner-controls button.is-active { background: #f26a1b; color: #08110b; }
+.map-tools-toggle { border-radius: 0.55rem; }
 
 .trail-layer-primary {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
   pointer-events: auto;
+  justify-content: flex-end;
 }
 
 .trail-layer-primary {
@@ -5838,6 +5882,7 @@ button.tier-card.is-selected {
   gap: 0.45rem;
   align-items: center;
   pointer-events: auto;
+  justify-content: flex-end;
 }
 
 .trail-layer-drawer.is-open {
@@ -5864,7 +5909,7 @@ button.tier-card.is-selected {
 }
 
 .trail-leaflet-map.is-expanded .trail-layer-controls {
-  left: 0.75rem;
+  left: auto;
   right: 0.75rem;
 }
 
@@ -7744,10 +7789,19 @@ button.tier-card.is-selected {
   }
 
   .trail-layer-controls {
-    left: 0.6rem;
+    left: auto;
     right: 0.6rem;
-    bottom: 0.6rem;
-    max-width: calc(100% - 1.2rem);
+    bottom: auto;
+    top: 5.35rem;
+    width: calc(100% - 1.2rem);
+  }
+
+  .map-corner-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    right: 0.6rem;
+    top: 0.6rem;
+    width: calc(100% - 4.2rem);
   }
 
   .trail-layer-primary {
