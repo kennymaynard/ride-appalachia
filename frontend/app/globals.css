@@ -5870,8 +5870,14 @@ button.tier-card.is-selected {
 
 .trail-layer-drawer > span {
   align-self: center;
-  color: var(--orange-soft);
-  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(242, 106, 27, 0.45);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--text);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.72rem;
   font-weight: 950;
   text-transform: uppercase;
 }
@@ -5886,20 +5892,6 @@ button.tier-card.is-selected {
   font-weight: 950;
   text-transform: uppercase;
   cursor: pointer;
-}
-
-/* Section labels use the same pill treatment as inactive layer controls. */
-.trail-layer-controls > span {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(242, 106, 27, 0.45);
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.75);
-  color: var(--text);
-  padding: 0.5rem 0.7rem;
-  font-size: 0.72rem;
-  font-weight: 950;
-  text-transform: uppercase;
 }
 
 .trail-layer-controls button.is-active {
