@@ -399,8 +399,16 @@ export function TrailLeafletMap({
     () =>
       selectedTrailId
         ? []
-        : businesses.filter(hasMapCoordinates),
-    [businesses, selectedTrailId],
+        : businesses.filter((business) => {
+            if (!hasMapCoordinates(business)) return false;
+            const layer = getBusinessLayer(business);
+            return (
+              (showFeaturedBusinesses && business.is_featured) ||
+              businessLayers.includes(layer) ||
+              (businessLayers.includes("deals") && hasActiveDeal(business))
+            );
+          }),
+    [businessLayers, businesses, selectedTrailId, showFeaturedBusinesses],
   );
   const visibleFeatures = useMemo(
     () =>
