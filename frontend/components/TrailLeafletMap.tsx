@@ -303,6 +303,17 @@ function hasMapCoordinates(business: Business) {
   return Number.isFinite(business.latitude) && Number.isFinite(business.longitude);
 }
 
+function BusinessMarkerPane() {
+  const map = useMap();
+
+  useEffect(() => {
+    const pane = map.getPane("businessPane") ?? map.createPane("businessPane");
+    pane.style.zIndex = "800";
+  }, [map]);
+
+  return null;
+}
+
 function makeFeatureIcon(feature: RideMapFeature) {
   const label = feature.title.length > 24 ? `${feature.title.slice(0, 21)}...` : feature.title;
 
@@ -388,16 +399,8 @@ export function TrailLeafletMap({
     () =>
       selectedTrailId
         ? []
-        : businesses.filter((business) => {
-            if (!hasMapCoordinates(business)) return false;
-            const layer = getBusinessLayer(business);
-            return (
-              (showFeaturedBusinesses && business.is_featured) ||
-              businessLayers.includes(layer) ||
-              (businessLayers.includes("deals") && hasActiveDeal(business))
-            );
-          }),
-    [businessLayers, businesses, selectedTrailId, showFeaturedBusinesses],
+        : businesses.filter(hasMapCoordinates),
+    [businesses, selectedTrailId],
   );
   const visibleFeatures = useMemo(
     () =>
@@ -670,6 +673,7 @@ export function TrailLeafletMap({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
         )}
+        <BusinessMarkerPane />
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
         {!selectedTrail
@@ -806,7 +810,7 @@ export function TrailLeafletMap({
           <CircleMarker
             center={[business.latitude as number, business.longitude as number]}
             key={`business-${business.id}`}
-            pane="markerPane"
+            pane="businessPane"
             pathOptions={{
               color: business.is_featured ? "#ffc857" : "#0b6b3a",
               fillColor: business.is_featured ? "#ffc857" : "#3bb875",
