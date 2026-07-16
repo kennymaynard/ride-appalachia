@@ -806,6 +806,7 @@ export function TrailLeafletMap({
           <CircleMarker
             center={[business.latitude as number, business.longitude as number]}
             key={`business-${business.id}`}
+            pane="markerPane"
             pathOptions={{
               color: business.is_featured ? "#ffc857" : "#0b6b3a",
               fillColor: business.is_featured ? "#ffc857" : "#3bb875",
