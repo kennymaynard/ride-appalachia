@@ -11,6 +11,7 @@ import {
   TileLayer,
   Tooltip,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import type { Business, Category, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapConditionReport, MapPoint } from "./RideAreaMap";
@@ -32,16 +33,6 @@ type Props = {
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
 type IntelligenceLayer = RideMapFeature["layer"] | "ky_elk_ra" | "ky_elk_viewing";
 
-const businessLayerOptions: { id: BusinessLayer; label: string }[] = [
-  { id: "food", label: "Food" },
-  { id: "fuel", label: "Gas" },
-  { id: "lodging", label: "Lodging" },
-  { id: "repairs", label: "Repairs" },
-  { id: "rentals", label: "Rentals" },
-  { id: "services", label: "Services" },
-  { id: "deals", label: "Deals" },
-];
-
 const businessLayerLabels: Record<BusinessLayer, string> = {
   food: "Food",
   fuel: "Gas / Fuel",
@@ -51,6 +42,26 @@ const businessLayerLabels: Record<BusinessLayer, string> = {
   services: "Services",
   deals: "Deal",
 };
+
+type MapTool = "measure" | "checkpoint" | "trail" | null;
+
+function MapToolCapture({ activeTool, onPoint }: { activeTool: MapTool; onPoint: (point: [number, number]) => void }) {
+  useMapEvents({ click: (event) => activeTool && onPoint([event.latlng.lat, event.latlng.lng]) });
+  return null;
+}
+
+function distanceMiles(points: [number, number][]) {
+  return points.slice(1).reduce((total, point, index) => total + L.latLng(points[index]).distanceTo(L.latLng(point)) / 1609.344, 0);
+}
+
+function businessIcon(business: Business) {
+  const symbols: Record<BusinessLayer, string> = { lodging: "\u2302", food: "\u2615", fuel: "\u26fd", repairs: "\u2692", rentals: "R", services: "S", deals: "$" };
+  return L.divIcon({
+    className: "business-map-marker-wrap",
+    html: `<span class="business-map-marker${business.is_featured ? " is-featured" : ""}">${symbols[getBusinessLayer(business)]}</span>`,
+    iconAnchor: [16, 32], iconSize: [32, 32],
+  });
+}
 
 const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
   { id: "condition", label: "Conditions" },
@@ -70,6 +81,12 @@ const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
   { id: "ky_elk", label: "Elk hunting areas" },
   { id: "ky_elk_ra", label: "Elk regulated areas (RA)" },
   { id: "ky_elk_viewing", label: "Elk viewing areas" },
+];
+
+const intelligenceGroups: { label: string; layers: IntelligenceLayer[] }[] = [
+  { label: "Ride Intel", layers: ["condition", "cell", "parking", "difficulty", "emergency", "scenic", "offline", "group", "passport", "deal"] },
+  { label: "Wildlife", layers: ["wma", "ky_elk", "ky_elk_ra", "ky_elk_viewing"] },
+  { label: "River", layers: ["fish", "water_access", "river_level"] },
 ];
 
 const intelligenceLayerLabels: Record<IntelligenceLayer, string> = {
@@ -358,10 +375,6 @@ export function TrailLeafletMap({
 }: Props) {
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
-  const [businessLayers, setBusinessLayers] = useState<BusinessLayer[]>(
-    businessLayerOptions.map((layer) => layer.id),
-  );
-  const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(true);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
   const [mapStyle, setMapStyle] = useState<"roads" | "topo" | "satellite">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
@@ -376,6 +389,10 @@ export function TrailLeafletMap({
   ]);
   const [putInId, setPutInId] = useState<string>();
   const [takeOutId, setTakeOutId] = useState<string>();
+  const [activeTool, setActiveTool] = useState<MapTool>(null);
+  const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
+  const [checkpoints, setCheckpoints] = useState<[number, number][]>([]);
+  const [markedTrail, setMarkedTrail] = useState<[number, number][]>([]);
   const center: [number, number] = [
     (bounds[0][0] + bounds[1][0]) / 2,
     (bounds[0][1] + bounds[1][1]) / 2,
@@ -395,21 +412,7 @@ export function TrailLeafletMap({
       ),
     [points, selectedTrailId, showHiking, showOhv],
   );
-  const visibleBusinesses = useMemo(
-    () =>
-      selectedTrailId
-        ? []
-        : businesses.filter((business) => {
-            if (!hasMapCoordinates(business)) return false;
-            const layer = getBusinessLayer(business);
-            return (
-              (showFeaturedBusinesses && business.is_featured) ||
-              businessLayers.includes(layer) ||
-              (businessLayers.includes("deals") && hasActiveDeal(business))
-            );
-          }),
-    [businessLayers, businesses, selectedTrailId, showFeaturedBusinesses],
-  );
+  const visibleBusinesses = useMemo(() => businesses.filter(hasMapCoordinates), [businesses]);
   const businessesWithCoordinates = businesses.filter(hasMapCoordinates).length;
   const visibleFeatures = useMemo(
     () =>
@@ -472,13 +475,6 @@ export function TrailLeafletMap({
       "application/geo+json;charset=utf-8",
     );
   };
-  const toggleBusinessLayer = (layer: BusinessLayer) => {
-    setBusinessLayers((current) =>
-      current.includes(layer)
-        ? current.filter((item) => item !== layer)
-        : [...current, layer],
-    );
-  };
   const toggleIntelligenceLayer = (layer: IntelligenceLayer) => {
     setIntelligenceLayers((current) =>
       current.includes(layer)
@@ -487,21 +483,16 @@ export function TrailLeafletMap({
     );
   };
 
-  const toggleAllIntelligenceLayers = () => {
-    setIntelligenceLayers((current) =>
-      current.length === intelligenceLayerOptions.length
-        ? []
-        : intelligenceLayerOptions.map((layer) => layer.id),
-    );
-  };
-
   const clearAllLayers = () => {
     setShowOhv(false);
     setShowHiking(false);
-    setBusinessLayers([]);
-    setShowFeaturedBusinesses(false);
     setIntelligenceLayers([]);
     setSelectedTrailId(undefined);
+  };
+  const addToolPoint = (point: [number, number]) => {
+    if (activeTool === "measure") setMeasurementPoints((current) => [...current, point]);
+    if (activeTool === "checkpoint") setCheckpoints((current) => [...current, point]);
+    if (activeTool === "trail") setMarkedTrail((current) => [...current, point]);
   };
   const toggleWaterAccessType = (type: "trailer" | "carry_down" | "shoreline") => {
     setWaterAccessTypes((current) =>
@@ -579,55 +570,25 @@ export function TrailLeafletMap({
           >
             {mapStyle === "roads" ? "Roads + towns" : mapStyle === "topo" ? "Topo map" : "Satellite"}
           </button>
-          <button
-            aria-pressed={showFeaturedBusinesses}
-            className={
-              showFeaturedBusinesses
-                ? "is-active is-business is-featured-business"
-                : "is-business is-featured-business"
-            }
-            type="button"
-            onClick={() => setShowFeaturedBusinesses((current) => !current)}
-          >
-            Featured businesses
-          </button>
-          {businessLayerOptions.map((layer) => (
-            <button
-              aria-pressed={businessLayers.includes(layer.id)}
-              className={
-                businessLayers.includes(layer.id)
-                  ? "is-active is-business"
-                  : "is-business"
-              }
-              key={layer.id}
-              type="button"
-              onClick={() => toggleBusinessLayer(layer.id)}
-            >
-              {layer.label}
+          <span>Map tools</span>
+          {(["measure", "checkpoint", "trail"] as const).map((tool) => (
+            <button className={activeTool === tool ? "is-active" : ""} key={tool} type="button" onClick={() => setActiveTool((current) => current === tool ? null : tool)}>
+              {tool === "measure" ? "Measure distance" : tool === "checkpoint" ? "Add checkpoints" : "Mark trail"}
             </button>
           ))}
-          <button
-            aria-pressed={intelligenceLayers.length === intelligenceLayerOptions.length}
-            className={intelligenceLayers.length ? "is-active is-intel" : "is-intel"}
-            type="button"
-            onClick={toggleAllIntelligenceLayers}
-          >
-            Ride intel
-          </button>
-          {intelligenceLayerOptions.map((layer) => (
-            <button
-              aria-pressed={intelligenceLayers.includes(layer.id)}
-              className={
-                intelligenceLayers.includes(layer.id)
-                  ? "is-active is-intel"
-                  : "is-intel"
-              }
-              key={layer.id}
-              type="button"
-              onClick={() => toggleIntelligenceLayer(layer.id)}
-            >
-              {layer.label}
-            </button>
+          {measurementPoints.length || checkpoints.length || markedTrail.length ? (
+            <button type="button" onClick={() => { setMeasurementPoints([]); setCheckpoints([]); setMarkedTrail([]); }}>Clear map tools</button>
+          ) : null}
+          {measurementPoints.length > 1 ? <span>{distanceMiles(measurementPoints).toFixed(2)} miles</span> : null}
+          {intelligenceGroups.map((group) => (
+            <details className="trail-layer-group" key={group.label}>
+              <summary>{group.label}</summary>
+              {intelligenceLayerOptions.filter((layer) => group.layers.includes(layer.id)).map((layer) => (
+                <button aria-pressed={intelligenceLayers.includes(layer.id)} className={intelligenceLayers.includes(layer.id) ? "is-active is-intel" : "is-intel"} key={layer.id} type="button" onClick={() => toggleIntelligenceLayer(layer.id)}>
+                  {layer.label}
+                </button>
+              ))}
+            </details>
           ))}
           {intelligenceLayers.includes("water_access") ? (
             <>
@@ -674,10 +635,10 @@ export function TrailLeafletMap({
         zoomControl
       >
         {mapStyle === "satellite" ? (
-          <TileLayer
-            attribution='&copy; Esri, Maxar, Earthstar Geographics'
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          />
+          <>
+            <TileLayer attribution='&copy; Esri, Maxar, Earthstar Geographics' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+            <TileLayer attribution='&copy; OpenStreetMap contributors &copy; CARTO' pane="overlayPane" url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
+          </>
         ) : mapStyle === "topo" ? (
           <TileLayer
             attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, style &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
@@ -691,6 +652,7 @@ export function TrailLeafletMap({
           />
         )}
         <BusinessMarkerPane />
+        <MapToolCapture activeTool={activeTool} onPoint={addToolPoint} />
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
         {!selectedTrail
@@ -823,18 +785,15 @@ export function TrailLeafletMap({
             </Popup>
           </Marker>
         ))}
+        {measurementPoints.length > 1 ? <Polyline pathOptions={{ color: "#ffc857", dashArray: "6 6", weight: 3 }} positions={measurementPoints} /> : null}
+        {markedTrail.length > 1 ? <Polyline pathOptions={{ color: "#e94f37", weight: 5 }} positions={markedTrail} /> : null}
+        {checkpoints.map((point, index) => <CircleMarker center={point} key={`checkpoint-${index}`} pathOptions={{ color: "#fff", fillColor: "#1565c0", fillOpacity: 1 }} radius={8}><Tooltip permanent>{index + 1}</Tooltip></CircleMarker>)}
         {visibleBusinesses.map((business) => (
-          <CircleMarker
-            center={[business.latitude as number, business.longitude as number]}
+          <Marker
+            position={[business.latitude as number, business.longitude as number]}
             key={`business-${business.id}`}
             pane="businessPane"
-            pathOptions={{
-              color: business.is_featured ? "#ffc857" : "#0b6b3a",
-              fillColor: business.is_featured ? "#ffc857" : "#3bb875",
-              fillOpacity: 0.95,
-              weight: 3,
-            }}
-            radius={business.is_featured ? 9 : 7}
+            icon={businessIcon(business)}
           >
             <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
               {business.name}
@@ -855,7 +814,7 @@ export function TrailLeafletMap({
                 <a href={`/business/${business.slug}`}>View listing</a>
               </div>
             </Popup>
-          </CircleMarker>
+          </Marker>
         ))}
         {visibleFeatures.map((feature) => (
           <Marker

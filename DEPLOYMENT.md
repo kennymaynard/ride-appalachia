@@ -40,8 +40,8 @@ RESEND_API_KEY=
 EMAIL_FROM=Appalachia Offroad <support@appalachiaoffroadapp.com>
 LEAD_NOTIFY_EMAIL=support@appalachiaoffroadapp.com
 STRIPE_SECRET_KEY=
-STRIPE_PRICE_LOCAL_BUSINESS=
-STRIPE_PRICE_LODGING_PARTNER=
+STRIPE_PRICE_LOCAL_BUSINESS= # recurring $9.99/month
+STRIPE_PRICE_LODGING_PARTNER= # recurring $9/month
 STRIPE_PRICE_VETERAN_OWNED=
 STRIPE_WEBHOOK_SECRET=
 ```
@@ -97,8 +97,8 @@ Copy each live mode price ID, which starts with `price_`, into the matching
 backend environment variable:
 
 ```env
-STRIPE_PRICE_LOCAL_BUSINESS=price_...
-STRIPE_PRICE_LODGING_PARTNER=price_...
+STRIPE_PRICE_LOCAL_BUSINESS=price_... # recurring $9.99/month; checkout adds $19.01 once
+STRIPE_PRICE_LODGING_PARTNER=price_... # recurring $9/month; checkout adds $50 once
 STRIPE_PRICE_VETERAN_OWNED=price_...
 ```
 

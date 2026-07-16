@@ -131,6 +131,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businessStatus, setBusinessStatus] = useState<"all" | "pending" | "approved" | "denied">("all");
   const [businessCity, setBusinessCity] = useState("all");
   const [businessType, setBusinessType] = useState("all");
+  const [riderSearch, setRiderSearch] = useState("");
 
   const stats = useMemo(
     () => ({
@@ -159,6 +160,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     const matchesType = businessType === "all" || business.category === businessType;
     return matchesSearch && matchesStatus && matchesCity && matchesType;
   }), [businessCity, businessSearch, businessStatus, businessType, businesses]);
+  const filteredRiders = useMemo(() => riderAccounts.filter((rider) =>
+    `${rider.display_name} ${rider.email} ${rider.home_location}`.toLowerCase().includes(riderSearch.trim().toLowerCase()),
+  ), [riderAccounts, riderSearch]);
 
   function replaceBusiness(updatedBusiness: Business) {
     setBusinesses((current) =>
@@ -770,9 +774,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <p>Rider accounts</p>
           <h2>Profiles saved in the app</h2>
         </div>
+        <input aria-label="Search ride profiles by name" placeholder="Search ride profiles by name" value={riderSearch} onChange={(event) => setRiderSearch(event.target.value)} />
         {riderAccounts.length ? (
           <div className="admin-list">
-            {riderAccounts.map((rider) => (
+            {filteredRiders.map((rider) => (
               <article className="admin-business-card" key={rider.id}>
                 <div>
                   <div className="listing-meta">

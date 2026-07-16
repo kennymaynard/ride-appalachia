@@ -5968,6 +5968,45 @@ button.tier-card.is-selected {
   color: #06111a;
 }
 
+.business-map-marker-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.business-map-marker {
+  align-items: center;
+  background: #0b6b3a;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 8px #0008;
+  color: #fff;
+  display: flex;
+  font-size: 14px;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  transform: rotate(-45deg);
+  width: 28px;
+}
+
+.business-map-marker.is-featured { background: #c77b00; border-color: #fff3b0; }
+.business-map-marker-wrap .business-map-marker { line-height: 1; }
+
+.trail-layer-group {
+  border-top: 1px solid #ffffff2b;
+  padding-top: 0.35rem;
+}
+
+.trail-layer-group summary {
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0;
+}
+
+.trail-layer-group button { margin: 0.15rem; }
+
 .trail-leaflet-map .leaflet-container {
   background: #dce9ee;
   filter: saturate(0.9) contrast(1.08);
