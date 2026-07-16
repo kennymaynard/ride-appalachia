@@ -634,7 +634,7 @@ export function TrailLeafletMap({
       </div>
       <MapContainer
         center={center}
-        maxZoom={mapStyle === "topo" ? 17 : 19}
+        maxZoom={mapStyle === "topo" ? 17 : 20}
         minZoom={5}
         scrollWheelZoom
         zoom={7}
@@ -642,8 +642,8 @@ export function TrailLeafletMap({
       >
         {mapStyle === "satellite" ? (
           <>
-            <TileLayer attribution='&copy; Esri, Maxar, Earthstar Geographics' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-            <TileLayer attribution='&copy; OpenStreetMap contributors &copy; CARTO' pane="overlayPane" url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
+            <TileLayer attribution='&copy; Esri, Maxar, Earthstar Geographics' maxNativeZoom={18} maxZoom={20} url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+            <TileLayer attribution='&copy; OpenStreetMap contributors &copy; CARTO' maxNativeZoom={18} maxZoom={20} pane="overlayPane" url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
           </>
         ) : mapStyle === "topo" ? (
           <TileLayer
@@ -654,6 +654,8 @@ export function TrailLeafletMap({
         ) : (
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxNativeZoom={19}
+            maxZoom={20}
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
         )}
