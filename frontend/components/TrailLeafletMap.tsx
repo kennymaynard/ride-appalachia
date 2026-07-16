@@ -363,7 +363,7 @@ export function TrailLeafletMap({
   );
   const [showFeaturedBusinesses, setShowFeaturedBusinesses] = useState(true);
   const [intelligenceLayers, setIntelligenceLayers] = useState<IntelligenceLayer[]>([]);
-  const [mapStyle, setMapStyle] = useState<"roads" | "topo">("roads");
+  const [mapStyle, setMapStyle] = useState<"roads" | "topo" | "satellite">("roads");
   const [selectedTrailId, setSelectedTrailId] = useState<string>();
   const [controlsOpen, setControlsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -571,13 +571,13 @@ export function TrailLeafletMap({
             Hiking
           </button>
           <button
-            className={mapStyle === "topo" ? "is-active" : ""}
+            className={mapStyle !== "roads" ? "is-active" : ""}
             type="button"
             onClick={() =>
-              setMapStyle((current) => (current === "topo" ? "roads" : "topo"))
+              setMapStyle((current) => (current === "roads" ? "topo" : current === "topo" ? "satellite" : "roads"))
             }
           >
-            {mapStyle === "topo" ? "Topo map" : "Roads + towns"}
+            {mapStyle === "roads" ? "Roads + towns" : mapStyle === "topo" ? "Topo map" : "Satellite"}
           </button>
           <button
             aria-pressed={showFeaturedBusinesses}
@@ -673,7 +673,12 @@ export function TrailLeafletMap({
         zoom={7}
         zoomControl
       >
-        {mapStyle === "topo" ? (
+        {mapStyle === "satellite" ? (
+          <TileLayer
+            attribution='&copy; Esri, Maxar, Earthstar Geographics'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+        ) : mapStyle === "topo" ? (
           <TileLayer
             attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, style &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
             maxZoom={17}
