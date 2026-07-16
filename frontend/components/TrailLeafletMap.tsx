@@ -512,6 +512,29 @@ export function TrailLeafletMap({
 
   return (
     <div className={isExpanded ? "trail-leaflet-map is-expanded" : "trail-leaflet-map"}>
+      <div className="map-corner-controls">
+        <div className="map-style-switch" aria-label="Map style">
+          {(["roads", "satellite", "topo"] as const).map((style) => (
+            <button
+              aria-pressed={mapStyle === style}
+              className={mapStyle === style ? "is-active" : ""}
+              key={style}
+              type="button"
+              onClick={() => setMapStyle(style)}
+            >
+              {style === "roads" ? "Roads" : style === "satellite" ? "Satellite" : "Topo"}
+            </button>
+          ))}
+        </div>
+        <button
+          aria-expanded={controlsOpen}
+          className={controlsOpen ? "is-active map-tools-toggle" : "map-tools-toggle"}
+          type="button"
+          onClick={() => setControlsOpen((current) => !current)}
+        >
+          Tools & layers
+        </button>
+      </div>
       <div className="trail-layer-controls" aria-label="Trail map layers">
         <small className="business-map-diagnostic">
           Businesses loaded: {businesses.length} · Coordinates: {businessesWithCoordinates} · Visible markers: {visibleBusinesses.length}
@@ -526,14 +549,6 @@ export function TrailLeafletMap({
           </button>
           <button type="button" onClick={handleTrackMe}>
             {trackingStatus}
-          </button>
-          <button
-            aria-expanded={controlsOpen}
-            className={controlsOpen ? "is-active trail-layer-menu-toggle" : "trail-layer-menu-toggle"}
-            type="button"
-            onClick={() => setControlsOpen((current) => !current)}
-          >
-            Map layers
           </button>
           {selectedTrail ? (
             <button type="button" onClick={() => setSelectedTrailId(undefined)}>
@@ -560,15 +575,6 @@ export function TrailLeafletMap({
             onClick={() => setShowHiking((current) => !current)}
           >
             Hiking
-          </button>
-          <button
-            className={mapStyle !== "roads" ? "is-active" : ""}
-            type="button"
-            onClick={() =>
-              setMapStyle((current) => (current === "roads" ? "topo" : current === "topo" ? "satellite" : "roads"))
-            }
-          >
-            {mapStyle === "roads" ? "Roads + towns" : mapStyle === "topo" ? "Topo map" : "Satellite"}
           </button>
           <span>Map tools</span>
           {(["measure", "checkpoint", "trail"] as const).map((tool) => (
@@ -628,7 +634,7 @@ export function TrailLeafletMap({
       </div>
       <MapContainer
         center={center}
-        maxZoom={16}
+        maxZoom={mapStyle === "topo" ? 17 : 19}
         minZoom={5}
         scrollWheelZoom
         zoom={7}
