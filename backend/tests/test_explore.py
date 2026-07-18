@@ -5,9 +5,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
-from app.explore_schemas import ExploreDestinationInput, ExploreOwnerUpdateCreate, ExploreOwnerUpdateReview
-from app.models import Business, ExploreDestination, ExploreDestinationUpdateRequest
-from app.routes.admin import review_explore_update_request
+from app.explore_schemas import ExploreAdminUpdate, ExploreDestinationInput, ExploreModerationReview, ExploreOwnerUpdateCreate, ExploreOwnerUpdateReview
+from app.models import Business, ExploreDestination, ExploreDestinationReport, ExploreDestinationUpdateRequest, ExplorePhotoSubmission
+from app.routes.admin import review_admin_explore_photo, review_admin_explore_report, review_explore_update_request, update_admin_explore_destination
 from app.routes.business import submit_owner_explore_update
 from app.routes.explore import create_explore_claim_target, create_explore_plan, get_destination, list_destinations, suggest_destination
 from app.services.business_claims import link_approved_explore_destination
@@ -105,6 +105,21 @@ class ExploreTests(unittest.TestCase):
         self.assertEqual(destination.phone, "606-555-0100")
         self.assertEqual(destination.events_json, [])
         self.assertEqual(self.db.get(ExploreDestinationUpdateRequest, request.id).approved_fields_json, ["description", "amenities", "specials"])
+
+    def test_admin_can_publish_edit_and_moderate_destination(self):
+        destination = ExploreDestination(name="Pending Falls", slug="pending-falls", category="waterfalls", short_description="A submitted waterfall destination.", city="Inez", state="KY", status="pending")
+        self.db.add(destination); self.db.flush()
+        photo = ExplorePhotoSubmission(destination_id=destination.id, image_url="https://example.com/falls.jpg")
+        report = ExploreDestinationReport(destination_id=destination.id, details="Coordinates need to be checked before publishing.")
+        self.db.add_all([photo, report]); self.db.commit()
+        update_admin_explore_destination(destination.id, ExploreAdminUpdate(status="approved", verified=True, latitude=37.8, longitude=-82.5, nearby_trail_slugs=["rush-off-road"]), None, self.db)
+        review_admin_explore_photo(photo.id, ExploreModerationReview(action="approve"), None, self.db)
+        review_admin_explore_report(report.id, ExploreModerationReview(action="resolve"), None, self.db)
+        self.db.refresh(destination); self.db.refresh(photo); self.db.refresh(report)
+        self.assertEqual(destination.status, "approved"); self.assertTrue(destination.verified)
+        self.assertEqual(destination.image_url, "https://example.com/falls.jpg")
+        self.assertEqual([trail.trail_slug for trail in destination.trails], ["rush-off-road"])
+        self.assertEqual(photo.status, "approved"); self.assertEqual(report.status, "resolved")
 
 
 if __name__ == "__main__": unittest.main()
