@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getEvents, getListings } from "../lib/api";
 import type { Business, RideEvent, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapConditionReport, MapPoint } from "./RideAreaMap";
@@ -29,24 +29,32 @@ type Props = {
 export function TrailMapShell(props: Props) {
   const [businesses, setBusinesses] = useState(props.businesses ?? []);
   const [events, setEvents] = useState<RideEvent[]>([]);
+  const businessRequest = useRef(0);
 
-  useEffect(() => {
-    const [[minLatitude, minLongitude], [maxLatitude, maxLongitude]] = props.bounds;
+  const loadViewportBusinesses = useCallback((
+    bounds: [[number, number], [number, number]],
+    zoom: number,
+  ) => {
+    const request = ++businessRequest.current;
+    const [[minLatitude, minLongitude], [maxLatitude, maxLongitude]] = bounds;
     getListings({
       category: "all",
+      featured: zoom < 8 ? true : undefined,
       limit: 500,
       minLatitude,
       maxLatitude,
       minLongitude,
       maxLongitude,
     }).then((loaded) => {
-      setBusinesses((current) => {
-        const merged = new Map(current.map((business) => [business.id, business]));
-        loaded.forEach((business) => merged.set(business.id, business));
-        return Array.from(merged.values());
-      });
+      if (request !== businessRequest.current) return;
+      const protectedBusinesses = (props.businesses ?? []).filter(
+        (business) => business.is_featured || ["active", "trialing"].includes(business.subscription_status),
+      );
+      const next = new Map(protectedBusinesses.map((business) => [business.id, business]));
+      loaded.forEach((business) => next.set(business.id, business));
+      setBusinesses(Array.from(next.values()));
     }).catch(() => undefined);
-  }, [props.bounds]);
+  }, [props.businesses]);
 
   useEffect(() => {
     getEvents().then(setEvents).catch(() => undefined);
@@ -60,6 +68,7 @@ export function TrailMapShell(props: Props) {
       businesses={businesses}
       events={events}
       onBusinessSearch={searchBusinesses}
+      onBusinessViewportChange={loadViewportBusinesses}
     />
   );
 }

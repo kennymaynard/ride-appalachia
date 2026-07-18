@@ -30,6 +30,10 @@ type Props = {
   riderPhotos?: TrailReview[];
   conditionReports?: MapConditionReport[];
   onBusinessSearch?: (query: string) => Promise<Business[]>;
+  onBusinessViewportChange?: (
+    bounds: [[number, number], [number, number]],
+    zoom: number,
+  ) => void;
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
@@ -49,6 +53,27 @@ type MapTool = "measure" | "checkpoint" | "trail" | null;
 
 function MapToolCapture({ activeTool, onPoint }: { activeTool: MapTool; onPoint: (point: [number, number]) => void }) {
   useMapEvents({ click: (event) => activeTool && onPoint([event.latlng.lat, event.latlng.lng]) });
+  return null;
+}
+
+function BusinessViewportLoader({
+  onViewportChange,
+}: {
+  onViewportChange?: Props["onBusinessViewportChange"];
+}) {
+  const publishViewport = (map: L.Map) => {
+    if (!onViewportChange) return;
+    const visible = map.getBounds();
+    onViewportChange(
+      [
+        [visible.getSouth(), visible.getWest()],
+        [visible.getNorth(), visible.getEast()],
+      ],
+      map.getZoom(),
+    );
+  };
+  const map = useMapEvents({ moveend: () => publishViewport(map) });
+  useEffect(() => publishViewport(map), [map, onViewportChange]);
   return null;
 }
 
@@ -426,6 +451,7 @@ export function TrailLeafletMap({
   riderPhotos = [],
   conditionReports = [],
   onBusinessSearch,
+  onBusinessViewportChange,
 }: Props) {
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
@@ -773,6 +799,7 @@ export function TrailLeafletMap({
           />
         )}
         <BusinessMarkerPane />
+        <BusinessViewportLoader onViewportChange={onBusinessViewportChange} />
         <BusinessSearchFocus business={selectedBusiness} />
         <UserLocationFocus location={userLocation} />
         <MapToolCapture activeTool={activeTool} onPoint={addToolPoint} />
