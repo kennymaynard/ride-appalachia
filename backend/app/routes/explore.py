@@ -9,6 +9,7 @@ from app.database import get_db
 from app.explore_schemas import ExploreDestinationInput, ExploreDestinationRead, ExplorePhotoCreate, ExplorePlanRead, ExplorePlanRequest, ExploreReportCreate
 from app.models import ExploreDestination, ExploreDestinationReport, ExploreDestinationTrail, ExplorePhotoSubmission
 from app.services.explore_ai import build_ai_plan
+from app.routes.riders import require_rider_access
 
 router = APIRouter(tags=["explore"])
 
@@ -82,7 +83,7 @@ def get_destination(slug: str, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/explore/suggestions", status_code=202)
-def suggest_destination(payload: ExploreDestinationInput, db: Session = Depends(get_db)) -> dict:
+def suggest_destination(payload: ExploreDestinationInput, db: Session = Depends(get_db), _rider=Depends(require_rider_access)) -> dict:
     base = slugify(payload.name); slug = base; suffix = 2
     while db.query(ExploreDestination.id).filter(ExploreDestination.slug == slug).first(): slug, suffix = f"{base}-{suffix}", suffix + 1
     data = payload.model_dump(exclude={"nearby_trail_slugs"}); row = ExploreDestination(**data, slug=slug, status="pending")
@@ -92,14 +93,14 @@ def suggest_destination(payload: ExploreDestinationInput, db: Session = Depends(
 
 
 @router.post("/explore/{slug}/reports", status_code=202)
-def report_destination(slug: str, payload: ExploreReportCreate, db: Session = Depends(get_db)) -> dict:
+def report_destination(slug: str, payload: ExploreReportCreate, db: Session = Depends(get_db), _rider=Depends(require_rider_access)) -> dict:
     row = db.query(ExploreDestination).filter(ExploreDestination.slug == slug).first()
     if not row: raise HTTPException(404, "Destination not found")
     db.add(ExploreDestinationReport(destination_id=row.id, **payload.model_dump())); db.commit(); return {"status": "pending"}
 
 
 @router.post("/explore/{slug}/photos", status_code=202)
-def add_destination_photo(slug: str, payload: ExplorePhotoCreate, db: Session = Depends(get_db)) -> dict:
+def add_destination_photo(slug: str, payload: ExplorePhotoCreate, db: Session = Depends(get_db), _rider=Depends(require_rider_access)) -> dict:
     row = db.query(ExploreDestination).filter(ExploreDestination.slug == slug).first()
     if not row: raise HTTPException(404, "Destination not found")
     db.add(ExplorePhotoSubmission(destination_id=row.id, **payload.model_dump())); db.commit(); return {"status": "pending"}

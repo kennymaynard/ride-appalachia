@@ -601,10 +601,11 @@ export async function updateBusiness(
 export async function claimBusiness(
   businessId: number,
   payload: { claimant_name: string; claimant_email: string; claimant_phone: string; claimant_role: string; proof_url: string; proof_notes: string; subscription_tier: string },
+  riderToken = "",
 ): Promise<import("./types").BusinessClaim> {
   const response = await fetch(`${getApiUrl()}/api/businesses/${businessId}/claim`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Rider-Token": riderToken },
     body: JSON.stringify(payload),
   });
 
@@ -1735,6 +1736,6 @@ export async function getExploreDestination(slug: string): Promise<import("./typ
   return response.json();
 }
 
-export async function suggestExploreDestination(payload: Record<string, unknown>) { const response = await apiFetch("/api/explore/suggestions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this place"); return response.json(); }
-export async function submitExplorePhoto(slug: string, payload: Record<string, string>) { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/photos`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this photo"); return response.json(); }
-export async function reportExploreDestination(slug: string, payload: Record<string, string>) { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this report"); return response.json(); }
+export async function suggestExploreDestination(payload: Record<string, unknown>, riderToken = "") { const response = await apiFetch("/api/explore/suggestions", { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": riderToken }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(response.status===401?"Rider signup is required.":"Unable to submit this place"); return response.json(); }
+export async function submitExplorePhoto(slug: string, payload: Record<string, string>, riderToken = "") { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/photos`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": riderToken }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(response.status===401?"Rider signup is required.":"Unable to submit this photo"); return response.json(); }
+export async function reportExploreDestination(slug: string, payload: Record<string, string>, riderToken = "") { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/reports`, { method: "POST", headers: { "Content-Type": "application/json", "X-Rider-Token": riderToken }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(response.status===401?"Rider signup is required.":"Unable to submit this report"); return response.json(); }

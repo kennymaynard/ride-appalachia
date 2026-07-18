@@ -30,6 +30,7 @@ from app.schemas import (
 from app.services.email_service import send_business_approval_notification, send_business_claim_code_email, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import fallback_photo_for_category, is_oversized_embedded_photo, normalize_photo_url
+from app.routes.riders import require_rider_access
 from app.services.sms_service import send_sms
 
 router = APIRouter(tags=["business dashboard"])
@@ -246,6 +247,7 @@ def claim_business(
     business_id: int,
     payload: BusinessClaimRequest,
     db: Session = Depends(get_db),
+    _rider=Depends(require_rider_access),
 ) -> BusinessClaim:
     business = db.get(Business, business_id)
     if not business:
