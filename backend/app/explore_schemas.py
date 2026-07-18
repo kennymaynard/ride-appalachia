@@ -117,6 +117,47 @@ class ExploreOwnerUpdateReview(BaseModel):
         return value
 
 
+class ExploreAdminUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=180)
+    category: str | None = None
+    short_description: str | None = Field(default=None, min_length=10, max_length=360)
+    full_description: str | None = Field(default=None, max_length=10000)
+    address: str | None = Field(default=None, max_length=240)
+    city: str | None = Field(default=None, max_length=120)
+    county: str | None = Field(default=None, max_length=120)
+    state: str | None = Field(default=None, max_length=2)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    phone: str | None = Field(default=None, max_length=40)
+    website: str | None = Field(default=None, max_length=1000)
+    status: str | None = None
+    verified: bool | None = None
+    featured: bool | None = None
+    nearby_trail_slugs: list[str] | None = None
+
+    @field_validator("category")
+    @classmethod
+    def admin_category(cls, value: str | None) -> str | None:
+        if value is not None and value not in EXPLORE_CATEGORIES: raise ValueError("Unknown Explore category")
+        return value
+
+    @field_validator("status")
+    @classmethod
+    def admin_status(cls, value: str | None) -> str | None:
+        if value is not None and value not in {"pending", "approved", "archived", "rejected"}: raise ValueError("Unknown status")
+        return value
+
+
+class ExploreModerationReview(BaseModel):
+    action: str
+
+    @field_validator("action")
+    @classmethod
+    def moderation_action(cls, value: str) -> str:
+        if value not in {"approve", "reject", "resolve"}: raise ValueError("Unknown moderation action")
+        return value
+
+
 class ExploreReportCreate(BaseModel):
     reason: str = Field(default="incorrect_information", max_length=80)
     details: str = Field(min_length=10, max_length=4000)

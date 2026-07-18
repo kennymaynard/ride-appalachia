@@ -7,8 +7,9 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Booking, BookingPayment, BookingTransfer, Business, BusinessClaim, Campaign, ExploreDestination, ExploreDestinationUpdateRequest, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
-from app.explore_schemas import ExploreOwnerUpdateRead, ExploreOwnerUpdateReview
+from app.models import Booking, BookingPayment, BookingTransfer, Business, BusinessClaim, Campaign, ExploreDestination, ExploreDestinationReport, ExploreDestinationTrail, ExploreDestinationUpdateRequest, ExplorePhotoSubmission, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
+from app.explore_schemas import ExploreAdminUpdate, ExploreDestinationInput, ExploreModerationReview, ExploreOwnerUpdateRead, ExploreOwnerUpdateReview
+from app.routes.explore import destination_payload, slugify
 from app.schemas import (
     AdminAnalyticsLocation,
     AdminAnalyticsPath,
@@ -499,6 +500,59 @@ def review_explore_update_request(request_id: int, payload: ExploreOwnerUpdateRe
     else: row.status = "rejected"
     row.approved_fields_json = fields; row.admin_notes = payload.admin_notes; row.reviewed_at = datetime.utcnow()
     db.commit(); db.refresh(row); return explore_update_payload(row,db)
+
+
+def admin_explore_payload(row: ExploreDestination) -> dict:
+    data = destination_payload(row)
+    data["photos"] = [{column.name: getattr(photo, column.name) for column in photo.__table__.columns} for photo in row.photos]
+    data["reports"] = [{column.name: getattr(report, column.name) for column in report.__table__.columns} for report in row.reports]
+    return data
+
+
+@router.get("/explore-destinations")
+def list_admin_explore_destinations(_: None = Depends(require_admin), db: Session = Depends(get_db)) -> list[dict]:
+    rows = db.query(ExploreDestination).options(selectinload(ExploreDestination.trails), selectinload(ExploreDestination.photos), selectinload(ExploreDestination.reports)).order_by(ExploreDestination.created_at.desc()).limit(500).all()
+    return [admin_explore_payload(row) for row in rows]
+
+
+@router.post("/explore-destinations", status_code=201)
+def create_admin_explore_destination(payload: ExploreDestinationInput, _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+    base = slugify(payload.name); slug = base; suffix = 2
+    while db.query(ExploreDestination.id).filter_by(slug=slug).first(): slug, suffix = f"{base}-{suffix}", suffix + 1
+    data = payload.model_dump(exclude={"nearby_trail_slugs"}); row = ExploreDestination(**data, slug=slug, status="pending")
+    db.add(row); db.flush()
+    for trail in payload.nearby_trail_slugs: db.add(ExploreDestinationTrail(destination_id=row.id, trail_slug=slugify(trail)))
+    db.commit(); db.refresh(row); return admin_explore_payload(row)
+
+
+@router.patch("/explore-destinations/{destination_id}")
+def update_admin_explore_destination(destination_id: int, payload: ExploreAdminUpdate, _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+    row = db.get(ExploreDestination, destination_id)
+    if not row: raise HTTPException(404, "Explore destination not found")
+    values = payload.model_dump(exclude_unset=True); trails = values.pop("nearby_trail_slugs", None)
+    for field, value in values.items(): setattr(row, field, value.strip().upper() if field == "state" and value else value)
+    if trails is not None:
+        db.query(ExploreDestinationTrail).filter_by(destination_id=row.id).delete()
+        for trail in dict.fromkeys(slugify(item) for item in trails if item.strip()): db.add(ExploreDestinationTrail(destination_id=row.id, trail_slug=trail))
+    db.commit(); db.refresh(row); return admin_explore_payload(row)
+
+
+@router.post("/explore-photos/{photo_id}/review")
+def review_admin_explore_photo(photo_id: int, payload: ExploreModerationReview, _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+    photo = db.get(ExplorePhotoSubmission, photo_id)
+    if not photo: raise HTTPException(404, "Photo submission not found")
+    photo.status = "approved" if payload.action == "approve" else "rejected"
+    if payload.action == "approve":
+        row = db.get(ExploreDestination, photo.destination_id); row.image_urls = list(dict.fromkeys([*row.image_urls, photo.image_url])); row.image_url = row.image_url or photo.image_url
+    db.commit(); return {"id": photo.id, "status": photo.status}
+
+
+@router.post("/explore-reports/{report_id}/review")
+def review_admin_explore_report(report_id: int, payload: ExploreModerationReview, _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+    report = db.get(ExploreDestinationReport, report_id)
+    if not report: raise HTTPException(404, "Destination report not found")
+    report.status = "resolved" if payload.action in {"resolve", "approve"} else "rejected"; db.commit()
+    return {"id": report.id, "status": report.status}
 
 
 @router.get("/analytics", response_model=AdminAnalyticsRead)

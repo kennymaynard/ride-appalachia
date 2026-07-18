@@ -760,3 +760,5 @@ export type ExploreDestination = {
 };
 
 export type ExploreOwnerUpdate = {id:number;destination_id:number;business_id:number;proposed_json:Record<string,unknown>;current_json:Record<string,unknown>;destination_name:string;business_name:string;status:string;approved_fields_json:string[];admin_notes:string;created_at:string;reviewed_at?:string|null};
+export type ExploreModerationItem = {id:number;status:string;created_at:string;image_url?:string;submitter_name?:string;reason?:string;details?:string};
+export type AdminExploreDestination = ExploreDestination & {photos:ExploreModerationItem[];reports:ExploreModerationItem[]};
