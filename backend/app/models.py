@@ -58,6 +58,14 @@ class TrailTalkStatus(str, Enum):
     rejected = "rejected"
 
 
+class ExploreStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    needs_changes = "needs_changes"
+    archived = "archived"
+    rejected = "rejected"
+
+
 class EventStatus(str, Enum):
     pending = "pending"
     approved = "approved"
@@ -895,4 +903,79 @@ class PageVisit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     path: Mapped[str] = mapped_column(String(240), index=True)
     referrer: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class ExploreDestination(Base):
+    __tablename__ = "explore_destinations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(180), index=True)
+    slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
+    category: Mapped[str] = mapped_column(String(60), index=True)
+    short_description: Mapped[str] = mapped_column(String(360), default="")
+    full_description: Mapped[str] = mapped_column(Text, default="")
+    address: Mapped[str] = mapped_column(String(240), default="")
+    city: Mapped[str] = mapped_column(String(120), default="", index=True)
+    county: Mapped[str] = mapped_column(String(120), default="", index=True)
+    state: Mapped[str] = mapped_column(String(2), default="", index=True)
+    postal_code: Mapped[str] = mapped_column(String(20), default="")
+    latitude: Mapped[float | None] = mapped_column(Float, index=True)
+    longitude: Mapped[float | None] = mapped_column(Float, index=True)
+    phone: Mapped[str] = mapped_column(String(40), default="")
+    website: Mapped[str] = mapped_column(Text, default="")
+    email: Mapped[str] = mapped_column(String(180), default="")
+    hours_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    admission_cost: Mapped[str] = mapped_column(String(120), default="")
+    parking_info: Mapped[str] = mapped_column(Text, default="")
+    accessibility_info: Mapped[str] = mapped_column(Text, default="")
+    pet_policy: Mapped[str] = mapped_column(Text, default="")
+    seasonal_info: Mapped[str] = mapped_column(Text, default="")
+    family_friendly: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    veteran_owned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    free_admission: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    indoor: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    outdoor: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    status: Mapped[str] = mapped_column(String(30), default=ExploreStatus.pending.value, index=True)
+    image_url: Mapped[str] = mapped_column(Text, default="")
+    image_urls: Mapped[list] = mapped_column(JSON, default=list)
+    submitted_by_rider_id: Mapped[int | None] = mapped_column(ForeignKey("riders.id"), index=True)
+    claimed_by_business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    trails: Mapped[list["ExploreDestinationTrail"]] = relationship(cascade="all, delete-orphan")
+    photos: Mapped[list["ExplorePhotoSubmission"]] = relationship(cascade="all, delete-orphan")
+    reports: Mapped[list["ExploreDestinationReport"]] = relationship(cascade="all, delete-orphan")
+
+
+class ExploreDestinationTrail(Base):
+    __tablename__ = "explore_destination_trails"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    destination_id: Mapped[int] = mapped_column(ForeignKey("explore_destinations.id"), index=True)
+    trail_slug: Mapped[str] = mapped_column(String(180), index=True)
+    __table_args__ = (UniqueConstraint("destination_id", "trail_slug", name="uq_explore_destination_trail"),)
+
+
+class ExplorePhotoSubmission(Base):
+    __tablename__ = "explore_photo_submissions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    destination_id: Mapped[int] = mapped_column(ForeignKey("explore_destinations.id"), index=True)
+    image_url: Mapped[str] = mapped_column(Text)
+    submitter_name: Mapped[str] = mapped_column(String(160), default="")
+    submitter_email: Mapped[str] = mapped_column(String(180), default="")
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class ExploreDestinationReport(Base):
+    __tablename__ = "explore_destination_reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    destination_id: Mapped[int] = mapped_column(ForeignKey("explore_destinations.id"), index=True)
+    reason: Mapped[str] = mapped_column(String(80), default="incorrect_information", index=True)
+    details: Mapped[str] = mapped_column(Text)
+    reporter_email: Mapped[str] = mapped_column(String(180), default="")
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
