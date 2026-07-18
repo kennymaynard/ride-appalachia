@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { getListings } from "../lib/api";
 import type { Business, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapConditionReport, MapPoint } from "./RideAreaMap";
 
@@ -25,5 +27,12 @@ type Props = {
 };
 
 export function TrailMapShell(props: Props) {
-  return <TrailLeafletMap {...props} />;
+  const [businesses, setBusinesses] = useState(props.businesses ?? []);
+
+  useEffect(() => {
+    if (businesses.length) return;
+    getListings("all").then(setBusinesses).catch(() => undefined);
+  }, [businesses.length]);
+
+  return <TrailLeafletMap {...props} businesses={businesses} />;
 }

@@ -131,6 +131,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
   const [businessStatus, setBusinessStatus] = useState<"all" | "pending" | "approved" | "denied">("all");
   const [businessCity, setBusinessCity] = useState("all");
   const [businessType, setBusinessType] = useState("all");
+  const [showAllBusinesses, setShowAllBusinesses] = useState(false);
   const [riderSearch, setRiderSearch] = useState("");
 
   const stats = useMemo(
@@ -149,7 +150,9 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     () => Array.from(new Set(businesses.map((business) => business.location?.split(",")[0]?.trim()).filter(Boolean))).sort(),
     [businesses],
   );
-  const filteredBusinesses = useMemo(() => businesses.filter((business) => {
+  const directoryIsOpen = showAllBusinesses || Boolean(businessSearch.trim()) || businessCity !== "all" || businessStatus !== "all" || businessType !== "all";
+  const featuredBusinesses = useMemo(() => businesses.filter((business) => business.is_featured && !business.is_deleted), [businesses]);
+  const filteredBusinesses = useMemo(() => directoryIsOpen ? businesses.filter((business) => {
     const haystack = `${business.name} ${business.location} ${business.description}`.toLowerCase();
     const matchesSearch = !businessSearch.trim() || haystack.includes(businessSearch.trim().toLowerCase());
     const matchesStatus = businessStatus === "all"
@@ -159,7 +162,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
     const matchesCity = businessCity === "all" || business.location?.toLowerCase().startsWith(businessCity.toLowerCase());
     const matchesType = businessType === "all" || business.category === businessType;
     return matchesSearch && matchesStatus && matchesCity && matchesType;
-  }), [businessCity, businessSearch, businessStatus, businessType, businesses]);
+  }) : [], [businessCity, businessSearch, businessStatus, businessType, businesses, directoryIsOpen]);
   const filteredRiders = useMemo(() => riderAccounts.filter((rider) =>
     `${rider.display_name} ${rider.email} ${rider.home_location}`.toLowerCase().includes(riderSearch.trim().toLowerCase()),
   ), [riderAccounts, riderSearch]);
@@ -1375,6 +1378,14 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
 
       <section className="admin-review-queue">
         <div className="section-heading">
+          <p>Featured businesses</p>
+          <h2>Priority partners and their click-throughs</h2>
+        </div>
+        {featuredBusinesses.length ? <div className="admin-featured-businesses">{featuredBusinesses.map((business) => <article className="admin-business-card" key={`featured-${business.id}`}><div className="listing-meta"><span>{business.category}</span><span>Featured</span></div><h3>{business.name}</h3><p>{business.location}</p><dl><div><dt>Listing views</dt><dd>{business.view_clicks}</dd></div><div><dt>Action click-throughs</dt><dd>{business.action_clicks}</dd></div><div><dt>Total engagement</dt><dd>{business.view_clicks + business.action_clicks}</dd></div><div><dt>Bookings</dt><dd>{business.bookings?.length ?? 0}</dd></div></dl><div className="admin-actions"><a href={`/business/${business.slug}`} target="_blank" rel="noreferrer">Open listing</a><button type="button" disabled={workingId === business.id} onClick={() => runAction(business.id, () => setBusinessFeatured(business.id, false, adminPassword))}>Remove featured</button></div></article>)}</div> : <p className="empty-state">No businesses are featured yet. Search the directory and choose Mark Featured.</p>}
+      </section>
+
+      <section className="admin-review-queue">
+        <div className="section-heading">
           <p>Business directory</p>
           <h2>Search, approve, deny, and edit businesses</h2>
         </div>
@@ -1385,6 +1396,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           </select>
           <select aria-label="Business city" value={businessCity} onChange={(event) => setBusinessCity(event.target.value)}><option value="all">All cities</option>{businessCities.map((city) => <option key={city} value={city}>{city}</option>)}</select>
           <select aria-label="Business type" value={businessType} onChange={(event) => setBusinessType(event.target.value)}><option value="all">All types</option>{["lodging","food","fuel","repairs","rentals","services"].map((type) => <option key={type} value={type}>{type}</option>)}</select>
+          <button type="button" className={showAllBusinesses ? "is-active" : ""} onClick={() => setShowAllBusinesses((current) => !current)}>{showAllBusinesses ? "Hide all businesses" : "Show all businesses"}</button>
         </div>
       </section>
       <BusinessImporter
@@ -1394,6 +1406,8 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
       <BusinessClaimsPanel adminPassword={adminPassword} />
 
       <div className="admin-list">
+        {!directoryIsOpen ? <p className="empty-state">Search for a business, choose a city or status, or click Show all businesses.</p> : null}
+        {directoryIsOpen && !filteredBusinesses.length ? <p className="empty-state">No businesses match these filters.</p> : null}
         {filteredBusinesses.map((business) => (
           <article className="admin-business-card" key={business.id}>
             {editingId === business.id ? (
@@ -1547,10 +1561,10 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
                   <dt>Tier</dt>
                   <dd>{business.subscription_tier.replaceAll("_", " ")}</dd>
                 </div>
-                <div>
-                  <dt>Clicks</dt>
-                  <dd>{business.view_clicks + business.action_clicks}</dd>
-                </div>
+                <div><dt>Listing views</dt><dd>{business.view_clicks}</dd></div>
+                <div><dt>Action click-throughs</dt><dd>{business.action_clicks}</dd></div>
+                <div><dt>Total engagement</dt><dd>{business.view_clicks + business.action_clicks}</dd></div>
+                <div><dt>Bookings</dt><dd>{business.bookings?.length ?? 0}</dd></div>
               </dl>
             </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import {
   CircleMarker,
@@ -47,6 +47,14 @@ type MapTool = "measure" | "checkpoint" | "trail" | null;
 
 function MapToolCapture({ activeTool, onPoint }: { activeTool: MapTool; onPoint: (point: [number, number]) => void }) {
   useMapEvents({ click: (event) => activeTool && onPoint([event.latlng.lat, event.latlng.lng]) });
+  return null;
+}
+
+function BusinessSearchFocus({ business }: { business?: Business }) {
+  const map = useMap();
+  useEffect(() => {
+    if (business && hasMapCoordinates(business)) map.flyTo([business.latitude as number, business.longitude as number], 17, { duration: 0.8 });
+  }, [business, map]);
   return null;
 }
 
@@ -393,6 +401,9 @@ export function TrailLeafletMap({
   const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
   const [checkpoints, setCheckpoints] = useState<[number, number][]>([]);
   const [markedTrail, setMarkedTrail] = useState<[number, number][]>([]);
+  const [businessQuery, setBusinessQuery] = useState("");
+  const [selectedBusinessId, setSelectedBusinessId] = useState<number>();
+  const businessMarkers = useRef(new Map<number, L.Marker>());
   const center: [number, number] = [
     (bounds[0][0] + bounds[1][0]) / 2,
     (bounds[0][1] + bounds[1][1]) / 2,
@@ -413,6 +424,15 @@ export function TrailLeafletMap({
     [points, selectedTrailId, showHiking, showOhv],
   );
   const visibleBusinesses = useMemo(() => businesses.filter(hasMapCoordinates), [businesses]);
+  const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId);
+  const matchingBusinesses = useMemo(() => {
+    const query = businessQuery.trim().toLowerCase();
+    if (!query) return [];
+    return visibleBusinesses.filter((business) => `${business.name} ${business.location}`.toLowerCase().includes(query)).slice(0, 8);
+  }, [businessQuery, visibleBusinesses]);
+  useEffect(() => {
+    if (selectedBusinessId) businessMarkers.current.get(selectedBusinessId)?.openPopup();
+  }, [selectedBusinessId]);
   const businessesWithCoordinates = businesses.filter(hasMapCoordinates).length;
   const visibleFeatures = useMemo(
     () =>
@@ -494,6 +514,12 @@ export function TrailLeafletMap({
     if (activeTool === "checkpoint") setCheckpoints((current) => [...current, point]);
     if (activeTool === "trail") setMarkedTrail((current) => [...current, point]);
   };
+  const findBusinessOnMap = () => {
+    const match = matchingBusinesses[0];
+    if (!match) return;
+    setBusinessQuery(match.name);
+    setSelectedBusinessId(match.id);
+  };
   const toggleWaterAccessType = (type: "trailer" | "carry_down" | "shoreline") => {
     setWaterAccessTypes((current) =>
       current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
@@ -512,6 +538,18 @@ export function TrailLeafletMap({
 
   return (
     <div className={isExpanded ? "trail-leaflet-map is-expanded" : "trail-leaflet-map"}>
+      <div className="map-business-search" role="search">
+        <input
+          aria-label="Search businesses on map"
+          list="map-business-options"
+          placeholder={businesses.length ? "Search businesses or city" : "Loading businesses…"}
+          value={businessQuery}
+          onChange={(event) => setBusinessQuery(event.target.value)}
+          onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); findBusinessOnMap(); } }}
+        />
+        <datalist id="map-business-options">{matchingBusinesses.map((business) => <option key={business.id} value={business.name}>{business.location}</option>)}</datalist>
+        <button disabled={!matchingBusinesses.length} type="button" onClick={findBusinessOnMap}>Find</button>
+      </div>
       <div className="map-corner-controls">
         <div className="map-style-switch" aria-label="Map style">
           {(["roads", "satellite", "topo"] as const).map((style) => (
@@ -660,6 +698,7 @@ export function TrailLeafletMap({
           />
         )}
         <BusinessMarkerPane />
+        <BusinessSearchFocus business={selectedBusiness} />
         <MapToolCapture activeTool={activeTool} onPoint={addToolPoint} />
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
@@ -802,6 +841,7 @@ export function TrailLeafletMap({
             key={`business-${business.id}`}
             pane="businessPane"
             icon={businessIcon(business)}
+            ref={(marker) => { if (marker) businessMarkers.current.set(business.id, marker); else businessMarkers.current.delete(business.id); }}
           >
             <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
               {business.name}
