@@ -9448,6 +9448,27 @@ button.tier-card.is-selected {
   padding: clamp(1rem, 3vw, 1.5rem);
 }
 
+.ride-calendar-state-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem) 0;
+}
+
+.ride-calendar-state-links a {
+  border: 1px solid rgba(242, 106, 27, 0.55);
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 900;
+  padding: 0.6rem 0.9rem;
+  text-decoration: none;
+}
+
+.ride-calendar-state-links a:hover { background: var(--orange); color: #050505; }
+.ride-calendar-content { padding-top: 1rem; }
+
 .event-filter-grid,
 .event-submission-grid {
   display: grid;

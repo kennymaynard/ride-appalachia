@@ -81,7 +81,7 @@ export default async function Home() {
         <RideAreaFinder areas={rideAreas} listings={[]} />
       </section>
 
-      {events.length ? <section className="home-section" aria-labelledby="next-rides-title"><div className="home-section-heading"><p className="eyebrow">Upcoming events</p><h2 id="next-rides-title">Next verified rides</h2></div><div className="trip-flow-grid">{events.slice(0, 3).map((event) => <article key={event.id}>{event.is_featured ? <span>Featured</span> : null}<h3>{event.title}</h3><p>{event.start_date} • {event.city}, {event.state}</p><Link href={`/trail-talk/rides/${event.slug}`}>View ride</Link></article>)}</div><div className="home-hero-actions"><Link href="/trail-talk">View All Rides</Link></div></section> : null}
+      {events.length ? <section className="home-section" aria-labelledby="next-rides-title"><div className="home-section-heading"><p className="eyebrow">Upcoming events</p><h2 id="next-rides-title">Next verified rides</h2></div><div className="trip-flow-grid">{events.slice(0, 3).map((event) => <article key={event.id}>{event.is_featured ? <span>Featured</span> : null}<h3>{event.title}</h3><p>{event.start_date} • {event.city}, {event.state}</p><Link href={`/trail-talk/rides/${event.slug}`}>View ride</Link></article>)}</div><div className="home-hero-actions"><Link href="/ride-calendar">View Ride Calendar</Link></div></section> : null}
 
       <section className="final-home-cta" aria-labelledby="final-cta-title">
         <h2 id="final-cta-title">Save the trip before you lose service.</h2>
