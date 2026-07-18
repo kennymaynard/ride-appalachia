@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TrailTalkPage() {
-  const [posts, events] = await Promise.all([getTrailTalkPosts(), getEvents().catch(() => [])]);
+  const [posts, events] = await Promise.all([getTrailTalkPosts(), getEvents({ verified: true }).catch(() => [])]);
 
   return (
     <main className="page trail-talk-page">
@@ -25,6 +25,7 @@ export default async function TrailTalkPage() {
           Find group rides, ask for repair help, share trail conditions, and keep
           up with what riders are seeing across Appalachia.
         </p>
+        <div className="hero-actions"><a href="/ride-calendar">Open Ride Calendar</a></div>
       </section>
 
       <section className="page-section">

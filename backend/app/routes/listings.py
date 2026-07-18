@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
@@ -78,6 +78,11 @@ def list_marketplace(
     featured: bool | None = None,
     location: str | None = None,
     q: str | None = None,
+    min_latitude: float | None = None,
+    max_latitude: float | None = None,
+    min_longitude: float | None = None,
+    max_longitude: float | None = None,
+    limit: int | None = Query(default=None, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[Business]:
     query = (
@@ -107,7 +112,17 @@ def list_marketplace(
             | Business.location.ilike(term)
         )
 
-    businesses = query.order_by(Business.created_at.desc()).all()
+    if min_latitude is not None:
+        query = query.filter(Business.latitude >= min_latitude)
+    if max_latitude is not None:
+        query = query.filter(Business.latitude <= max_latitude)
+    if min_longitude is not None:
+        query = query.filter(Business.longitude >= min_longitude)
+    if max_longitude is not None:
+        query = query.filter(Business.longitude <= max_longitude)
+
+    ordered_query = query.order_by(Business.is_featured.desc(), Business.created_at.desc())
+    businesses = ordered_query.limit(limit).all() if limit else ordered_query.all()
     sorted_businesses = sorted(
         businesses,
         key=lambda business: (

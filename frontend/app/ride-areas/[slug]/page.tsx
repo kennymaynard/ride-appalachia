@@ -23,12 +23,15 @@ export default async function RideAreaDetailPage({ params }: Props) {
     notFound();
   }
 
-  const allListings = await getListings("all");
   const nearbyListings = await getListings({
     category: "all",
-    location: area.locationQuery,
+    limit: 150,
+    minLatitude: area.latitude - 1.1,
+    maxLatitude: area.latitude + 1.1,
+    minLongitude: area.longitude - 1.4,
+    maxLongitude: area.longitude + 1.4,
   });
-  const plannerListings = nearbyListings.length ? nearbyListings : allListings;
+  const plannerListings = nearbyListings;
   let areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
   let areaConditionReports: TrailConditionReport[] = [];
   try {
@@ -107,7 +110,7 @@ export default async function RideAreaDetailPage({ params }: Props) {
           <RideAreaMap
             areas={rideAreas}
             activeSlug={area.slug}
-            businesses={allListings}
+            businesses={nearbyListings}
             compact
             reviews={areaReviews}
             conditionReports={areaConditionReports}

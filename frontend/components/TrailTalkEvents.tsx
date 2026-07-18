@@ -43,6 +43,10 @@ export function TrailTalkEvents({ initialEvents }: { initialEvents: RideEvent[] 
 
   const featured = useMemo(() => events.filter((event) => event.is_featured), [events]);
   const weekend = useMemo(() => events.filter(thisWeekend), [events]);
+  const upcoming = useMemo(
+    () => events.filter((event) => !event.is_featured && !thisWeekend(event)),
+    [events],
+  );
 
   async function applyFilters(event: FormEvent) {
     event.preventDefault(); setLoading(true); setError("");
@@ -129,7 +133,7 @@ export function TrailTalkEvents({ initialEvents }: { initialEvents: RideEvent[] 
       ) : null}
       {featured.length ? <><h3>Featured Events</h3><div className="trail-talk-event-grid">{cards(featured)}</div></> : null}
       {weekend.length ? <><h3>This Weekend</h3><div className="trail-talk-event-grid">{cards(weekend)}</div></> : null}
-      <h3>Upcoming Events</h3><div className="trail-talk-event-grid">{events.length ? cards(events) : <p className="empty-state">No approved verified events match these filters yet.</p>}</div>
+      <h3>More Upcoming Events</h3><div className="trail-talk-event-grid">{upcoming.length ? cards(upcoming) : featured.length || weekend.length ? null : <p className="empty-state">No approved verified events match these filters yet.</p>}</div>
       {planner ? (
         <div className="event-planner-panel dashboard-card">
           <div><h3>Plan: {planner.event.title}</h3><select value={radius} onChange={(e) => { const next = Number(e.target.value); setRadius(next); planRide(planner.event, next); }}>{radii.map((item) => <option value={item} key={item}>{item} miles</option>)}</select></div>

@@ -5834,6 +5834,43 @@ button.tier-card.is-selected {
   z-index: 900;
 }
 
+.map-business-search {
+  display: flex;
+  gap: 0.35rem;
+  left: 3.65rem;
+  position: absolute;
+  top: 0.75rem;
+  width: min(24rem, calc(100% - 38rem));
+  z-index: 900;
+}
+
+.map-business-search input {
+  background: rgba(5, 14, 9, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.55rem;
+  color: #fff;
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.map-business-search button {
+  background: #f26a1b;
+  border: 0;
+  border-radius: 0.55rem;
+  color: #08110b;
+  font-weight: 900;
+  padding: 0.45rem 0.75rem;
+}
+
+.map-business-search button:disabled { opacity: 0.5; }
+
+.admin-featured-businesses {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
 .map-style-switch {
   background: rgba(5, 14, 9, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -7804,6 +7841,16 @@ button.tier-card.is-selected {
     width: calc(100% - 4.2rem);
   }
 
+  .map-business-search {
+    left: 0.6rem;
+    top: 5.4rem;
+    width: calc(100% - 1.2rem);
+  }
+
+  .map-business-search + .map-corner-controls + .trail-layer-controls {
+    top: 8.45rem;
+  }
+
   .trail-layer-primary {
     max-width: 100%;
   }
@@ -9400,6 +9447,27 @@ button.tier-card.is-selected {
   background: rgba(8, 8, 8, 0.94);
   padding: clamp(1rem, 3vw, 1.5rem);
 }
+
+.ride-calendar-state-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem) 0;
+}
+
+.ride-calendar-state-links a {
+  border: 1px solid rgba(242, 106, 27, 0.55);
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 900;
+  padding: 0.6rem 0.9rem;
+  text-decoration: none;
+}
+
+.ride-calendar-state-links a:hover { background: var(--orange); color: #050505; }
+.ride-calendar-content { padding-top: 1rem; }
 
 .event-filter-grid,
 .event-submission-grid {

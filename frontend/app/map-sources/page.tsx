@@ -1,12 +1,8 @@
 import { RideAreaMap } from "../../components/RideAreaMap";
-import { getListings } from "../../lib/api";
 import { TrailMapSourceChecklist } from "../../components/TrailMapSourceChecklist";
 import { rideAreas } from "../../lib/sample-data";
 
-export const dynamic = "force-dynamic";
-
-export default async function MapSourcesPage() {
-  const businesses = await getListings("all");
+export default function MapSourcesPage() {
 
   return (
     <main className="page">
@@ -30,7 +26,7 @@ export default async function MapSourcesPage() {
           in-app planning corridors based on verified trail source locations
           until the official GPX, KMZ, or GeoJSON files are imported.
         </p>
-        <RideAreaMap areas={rideAreas} businesses={businesses} compact />
+        <RideAreaMap areas={rideAreas} businesses={[]} compact />
       </section>
       <TrailMapSourceChecklist areas={rideAreas} />
     </main>
