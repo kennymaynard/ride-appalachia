@@ -5,8 +5,9 @@ import { RideAreaMap } from "../../../components/RideAreaMap";
 import { TrailConditionReports } from "../../../components/TrailConditionReports";
 import { TrailPack } from "../../../components/TrailPack";
 import { TrailReviews } from "../../../components/TrailReviews";
-import { getListings, getTrailConditionReports, getTrailReviews } from "../../../lib/api";
-import type { TrailConditionReport } from "../../../lib/types";
+import { ExploreNearTrail } from "../../../components/ExploreNearTrail";
+import { getExploreDestinations, getListings, getTrailConditionReports, getTrailReviews } from "../../../lib/api";
+import type { ExploreDestination, TrailConditionReport } from "../../../lib/types";
 import { rideAreas, trailReviews } from "../../../lib/sample-data";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,12 @@ export default async function RideAreaDetailPage({ params }: Props) {
     maxLongitude: area.longitude + 1.4,
   });
   const plannerListings = nearbyListings;
+  let exploreDestinations: ExploreDestination[] = [];
+  try {
+    exploreDestinations = await getExploreDestinations(new URLSearchParams({ latitude: String(area.latitude), longitude: String(area.longitude), distance: "50", limit: "100" }).toString());
+  } catch {
+    exploreDestinations = [];
+  }
   let areaReviews = trailReviews.filter((review) => review.areaSlug === area.slug);
   let areaConditionReports: TrailConditionReport[] = [];
   try {
@@ -189,6 +196,8 @@ export default async function RideAreaDetailPage({ params }: Props) {
         trails={area.trails}
         reports={areaConditionReports}
       />
+
+      <ExploreNearTrail areaName={area.name} areaSlug={area.slug} latitude={area.latitude} longitude={area.longitude} destinations={exploreDestinations} />
 
       <TrailReviews areaSlug={area.slug} areaName={area.name} reviews={areaReviews} />
 

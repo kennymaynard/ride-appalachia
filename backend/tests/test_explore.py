@@ -37,5 +37,14 @@ class ExploreTests(unittest.TestCase):
         self.assertEqual(result["source"], "standard")
         self.assertEqual([stop["destination_id"] for stop in result["stops"]], [row.id])
 
+    def test_nearby_destinations_use_real_distance_and_featured_priority(self):
+        near = ExploreDestination(name="Nearby Museum", slug="nearby-museum", category="museums", short_description="A nearby destination for riders.", latitude=37.87, longitude=-82.54, status="approved")
+        featured = ExploreDestination(name="Featured Lodge", slug="featured-lodge", category="lodging", short_description="A featured destination for riders.", latitude=37.95, longitude=-82.54, featured=True, status="approved")
+        far = ExploreDestination(name="Faraway Park", slug="faraway-park", category="parks", short_description="A destination outside the radius.", latitude=39.0, longitude=-82.54, status="approved")
+        self.db.add_all([near, featured, far]); self.db.commit()
+        rows = list_destinations(latitude=37.8662, longitude=-82.5388, distance=25, limit=100, db=self.db)
+        self.assertEqual([row["slug"] for row in rows], ["featured-lodge", "nearby-museum"])
+        self.assertTrue(all(row["distance_miles"] <= 25 for row in rows))
+
 
 if __name__ == "__main__": unittest.main()

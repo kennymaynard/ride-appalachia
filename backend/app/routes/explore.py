@@ -1,3 +1,4 @@
+import math
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -25,10 +26,20 @@ def create_explore_plan(payload: ExplorePlanRequest, db: Session = Depends(get_d
     return {"source": "ai", "stops": stops, "message": "AI plan created from approved Explore destinations."}
 
 
-def destination_payload(row: ExploreDestination) -> dict:
+def destination_payload(row: ExploreDestination, distance_miles: float | None = None) -> dict:
     data = {column.name: getattr(row, column.name) for column in row.__table__.columns}
     data["nearby_trail_slugs"] = [trail.trail_slug for trail in row.trails]
+    data["distance_miles"] = distance_miles
     return data
+
+
+def haversine_miles(latitude: float, longitude: float, other_latitude: float, other_longitude: float) -> float:
+    radius = 3958.8
+    lat1, lat2 = math.radians(latitude), math.radians(other_latitude)
+    delta_lat = math.radians(other_latitude - latitude)
+    delta_lon = math.radians(other_longitude - longitude)
+    value = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+    return radius * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value))
 
 
 def slugify(value: str) -> str:
@@ -36,7 +47,7 @@ def slugify(value: str) -> str:
 
 
 @router.get("/explore", response_model=list[ExploreDestinationRead])
-def list_destinations(state: str = "", county: str = "", city: str = "", category: str = "", trail: str = "", q: str = "", family_friendly: bool | None = None, veteran_owned: bool | None = None, free_admission: bool | None = None, indoor: bool | None = None, outdoor: bool | None = None, limit: int = Query(100, ge=1, le=250), db: Session = Depends(get_db)) -> list[dict]:
+def list_destinations(state: str = "", county: str = "", city: str = "", category: str = "", trail: str = "", q: str = "", family_friendly: bool | None = None, veteran_owned: bool | None = None, free_admission: bool | None = None, indoor: bool | None = None, outdoor: bool | None = None, latitude: float | None = None, longitude: float | None = None, distance: float = 50, limit: int = Query(100, ge=1, le=250), db: Session = Depends(get_db)) -> list[dict]:
     query = db.query(ExploreDestination).options(selectinload(ExploreDestination.trails)).filter(ExploreDestination.status == "approved")
     for field, value in ((ExploreDestination.state, state.upper()), (ExploreDestination.county, county), (ExploreDestination.city, city), (ExploreDestination.category, category)):
         if value: query = query.filter(field.ilike(value))
@@ -45,8 +56,22 @@ def list_destinations(state: str = "", county: str = "", city: str = "", categor
     if trail: query = query.join(ExploreDestinationTrail).filter(ExploreDestinationTrail.trail_slug == trail)
     for field, value in ((ExploreDestination.family_friendly, family_friendly), (ExploreDestination.veteran_owned, veteran_owned), (ExploreDestination.free_admission, free_admission), (ExploreDestination.indoor, indoor), (ExploreDestination.outdoor, outdoor)):
         if value is not None: query = query.filter(field.is_(value))
-    rows = query.order_by(ExploreDestination.featured.desc(), ExploreDestination.verified.desc(), ExploreDestination.name).limit(limit).all()
-    return [destination_payload(row) for row in rows]
+    location_search = latitude is not None and longitude is not None
+    if location_search:
+        if not 1 <= distance <= 100: raise HTTPException(400, "Distance must be between 1 and 100 miles")
+        latitude_span = distance / 69
+        longitude_span = distance / max(1, 69 * math.cos(math.radians(latitude)))
+        query = query.filter(
+            ExploreDestination.latitude.is_not(None), ExploreDestination.longitude.is_not(None),
+            ExploreDestination.latitude.between(latitude - latitude_span, latitude + latitude_span),
+            ExploreDestination.longitude.between(longitude - longitude_span, longitude + longitude_span),
+        )
+    rows = query.order_by(ExploreDestination.featured.desc(), ExploreDestination.verified.desc(), ExploreDestination.name).limit(250 if location_search else limit).all()
+    if not location_search: return [destination_payload(row) for row in rows]
+    nearby = [(row, haversine_miles(latitude, longitude, row.latitude, row.longitude)) for row in rows]
+    nearby = [(row, miles) for row, miles in nearby if miles <= distance]
+    nearby.sort(key=lambda item: (not item[0].featured, item[1], not item[0].verified, item[0].name))
+    return [destination_payload(row, round(miles, 1)) for row, miles in nearby[:limit]]
 
 
 @router.get("/explore/{slug}", response_model=ExploreDestinationRead)
