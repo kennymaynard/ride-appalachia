@@ -112,6 +112,7 @@ def _event_date_range(value: str) -> tuple[date | None, date | None]:
         return datetime.strptime(f"{month} {day} {year}", "%b %d %Y" if len(month) <= 3 else "%B %d %Y").date()
 
     cleaned = _plain_html(value).replace("–", "-").replace("—", "-")
+    cleaned = re.sub(r"(\d)(?:st|nd|rd|th)\b", r"\1", cleaned, flags=re.I)
     single = re.fullmatch(r"([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})", cleaned)
     if single:
         parsed = named(*single.groups())
@@ -149,6 +150,15 @@ def official_html_items(text: str, source: EventSource) -> list[dict]:
             match = date_pattern.search(plain)
             if match and plain[:match.start()].strip(): rows.append((match.group(2), plain[:match.start()].strip()))
         venue, city, address = "Hatfield-McCoy Trails", "Matewan", "Matewan, WV"
+    elif host == "dentonfarmpark.com":
+        dates = re.findall(r'<h1[^>]*><strong>([A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?,\s*\d{4})\s*</strong></h1>', text, re.I)
+        rows = [(date_text, "Jeeps on the Farm") for date_text in dates]
+        venue, city, address = "Denton FarmPark", "Denton", "1072 Cranford Road, Denton, NC 27239"
+    elif host == "jeepjamboreeusa.com":
+        titles = re.findall(r'<span class="trip-name">(.*?)</span>', text, re.I | re.S)
+        dates = re.findall(r'<p class="trip-detail__label">Dates</p>\s*<p class="trip-detail__value">(.*?)</p>', text, re.I | re.S)
+        rows = [(date_text, title) for title, date_text in zip(titles, dates)]
+        venue, city, address = "Uwharrie National Forest", "Troy", "Troy, NC"
     else:
         return results
     for date_text, title_html in rows:

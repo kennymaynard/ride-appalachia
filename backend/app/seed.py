@@ -8,6 +8,9 @@ OFFICIAL_EVENT_SOURCES = [
     {"name": "Rush Off-Road Events", "base_url": "https://rushoffroad.com/", "state": "KY", "organizer_name": "Rush Off-Road"},
     {"name": "Windrock Park Events", "base_url": "https://windrockpark.com/", "state": "TN", "organizer_name": "Windrock Park"},
     {"name": "Hatfield-McCoy Area Events", "base_url": "https://www.devilsbackbonewv.com/thingstodo", "state": "WV", "organizer_name": "Devil's Backbone Adventure Resort"},
+    {"name": "Denton FarmPark Jeep Events", "base_url": "https://dentonfarmpark.com/jeeps-on-the-farm/", "state": "NC", "organizer_name": "Denton FarmPark"},
+    {"name": "Jeep Jamboree Uwharrie", "base_url": "https://jeepjamboreeusa.com/trip/12th-uwharrie-2026/", "state": "NC", "organizer_name": "Jeep Jamboree USA"},
+    {"name": "WNC JeepFest", "base_url": "https://wncjeepfest.com/event/2026-wnc-jeepfest/", "state": "NC", "organizer_name": "WNC JeepFest"},
 ]
 
 DEMO_BUSINESS_SLUGS = [
