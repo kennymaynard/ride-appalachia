@@ -86,6 +86,10 @@ def remove_demo_data(db: Session) -> None:
 def seed_database(db: Session) -> None:
     remove_demo_data(db)
     changed = False
+    dunlow_guide = db.query(Business).filter(Business.slug == "riding-with-sam-and-the-goat-mr2mf9gn").first()
+    if dunlow_guide and (dunlow_guide.latitude is None or dunlow_guide.longitude is None):
+        dunlow_guide.latitude, dunlow_guide.longitude = 38.0231473, -82.4315386
+        changed = True
     for source in OFFICIAL_EVENT_SOURCES:
         if db.query(EventSource).filter(EventSource.base_url == source["base_url"]).first():
             continue

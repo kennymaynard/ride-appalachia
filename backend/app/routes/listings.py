@@ -82,7 +82,7 @@ def list_marketplace(
     max_latitude: float | None = None,
     min_longitude: float | None = None,
     max_longitude: float | None = None,
-    limit: int | None = Query(default=None, ge=1, le=500),
+    limit: int = Query(default=500, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[Business]:
     query = (
@@ -122,7 +122,7 @@ def list_marketplace(
         query = query.filter(Business.longitude <= max_longitude)
 
     ordered_query = query.order_by(Business.is_featured.desc(), Business.created_at.desc())
-    businesses = ordered_query.limit(limit).all() if limit else ordered_query.all()
+    businesses = ordered_query.limit(limit).all()
     sorted_businesses = sorted(
         businesses,
         key=lambda business: (
