@@ -137,12 +137,26 @@ def official_html_items(text: str, source: EventSource) -> list[dict]:
         rows = re.findall(r'<div class="p-6 text-center">\s*<h3[^>]*>(.*?)</h3>\s*<div class="text-orange-300[^>]*>(.*?)</div>', text, re.I | re.S)
         venue, city, address = "Rush Off-Road", "Rush", "100 Four Mile Rd, Rush, KY 41168"
         rows = [(date_text, title) for title, date_text in rows]
+    elif host == "windrockpark.com":
+        pairs = re.findall(r'<h3 class="elementor-heading-title[^>]*>(.*?)</h3>.{0,700}?<h4 class="elementor-heading-title[^>]*>(.*?)</h4>', text, re.I | re.S)
+        rows = [(date_text, title) for title, date_text in pairs]
+        venue, city, address = "Windrock Park", "Oliver Springs", "921 Windrock Road, Oliver Springs, TN 37840"
+    elif host == "devilsbackbonewv.com":
+        rows = []
+        date_pattern = re.compile(r'((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+)?([A-Za-z]+\s+\d{1,2}(?:\s*[-–]\s*\d{1,2})?,\s*\d{4})', re.I)
+        for heading in re.findall(r'<h2[^>]*>(.*?)</h2>', text, re.I | re.S):
+            plain = _plain_html(heading)
+            match = date_pattern.search(plain)
+            if match and plain[:match.start()].strip(): rows.append((match.group(2), plain[:match.start()].strip()))
+        venue, city, address = "Hatfield-McCoy Trails", "Matewan", "Matewan, WV"
     else:
         return results
     for date_text, title_html in rows:
         start, end = _event_date_range(date_text)
         title = _plain_html(title_html)
         if not title or not start: continue
+        if host == "devilsbackbonewv.com" and "national trail" in title.lower():
+            city, address = "Gilbert", "Gilbert, WV"
         results.append({"external_id": sha256(f"{host}|{title}|{start}".encode()).hexdigest(), "source_url": source.base_url, "title": title, "organizer": source.organizer_name, "description": f"Official event at {venue}. Confirm current details with the organizer.", "state": source.state, "city": city, "venue": venue, "address": address, "start_date": start, "end_date": end or start, "official_url": source.base_url, "registration_url": "", "image_url": "", "structured": True, "raw_metadata": {"official_html_schedule": True}})
     return results
 

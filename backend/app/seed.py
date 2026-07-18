@@ -6,6 +6,8 @@ from app.models import Business, EventSource, TrailReview
 OFFICIAL_EVENT_SOURCES = [
     {"name": "Leatherwood Off-Road Park Events", "base_url": "https://leatherwoodoffroad.com/", "state": "KY", "organizer_name": "Leatherwood Off-Road Park"},
     {"name": "Rush Off-Road Events", "base_url": "https://rushoffroad.com/", "state": "KY", "organizer_name": "Rush Off-Road"},
+    {"name": "Windrock Park Events", "base_url": "https://windrockpark.com/", "state": "TN", "organizer_name": "Windrock Park"},
+    {"name": "Hatfield-McCoy Area Events", "base_url": "https://www.devilsbackbonewv.com/thingstodo", "state": "WV", "organizer_name": "Devil's Backbone Adventure Resort"},
 ]
 
 DEMO_BUSINESS_SLUGS = [
