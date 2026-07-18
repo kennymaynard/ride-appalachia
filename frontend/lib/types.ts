@@ -263,6 +263,7 @@ export type Business = {
   partner_tax_agreement_accepted_at?: string | null;
   is_approved: boolean;
   is_featured: boolean;
+  is_search_only?: boolean;
   is_deleted?: boolean;
   deleted_at?: string | null;
   view_clicks: number;

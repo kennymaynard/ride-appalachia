@@ -29,6 +29,7 @@ type Props = {
   features?: RideMapFeature[];
   riderPhotos?: TrailReview[];
   conditionReports?: MapConditionReport[];
+  onBusinessSearch?: (query: string) => Promise<Business[]>;
 };
 
 type BusinessLayer = Exclude<Category, "deals"> | "deals";
@@ -424,6 +425,7 @@ export function TrailLeafletMap({
   points,
   riderPhotos = [],
   conditionReports = [],
+  onBusinessSearch,
 }: Props) {
   const [showOhv, setShowOhv] = useState(false);
   const [showHiking, setShowHiking] = useState(false);
@@ -447,6 +449,8 @@ export function TrailLeafletMap({
   const [markedTrail, setMarkedTrail] = useState<[number, number][]>([]);
   const [businessQuery, setBusinessQuery] = useState("");
   const [selectedBusinessId, setSelectedBusinessId] = useState<number>();
+  const [searchedBusinesses, setSearchedBusinesses] = useState<Business[]>([]);
+  const [businessSearchPending, setBusinessSearchPending] = useState(false);
   const businessMarkers = useRef(new Map<number, L.Marker>());
   const center: [number, number] = [
     (bounds[0][0] + bounds[1][0]) / 2,
@@ -467,7 +471,12 @@ export function TrailLeafletMap({
       ),
     [points, selectedTrailId, showHiking, showOhv],
   );
-  const visibleBusinesses = useMemo(() => businesses.filter(hasMapCoordinates), [businesses]);
+  const allBusinesses = useMemo(() => {
+    const merged = new Map(businesses.map((business) => [business.id, business]));
+    searchedBusinesses.forEach((business) => merged.set(business.id, business));
+    return Array.from(merged.values());
+  }, [businesses, searchedBusinesses]);
+  const visibleBusinesses = useMemo(() => allBusinesses.filter(hasMapCoordinates), [allBusinesses]);
   const visibleEvents = useMemo(() => {
     const seen = new Set<string>();
     return events.filter((event) => {
@@ -478,7 +487,7 @@ export function TrailLeafletMap({
       return true;
     });
   }, [events]);
-  const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId);
+  const selectedBusiness = allBusinesses.find((business) => business.id === selectedBusinessId);
   const matchingBusinesses = useMemo(() => {
     const query = businessQuery.trim().toLowerCase();
     if (!query) return [];
@@ -567,8 +576,19 @@ export function TrailLeafletMap({
     if (activeTool === "checkpoint") setCheckpoints((current) => [...current, point]);
     if (activeTool === "trail") setMarkedTrail((current) => [...current, point]);
   };
-  const findBusinessOnMap = () => {
-    const match = matchingBusinesses[0];
+  const findBusinessOnMap = async () => {
+    let match: Business | undefined = matchingBusinesses[0];
+    const query = businessQuery.trim();
+    if (!match && query && onBusinessSearch) {
+      setBusinessSearchPending(true);
+      try {
+        const results = await onBusinessSearch(query);
+        setSearchedBusinesses(results);
+        match = results.find(hasMapCoordinates);
+      } finally {
+        setBusinessSearchPending(false);
+      }
+    }
     if (!match) return;
     setBusinessQuery(match.name);
     setSelectedBusinessId(match.id);
@@ -601,7 +621,9 @@ export function TrailLeafletMap({
           onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); findBusinessOnMap(); } }}
         />
         <datalist id="map-business-options">{matchingBusinesses.map((business) => <option key={business.id} value={business.name}>{business.location}</option>)}</datalist>
-        <button disabled={!matchingBusinesses.length} type="button" onClick={findBusinessOnMap}>Find</button>
+        <button disabled={!businessQuery.trim() || businessSearchPending} type="button" onClick={() => void findBusinessOnMap()}>
+          {businessSearchPending ? "Searching…" : "Find"}
+        </button>
       </div>
       <div className="map-corner-controls">
         <div className="map-style-switch" aria-label="Map style">

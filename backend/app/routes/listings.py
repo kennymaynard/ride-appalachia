@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
@@ -32,6 +33,7 @@ def compact_listing(business: Business) -> dict:
         "admin_notes": "",
         "is_approved": business.is_approved,
         "is_featured": business.is_featured,
+        "is_search_only": business.is_search_only,
         "is_deleted": business.is_deleted,
         "deleted_at": business.deleted_at,
         "subscription_status": business.subscription_status,
@@ -91,6 +93,18 @@ def list_marketplace(
         .filter(Business.is_approved.is_(True), Business.listing_status == "approved", Business.is_deleted.is_(False))
     )
 
+    # Search-only businesses stay available by direct detail URL and explicit
+    # name search, but do not clutter routine map or marketplace loads.
+    if not q or not q.strip():
+        query = query.filter(
+            or_(
+                Business.is_search_only.is_(False),
+                Business.is_featured.is_(True),
+                Business.subscription_status.in_(["active", "trialing"]),
+                Business.owner_email != "",
+            )
+        )
+
     if category and category != "all":
         if category == "deals":
             query = query.join(Deal).filter(Deal.is_active.is_(True))
@@ -106,10 +120,13 @@ def list_marketplace(
 
     if q:
         term = f"%{q}%"
-        query = query.filter(
+        text_match = (
             Business.name.ilike(term)
             | Business.description.ilike(term)
             | Business.location.ilike(term)
+        )
+        query = query.filter(text_match).filter(
+            or_(Business.is_search_only.is_(False), Business.name.ilike(term))
         )
 
     if min_latitude is not None:

@@ -52,6 +52,7 @@ from app.services.photos import normalize_photo_url
 from app.services.printify_service import list_curated_store_products
 from app.services.sms_service import send_marketing_lead_status_sms, send_sms
 from app.services.business_import import find_duplicate, scan_openstreetmap
+from app.services.business_visibility import imported_business_is_search_only
 from app.services.photos import fallback_photo_for_category
 
 router = APIRouter(tags=["admin"])
@@ -106,6 +107,7 @@ def admin_business_payload(business: Business) -> dict[str, object]:
         "admin_notes": admin_text(business.admin_notes, "", 0),
         "is_approved": bool(business.is_approved),
         "is_featured": bool(business.is_featured),
+        "is_search_only": bool(business.is_search_only),
         "is_deleted": bool(business.is_deleted),
         "deleted_at": business.deleted_at,
         "subscription_tier": admin_choice(business.subscription_tier, SUBSCRIPTION_TIERS, "local_business"),
@@ -379,6 +381,9 @@ def import_businesses(
             listing_status="approved",
             admin_notes=f"Approved unclaimed OpenStreetMap import for {candidate.area_name}.",
             is_approved=True,
+            is_search_only=imported_business_is_search_only(
+                candidate.name, candidate.category, "openstreetmap",
+            ),
             subscription_status="incomplete",
         )
         db.add(business)

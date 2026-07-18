@@ -105,6 +105,7 @@ class Business(Base):
     admin_notes: Mapped[str] = mapped_column(Text, default="")
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_search_only: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     subscription_tier: Mapped[str] = mapped_column(String(40), default=SubscriptionTier.local_business.value)
     subscription_status: Mapped[str] = mapped_column(String(40), default=SubscriptionStatus.incomplete.value)
     stripe_customer_id: Mapped[str] = mapped_column(String(180), default="")

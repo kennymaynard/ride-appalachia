@@ -725,6 +725,7 @@ class BusinessRead(BusinessBase):
     admin_notes: str = ""
     is_approved: bool
     is_featured: bool
+    is_search_only: bool = False
     is_deleted: bool = False
     deleted_at: Optional[datetime] = None
     subscription_status: str = "incomplete"

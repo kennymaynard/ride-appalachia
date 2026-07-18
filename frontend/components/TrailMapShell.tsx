@@ -52,5 +52,14 @@ export function TrailMapShell(props: Props) {
     getEvents().then(setEvents).catch(() => undefined);
   }, []);
 
-  return <TrailLeafletMap {...props} businesses={businesses} events={events} />;
+  const searchBusinesses = (query: string) => getListings({ category: "all", q: query, limit: 20 });
+
+  return (
+    <TrailLeafletMap
+      {...props}
+      businesses={businesses}
+      events={events}
+      onBusinessSearch={searchBusinesses}
+    />
+  );
 }
