@@ -67,6 +67,7 @@ class ExploreDestinationRead(ExploreDestinationInput):
     image_urls: list[str] = []
     created_at: datetime
     updated_at: datetime
+    distance_miles: float | None = None
 
 
 class ExploreReportCreate(BaseModel):

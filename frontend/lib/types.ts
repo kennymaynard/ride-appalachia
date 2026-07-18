@@ -746,5 +746,6 @@ export type ExploreDestination = {
   parking_info: string; accessibility_info: string; pet_policy: string; seasonal_info: string;
   family_friendly: boolean; veteran_owned: boolean; free_admission: boolean; indoor: boolean; outdoor: boolean;
   featured: boolean; verified: boolean; status: string; image_url: string; image_urls: string[]; nearby_trail_slugs: string[];
+  distance_miles?: number | null;
   created_at: string; updated_at: string;
 };
