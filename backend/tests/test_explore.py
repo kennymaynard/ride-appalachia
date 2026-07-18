@@ -5,8 +5,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
-from app.explore_schemas import ExploreDestinationInput
-from app.models import Business, ExploreDestination
+from app.explore_schemas import ExploreDestinationInput, ExploreOwnerUpdateCreate, ExploreOwnerUpdateReview
+from app.models import Business, ExploreDestination, ExploreDestinationUpdateRequest
+from app.routes.admin import review_explore_update_request
+from app.routes.business import submit_owner_explore_update
 from app.routes.explore import create_explore_claim_target, create_explore_plan, get_destination, list_destinations, suggest_destination
 from app.services.business_claims import link_approved_explore_destination
 from app.explore_schemas import ExplorePlanRequest
@@ -57,6 +59,52 @@ class ExploreTests(unittest.TestCase):
         self.assertTrue(business.is_search_only); self.assertFalse(bool(destination.claimed_by_business_id))
         link_approved_explore_destination(self.db, business); self.db.commit(); self.db.refresh(destination)
         self.assertEqual(destination.claimed_by_business_id, business.id)
+
+    def test_claimed_owner_updates_publish_only_admin_selected_fields(self):
+        business = Business(
+            name="Heritage Lodge", slug="heritage-lodge", category="lodging",
+            description="Original business description", phone="606-555-0100",
+            location="Inez, KY", photo_url="https://example.com/original.jpg",
+            website_url="https://example.com", owner_access_token="owner-token",
+            source_provider="explore", is_approved=True, listing_status="approved",
+        )
+        self.db.add(business); self.db.flush()
+        destination = ExploreDestination(
+            name="Heritage Lodge", slug="heritage-lodge-explore", category="lodging",
+            short_description="A local lodge for trail visitors.", full_description="Original destination description",
+            phone="606-555-0100", website="https://example.com", city="Inez", state="KY",
+            status="approved", claimed_by_business_id=business.id,
+        )
+        self.db.add(destination); self.db.commit()
+
+        request = submit_owner_explore_update(
+            business.id,
+            ExploreOwnerUpdateCreate(
+                description="Verified new description", phone="606-555-0199",
+                website="https://heritagelodge.example", amenities=["Trailer parking", "Breakfast"],
+                specials=["Rider discount"], events=["Fall trail weekend"],
+            ),
+            business=business,
+            db=self.db,
+        )
+        self.db.refresh(destination)
+        self.assertEqual(destination.full_description, "Original destination description")
+        self.assertEqual(request.status, "pending")
+
+        review_explore_update_request(
+            request.id,
+            ExploreOwnerUpdateReview(action="approve", approved_fields=["description", "amenities", "specials"], admin_notes="Verified by admin."),
+            None,
+            self.db,
+        )
+        self.db.refresh(destination); self.db.refresh(business)
+        self.assertEqual(destination.full_description, "Verified new description")
+        self.assertEqual(business.description, "Verified new description")
+        self.assertEqual(destination.amenities_json, ["Trailer parking", "Breakfast"])
+        self.assertEqual(destination.specials_json, ["Rider discount"])
+        self.assertEqual(destination.phone, "606-555-0100")
+        self.assertEqual(destination.events_json, [])
+        self.assertEqual(self.db.get(ExploreDestinationUpdateRequest, request.id).approved_fields_json, ["description", "amenities", "specials"])
 
 
 if __name__ == "__main__": unittest.main()

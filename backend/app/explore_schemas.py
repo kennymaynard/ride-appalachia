@@ -69,6 +69,52 @@ class ExploreDestinationRead(ExploreDestinationInput):
     updated_at: datetime
     distance_miles: float | None = None
     claimed_by_business_id: int | None = None
+    amenities_json: list[str] = []
+    specials_json: list[str] = []
+    events_json: list[str] = []
+
+
+class ExploreOwnerUpdateCreate(BaseModel):
+    description: str = Field(default="", max_length=10000)
+    phone: str = Field(default="", max_length=40)
+    website: str = Field(default="", max_length=1000)
+    hours_json: dict[str, Any] = {}
+    amenities: list[str] = Field(default_factory=list, max_length=50)
+    photo_urls: list[str] = Field(default_factory=list, max_length=20)
+    specials: list[str] = Field(default_factory=list, max_length=20)
+    events: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("website")
+    @classmethod
+    def valid_website(cls, value: str) -> str:
+        value = value.strip()
+        if value: HttpUrl(value)
+        return value
+
+    @field_validator("photo_urls")
+    @classmethod
+    def valid_photo_urls(cls, values: list[str]) -> list[str]:
+        for value in values: HttpUrl(value)
+        return values
+
+
+class ExploreOwnerUpdateRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int; destination_id: int; business_id: int; proposed_json: dict[str, Any]; status: str
+    approved_fields_json: list[str] = []; admin_notes: str = ""; created_at: datetime; reviewed_at: datetime | None = None
+    destination_name: str = ""; business_name: str = ""; current_json: dict[str, Any] = {}
+
+
+class ExploreOwnerUpdateReview(BaseModel):
+    action: str
+    approved_fields: list[str] = Field(default_factory=list)
+    admin_notes: str = Field(default="", max_length=2000)
+
+    @field_validator("action")
+    @classmethod
+    def valid_action(cls,value:str)->str:
+        if value not in {"approve","reject"}: raise ValueError("Action must be approve or reject")
+        return value
 
 
 class ExploreReportCreate(BaseModel):

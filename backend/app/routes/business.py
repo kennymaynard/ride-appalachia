@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import BookableListing, Business, BusinessClaim, Campaign, Deal, LodgingServiceRequest
+from app.models import BookableListing, Business, BusinessClaim, Campaign, Deal, ExploreDestination, ExploreDestinationUpdateRequest, LodgingServiceRequest
 from app.schemas import (
     BusinessClaimRequest,
     BusinessClaimRead,
@@ -27,6 +27,7 @@ from app.schemas import (
     LodgingServiceRequestCreate,
     LodgingServiceRequestRead,
 )
+from app.explore_schemas import ExploreOwnerUpdateCreate, ExploreOwnerUpdateRead
 from app.services.email_service import send_business_approval_notification, send_business_claim_code_email, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import fallback_photo_for_category, is_oversized_embedded_photo, normalize_photo_url
@@ -319,6 +320,22 @@ def verify_business_claim_email(claim_id: int, payload: BusinessClaimEmailVerify
     access_url = f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
     send_business_login_email(business.owner_email, business.name, access_url)
     return claim
+
+
+@router.get("/businesses/{business_id}/explore-update-requests", response_model=list[ExploreOwnerUpdateRead])
+def list_owner_explore_updates(business_id: int, business: Business = Depends(require_business_access), db: Session = Depends(get_db)) -> list[ExploreDestinationUpdateRequest]:
+    return db.query(ExploreDestinationUpdateRequest).filter_by(business_id=business.id).order_by(ExploreDestinationUpdateRequest.created_at.desc()).all()
+
+
+@router.post("/businesses/{business_id}/explore-update-requests", response_model=ExploreOwnerUpdateRead, status_code=202)
+def submit_owner_explore_update(business_id: int, payload: ExploreOwnerUpdateCreate, business: Business = Depends(require_business_access), db: Session = Depends(get_db)) -> ExploreDestinationUpdateRequest:
+    destination = db.query(ExploreDestination).filter_by(claimed_by_business_id=business.id).first()
+    if not destination: raise HTTPException(404, "No claimed Explore destination is connected to this business")
+    if db.query(ExploreDestinationUpdateRequest).filter_by(business_id=business.id, status="pending").first(): raise HTTPException(409, "This business already has an update awaiting review")
+    proposed = payload.model_dump()
+    if not any(value for value in proposed.values()): raise HTTPException(400, "Add at least one proposed update")
+    row = ExploreDestinationUpdateRequest(destination_id=destination.id, business_id=business.id, proposed_json=proposed)
+    db.add(row); db.commit(); db.refresh(row); return row
 
 
 @router.post("/businesses/{business_id}/deals", response_model=DealRead)
