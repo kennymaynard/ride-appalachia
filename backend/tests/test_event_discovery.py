@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base
 from app.models import Event, EventCandidate, EventSource
 from app.routes.event_discovery import create_source, review_candidate, run_discovery, update_source
-from app.services.event_discovery import candidate_status, event_changes, find_duplicate, scan_source, score_candidate
+from app.services.event_discovery import candidate_status, event_changes, find_duplicate, jsonld_items, official_html_items, scan_source, score_candidate
 
 class EventDiscoveryTests(unittest.TestCase):
     def setUp(self):
@@ -58,6 +58,26 @@ class EventDiscoveryTests(unittest.TestCase):
         self.assertEqual(candidate_status(self.item(state="OH")), "ignored")
         self.assertEqual(candidate_status(self.item(start_date=date.today() - timedelta(days=2), end_date=date.today() - timedelta(days=1))), "ignored")
         self.assertEqual(candidate_status(self.item(start_date=None, end_date=None)), "needs_review")
+
+    def test_hatfield_mccoy_national_trailfest_schedule(self):
+        source = self.source(base_url="https://www.nationaltrailfest.com/", state="WV", organizer_name="National TrailFest")
+        items = official_html_items("<h2>October 8-10, 2026</h2>", source)
+        self.assertEqual([(item["title"], item["start_date"], item["end_date"], item["city"]) for item in items], [("National TrailFest", date(2026, 10, 8), date(2026, 10, 10), "Gilbert")])
+        self.assertEqual(candidate_status(items[0]), "new")
+
+    def test_nrra_official_event_pages(self):
+        source = self.source(base_url="https://nationalrockracing.com/pages/pretty-place", state="TN", organizer_name="National Rock Racing Association")
+        html = '<h2 class="h1 hero__title"><div>Tennessee Topple<br>NRRA 6</div></h2><div class="hero__subtitle"><div>July 31-August 1, 2026</div></div></div>'
+        items = official_html_items(html, source)
+        self.assertEqual((items[0]["title"], items[0]["start_date"], items[0]["end_date"], items[0]["city"]), ("Tennessee Topple Off-Road Race", date(2026, 7, 31), date(2026, 8, 1), "Belvidere"))
+        self.assertEqual(candidate_status(items[0]), "new")
+
+    def test_doe_mountain_jsonld_decodes_night_ride(self):
+        source = self.source(base_url="https://dmra.gov/events/", state="TN", organizer_name="Doe Mountain Recreation Area")
+        html = '<script type="application/ld+json">[{"@type":"Event","name":"Spooktacular &#038; Night Ride","url":"https://dmra.gov/event/night-ride/","startDate":"2026-10-31","location":{"@type":"Place","name":"DMRA Adventure Center","address":{"addressLocality":"Mountain City","streetAddress":"1203 Harbin Hill Rd"}}}]</script>'
+        item = jsonld_items(html, source)[0]
+        self.assertEqual(item["title"], "Spooktacular & Night Ride")
+        self.assertEqual(candidate_status(item), "new")
 
     def test_duplicate_detection(self):
         event = Event(title="Harlan UTV Trail Ride", slug="harlan-ride", organizer="Club", description="Ride", state="KY", city="Harlan", start_date=self.item()["start_date"], end_date=self.item()["end_date"], category="group_ride", status="approved")

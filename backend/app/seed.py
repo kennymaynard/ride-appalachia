@@ -1,7 +1,20 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import Business, TrailReview
+from app.models import Business, EventSource, TrailReview
+
+OFFICIAL_EVENT_SOURCES = [
+    {"name": "Leatherwood Off-Road Park Events", "base_url": "https://leatherwoodoffroad.com/", "state": "KY", "organizer_name": "Leatherwood Off-Road Park"},
+    {"name": "Rush Off-Road Events", "base_url": "https://rushoffroad.com/", "state": "KY", "organizer_name": "Rush Off-Road"},
+    {"name": "Windrock Park Events", "base_url": "https://windrockpark.com/", "state": "TN", "organizer_name": "Windrock Park"},
+    {"name": "National TrailFest", "base_url": "https://www.nationaltrailfest.com/", "state": "WV", "organizer_name": "National TrailFest"},
+    {"name": "Doe Mountain Night Rides", "base_url": "https://dmra.gov/events/", "state": "TN", "organizer_name": "Doe Mountain Recreation Area"},
+    {"name": "NRRA Tennessee Topple", "base_url": "https://nationalrockracing.com/pages/pretty-place", "state": "TN", "organizer_name": "National Rock Racing Association"},
+    {"name": "NRRA Battle of the Bouncers", "base_url": "https://nationalrockracing.com/pages/windrock-park-1", "state": "TN", "organizer_name": "National Rock Racing Association"},
+    {"name": "Denton FarmPark Jeep Events", "base_url": "https://dentonfarmpark.com/jeeps-on-the-farm/", "state": "NC", "organizer_name": "Denton FarmPark"},
+    {"name": "Jeep Jamboree Uwharrie", "base_url": "https://jeepjamboreeusa.com/trip/12th-uwharrie-2026/", "state": "NC", "organizer_name": "Jeep Jamboree USA"},
+    {"name": "WNC JeepFest", "base_url": "https://wncjeepfest.com/event/2026-wnc-jeepfest/", "state": "NC", "organizer_name": "WNC JeepFest"},
+]
 
 DEMO_BUSINESS_SLUGS = [
     "rush-ridge-lodging-partner",
@@ -71,3 +84,11 @@ def remove_demo_data(db: Session) -> None:
 
 def seed_database(db: Session) -> None:
     remove_demo_data(db)
+    changed = False
+    for source in OFFICIAL_EVENT_SOURCES:
+        if db.query(EventSource).filter(EventSource.base_url == source["base_url"]).first():
+            continue
+        db.add(EventSource(**source, source_type="official_event_calendar", feed_url="", is_active=True, is_trusted=True, scan_frequency="twice_daily", notes="Official organizer-owned event schedule verified July 2026."))
+        changed = True
+    if changed:
+        db.commit()
