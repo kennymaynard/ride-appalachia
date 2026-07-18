@@ -31,6 +31,7 @@ import type {
   CampaignCreateInput,
   Category,
 } from "../lib/types";
+import { ExploreOwnerUpdatePanel } from "./ExploreOwnerUpdatePanel";
 
 type Props = {
   initialBusinesses: Business[];
@@ -906,6 +907,8 @@ export function BusinessDashboard({ initialBusinesses }: Props) {
       {selectedBusiness.admin_notes ? (
         <p className="form-error">{selectedBusiness.admin_notes}</p>
       ) : null}
+
+      <ExploreOwnerUpdatePanel business={selectedBusiness} />
 
       <section className="dashboard-card setup-checklist-card">
         <div className="setup-checklist-head">

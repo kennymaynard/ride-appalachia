@@ -953,6 +953,9 @@ class ExploreDestination(Base):
     status: Mapped[str] = mapped_column(String(30), default=ExploreStatus.pending.value, index=True)
     image_url: Mapped[str] = mapped_column(Text, default="")
     image_urls: Mapped[list] = mapped_column(JSON, default=list)
+    amenities_json: Mapped[list] = mapped_column(JSON, default=list)
+    specials_json: Mapped[list] = mapped_column(JSON, default=list)
+    events_json: Mapped[list] = mapped_column(JSON, default=list)
     submitted_by_rider_id: Mapped[int | None] = mapped_column(ForeignKey("riders.id"), index=True)
     claimed_by_business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
@@ -961,6 +964,19 @@ class ExploreDestination(Base):
     trails: Mapped[list["ExploreDestinationTrail"]] = relationship(cascade="all, delete-orphan")
     photos: Mapped[list["ExplorePhotoSubmission"]] = relationship(cascade="all, delete-orphan")
     reports: Mapped[list["ExploreDestinationReport"]] = relationship(cascade="all, delete-orphan")
+
+
+class ExploreDestinationUpdateRequest(Base):
+    __tablename__ = "explore_destination_update_requests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    destination_id: Mapped[int] = mapped_column(ForeignKey("explore_destinations.id"), index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), index=True)
+    proposed_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    approved_fields_json: Mapped[list] = mapped_column(JSON, default=list)
+    admin_notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class ExploreDestinationTrail(Base):

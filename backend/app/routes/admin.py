@@ -7,7 +7,8 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db, get_settings
-from app.models import Booking, BookingPayment, BookingTransfer, Business, BusinessClaim, Campaign, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
+from app.models import Booking, BookingPayment, BookingTransfer, Business, BusinessClaim, Campaign, ExploreDestination, ExploreDestinationUpdateRequest, LodgingServiceRequest, MarketingLead, PageVisit, Rider, StoreOrder
+from app.explore_schemas import ExploreOwnerUpdateRead, ExploreOwnerUpdateReview
 from app.schemas import (
     AdminAnalyticsLocation,
     AdminAnalyticsPath,
@@ -457,6 +458,47 @@ def review_business_claim(
     db.commit()
     db.refresh(claim)
     return claim
+
+
+def explore_update_payload(row: ExploreDestinationUpdateRequest, db: Session) -> dict:
+    destination=db.get(ExploreDestination,row.destination_id);business=db.get(Business,row.business_id)
+    data={column.name:getattr(row,column.name) for column in row.__table__.columns}
+    data["destination_name"]=destination.name if destination else "";data["business_name"]=business.name if business else ""
+    data["current_json"]={"description":destination.full_description,"phone":destination.phone,"website":destination.website,"hours_json":destination.hours_json,"amenities":destination.amenities_json,"photo_urls":destination.image_urls,"specials":destination.specials_json,"events":destination.events_json} if destination else {}
+    return data
+
+
+@router.get("/explore-update-requests", response_model=list[ExploreOwnerUpdateRead])
+def list_explore_update_requests(_: None = Depends(require_admin), status: str = "pending", db: Session = Depends(get_db)) -> list[dict]:
+    query = db.query(ExploreDestinationUpdateRequest)
+    if status != "all": query = query.filter_by(status=status)
+    return [explore_update_payload(row,db) for row in query.order_by(ExploreDestinationUpdateRequest.created_at.desc()).all()]
+
+
+@router.post("/explore-update-requests/{request_id}/review", response_model=ExploreOwnerUpdateRead)
+def review_explore_update_request(request_id: int, payload: ExploreOwnerUpdateReview, _: None = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+    row = db.get(ExploreDestinationUpdateRequest, request_id)
+    if not row or row.status != "pending": raise HTTPException(404, "Pending Explore update request not found")
+    destination = db.get(ExploreDestination, row.destination_id); business = db.get(Business, row.business_id)
+    if not destination or not business or destination.claimed_by_business_id != business.id: raise HTTPException(409, "Claimed destination connection is invalid")
+    allowed = {"description","phone","website","hours_json","amenities","photo_urls","specials","events"}
+    fields = [field for field in payload.approved_fields if field in allowed and field in row.proposed_json]
+    if payload.action == "approve" and not fields: raise HTTPException(400, "Select at least one field to approve")
+    if payload.action == "approve":
+        for field in fields:
+            value = row.proposed_json[field]
+            if field == "description": destination.full_description = value; business.description = value
+            elif field == "phone": destination.phone = value; business.phone = value or "Not listed"
+            elif field == "website": destination.website = value; business.website_url = value
+            elif field == "hours_json": destination.hours_json = value
+            elif field == "amenities": destination.amenities_json = value
+            elif field == "photo_urls": destination.image_urls = value; destination.image_url = value[0] if value else destination.image_url; business.photo_url = value[0] if value else business.photo_url
+            elif field == "specials": destination.specials_json = value
+            elif field == "events": destination.events_json = value
+        row.status = "approved"
+    else: row.status = "rejected"
+    row.approved_fields_json = fields; row.admin_notes = payload.admin_notes; row.reviewed_at = datetime.utcnow()
+    db.commit(); db.refresh(row); return explore_update_payload(row,db)
 
 
 @router.get("/analytics", response_model=AdminAnalyticsRead)

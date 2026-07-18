@@ -5,6 +5,7 @@ import { AdminEventsPanel } from "./AdminEventsPanel";
 import { EventsIntelligencePanel } from "./EventsIntelligencePanel";
 import { BusinessImporter } from "./BusinessImporter";
 import { BusinessClaimsPanel } from "./BusinessClaimsPanel";
+import { AdminExploreOwnerUpdates } from "./AdminExploreOwnerUpdates";
 import {
   approveBusiness,
   deleteAdminBusiness,
@@ -1414,6 +1415,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         onImported={() => reloadAdminBusinesses()}
       />
       <BusinessClaimsPanel adminPassword={adminPassword} />
+      <AdminExploreOwnerUpdates adminPassword={adminPassword} />
 
       <div className="admin-list">
         {!directoryIsOpen ? <p className="empty-state">Search for a business, choose a city or status, or click Show all businesses.</p> : null}
