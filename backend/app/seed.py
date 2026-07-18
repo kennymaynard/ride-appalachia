@@ -1,7 +1,12 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import Business, TrailReview
+from app.models import Business, EventSource, TrailReview
+
+OFFICIAL_EVENT_SOURCES = [
+    {"name": "Leatherwood Off-Road Park Events", "base_url": "https://leatherwoodoffroad.com/", "state": "KY", "organizer_name": "Leatherwood Off-Road Park"},
+    {"name": "Rush Off-Road Events", "base_url": "https://rushoffroad.com/", "state": "KY", "organizer_name": "Rush Off-Road"},
+]
 
 DEMO_BUSINESS_SLUGS = [
     "rush-ridge-lodging-partner",
@@ -71,3 +76,11 @@ def remove_demo_data(db: Session) -> None:
 
 def seed_database(db: Session) -> None:
     remove_demo_data(db)
+    changed = False
+    for source in OFFICIAL_EVENT_SOURCES:
+        if db.query(EventSource).filter(EventSource.base_url == source["base_url"]).first():
+            continue
+        db.add(EventSource(**source, source_type="official_event_calendar", feed_url="", is_active=True, is_trusted=True, scan_frequency="twice_daily", notes="Official organizer-owned event schedule verified July 2026."))
+        changed = True
+    if changed:
+        db.commit()
