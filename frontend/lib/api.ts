@@ -127,6 +127,13 @@ function shouldSkipApiDuringBuild() {
 type ListingFilters = {
   category?: Category | "all";
   location?: string;
+  q?: string;
+  featured?: boolean;
+  limit?: number;
+  minLatitude?: number;
+  maxLatitude?: number;
+  minLongitude?: number;
+  maxLongitude?: number;
 };
 
 type ApiTrailReview = {
@@ -221,6 +228,7 @@ export async function getListings(filters?: Category | "all" | ListingFilters): 
   const params = new URLSearchParams();
   const category = typeof filters === "object" ? filters.category : filters;
   const location = typeof filters === "object" ? filters.location : "";
+  const options = typeof filters === "object" ? filters : {};
   if (shouldSkipApiDuringBuild()) {
     if (!category || category === "all") return sampleBusinesses;
     if (category === "deals") return sampleBusinesses.filter((business) => business.deals.length > 0);
@@ -228,6 +236,13 @@ export async function getListings(filters?: Category | "all" | ListingFilters): 
   }
   if (category) params.set("category", category);
   if (location) params.set("location", location);
+  if (options.q) params.set("q", options.q);
+  if (typeof options.featured === "boolean") params.set("featured", String(options.featured));
+  if (options.limit) params.set("limit", String(options.limit));
+  if (typeof options.minLatitude === "number") params.set("min_latitude", String(options.minLatitude));
+  if (typeof options.maxLatitude === "number") params.set("max_latitude", String(options.maxLatitude));
+  if (typeof options.minLongitude === "number") params.set("min_longitude", String(options.minLongitude));
+  if (typeof options.maxLongitude === "number") params.set("max_longitude", String(options.maxLongitude));
 
   try {
     const response = await apiFetch(`/api/listings?${params.toString()}`, {

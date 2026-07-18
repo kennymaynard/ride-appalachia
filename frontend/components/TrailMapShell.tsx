@@ -31,6 +31,7 @@ export function TrailMapShell(props: Props) {
 
   useEffect(() => {
     if (businesses.length) return;
+    // The map intentionally keeps every approved business visible; search pages use bounded queries.
     getListings("all").then(setBusinesses).catch(() => undefined);
   }, [businesses.length]);
 

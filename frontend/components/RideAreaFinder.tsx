@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getListings } from "../lib/api";
 import type { Business, Category, RideArea, TrailInfo } from "../lib/types";
 import { ListingCard } from "./ListingCard";
 
@@ -176,6 +177,8 @@ export function RideAreaFinder({ areas, listings }: Props) {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState("");
   const [hasSearchedCity, setHasSearchedCity] = useState(false);
+  const [availableListings, setAvailableListings] = useState(listings);
+  const [isLoadingListings, setIsLoadingListings] = useState(false);
   const searchCoordinates = getSearchCoordinates(travelCity, coordinates);
 
   const rankedAreas = useMemo(() => {
@@ -226,7 +229,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
   }, [areas, hasSearchedCity, radiusMiles, searchCoordinates, travelCity]);
 
   const nearbyListings = useMemo<NearbyBusiness[]>(() => {
-    const ranked = listings.map((business) => {
+    const ranked = availableListings.map((business) => {
       const businessCoordinates = getBusinessCoordinates(business, areas);
       const distance =
         searchCoordinates && businessCoordinates
@@ -255,7 +258,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
       if (featuredDelta) return featuredDelta;
       return (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999);
     });
-  }, [areas, hasSearchedCity, listings, radiusMiles, searchCoordinates, travelCity]);
+  }, [areas, availableListings, hasSearchedCity, radiusMiles, searchCoordinates, travelCity]);
 
   const featuredNearbyListings = useMemo(
     () => nearbyListings.filter(isSponsoredOrFeatured).slice(0, 3),
@@ -265,6 +268,29 @@ export function RideAreaFinder({ areas, listings }: Props) {
     ? featuredNearbyListings
     : nearbyListings.slice(0, 3);
   const marketplaceLocation = travelCity || (coordinates ? rankedAreas[0]?.locationQuery ?? "" : "");
+
+  async function loadNearbyBusinesses(search: Coordinates | string) {
+    setIsLoadingListings(true);
+    try {
+      if (typeof search === "string") {
+        setAvailableListings(await getListings({ category: "all", location: search, limit: 100 }));
+        return;
+      }
+
+      const latitudeDelta = radiusMiles / 69;
+      const longitudeDelta = radiusMiles / Math.max(20, 69 * Math.cos(toRadians(search.latitude)));
+      setAvailableListings(await getListings({
+        category: "all",
+        limit: 150,
+        minLatitude: search.latitude - latitudeDelta,
+        maxLatitude: search.latitude + latitudeDelta,
+        minLongitude: search.longitude - longitudeDelta,
+        maxLongitude: search.longitude + longitudeDelta,
+      }));
+    } finally {
+      setIsLoadingListings(false);
+    }
+  }
 
   function useCurrentLocation() {
     setStatus("");
@@ -282,6 +308,10 @@ export function RideAreaFinder({ areas, listings }: Props) {
         });
         setHasSearchedCity(false);
         setStatus("Showing ride areas closest to your current location.");
+        void loadNearbyBusinesses({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
       },
       () => {
         setStatus("Location permission was blocked. Enter a travel city instead.");
@@ -291,10 +321,17 @@ export function RideAreaFinder({ areas, listings }: Props) {
   }
 
   function searchTravelCity() {
+    const city = travelCity.trim();
+    if (!city) {
+      setStatus("Enter a city or use your current location.");
+      return;
+    }
     setCoordinates(null);
     setHasSearchedCity(true);
+    const knownCity = findKnownCity(city);
+    void loadNearbyBusinesses(knownCity ?? city);
     setStatus(
-      findKnownCity(travelCity)
+      knownCity
         ? `Showing trails and stops within ${radiusMiles} miles of ${travelCity}.`
         : "Showing matches from known ride towns. Use a nearby town for mileage results.",
     );
@@ -385,7 +422,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
         <details className="location-result-group" open>
           <summary>
             <span>Marketplace</span>
-            <strong>Everything nearby by category</strong>
+            <strong>{isLoadingListings ? "Loading nearby businesses…" : "Everything nearby by category"}</strong>
           </summary>
           {previewNearbyListings.length ? (
             <div className="nearby-featured-list">
