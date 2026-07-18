@@ -1,0 +1,1 @@
+import { SuggestPlaceForm } from "../../../components/ExploreSubmissionForms"; export default function Page(){return <main className="page"><section className="page-hero compact"><p className="eyebrow">Community submission</p><h1>Suggest a Place</h1><p>Every suggestion requires admin approval.</p></section><SuggestPlaceForm/></main>}

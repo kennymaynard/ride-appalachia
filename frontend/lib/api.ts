@@ -1715,3 +1715,20 @@ export async function downloadAdminEventFlyer(eventId: number, format: "facebook
   if (!response.ok) throw new Error("Unable to generate flyer");
   const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `event-${eventId}-${format}.${format === "pdf" ? "pdf" : "svg"}`; anchor.click(); URL.revokeObjectURL(url);
 }
+
+export async function getExploreDestinations(query = ""): Promise<import("./types").ExploreDestination[]> {
+  const response = await apiFetch(`/api/explore${query ? `?${query}` : ""}`, { cache: "no-store", signal: timeoutSignal(15000) });
+  if (!response.ok) throw new Error("Unable to load Explore destinations");
+  return response.json();
+}
+
+export async function getExploreDestination(slug: string): Promise<import("./types").ExploreDestination | null> {
+  const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}`, { cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Unable to load destination");
+  return response.json();
+}
+
+export async function suggestExploreDestination(payload: Record<string, unknown>) { const response = await apiFetch("/api/explore/suggestions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this place"); return response.json(); }
+export async function submitExplorePhoto(slug: string, payload: Record<string, string>) { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/photos`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this photo"); return response.json(); }
+export async function reportExploreDestination(slug: string, payload: Record<string, string>) { const response = await apiFetch(`/api/explore/${encodeURIComponent(slug)}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error("Unable to submit this report"); return response.json(); }
