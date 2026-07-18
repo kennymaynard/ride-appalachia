@@ -63,6 +63,7 @@ class EventDiscoveryTests(unittest.TestCase):
         source = self.source(base_url="https://www.nationaltrailfest.com/", state="WV", organizer_name="National TrailFest")
         items = official_html_items("<h2>October 8-10, 2026</h2>", source)
         self.assertEqual([(item["title"], item["start_date"], item["end_date"], item["city"]) for item in items], [("National TrailFest", date(2026, 10, 8), date(2026, 10, 10), "Gilbert")])
+        self.assertEqual((items[0]["latitude"], items[0]["longitude"]), (37.6108224, -81.8614230))
         self.assertEqual(candidate_status(items[0]), "new")
 
     def test_nrra_official_event_pages(self):
@@ -70,6 +71,7 @@ class EventDiscoveryTests(unittest.TestCase):
         html = '<h2 class="h1 hero__title"><div>Tennessee Topple<br>NRRA 6</div></h2><div class="hero__subtitle"><div>July 31-August 1, 2026</div></div></div>'
         items = official_html_items(html, source)
         self.assertEqual((items[0]["title"], items[0]["start_date"], items[0]["end_date"], items[0]["city"]), ("Tennessee Topple Off-Road Race", date(2026, 7, 31), date(2026, 8, 1), "Belvidere"))
+        self.assertEqual((items[0]["latitude"], items[0]["longitude"]), (35.1292509, -86.1866532))
         self.assertEqual(candidate_status(items[0]), "new")
 
     def test_doe_mountain_jsonld_decodes_night_ride(self):

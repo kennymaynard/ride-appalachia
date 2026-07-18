@@ -1,7 +1,8 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import Business, EventSource, TrailReview
+from app.models import Business, Event, EventSource, TrailReview
+from app.services.event_discovery import OFFICIAL_VENUE_COORDINATES
 
 OFFICIAL_EVENT_SOURCES = [
     {"name": "Leatherwood Off-Road Park Events", "base_url": "https://leatherwoodoffroad.com/", "state": "KY", "organizer_name": "Leatherwood Off-Road Park"},
@@ -90,5 +91,10 @@ def seed_database(db: Session) -> None:
             continue
         db.add(EventSource(**source, source_type="official_event_calendar", feed_url="", is_active=True, is_trusted=True, scan_frequency="twice_daily", notes="Official organizer-owned event schedule verified July 2026."))
         changed = True
+    for event in db.query(Event).filter(Event.status == "approved", or_(Event.latitude.is_(None), Event.longitude.is_(None))).all():
+        coordinates = OFFICIAL_VENUE_COORDINATES.get((event.state, event.venue))
+        if coordinates:
+            event.latitude, event.longitude = coordinates
+            changed = True
     if changed:
         db.commit()

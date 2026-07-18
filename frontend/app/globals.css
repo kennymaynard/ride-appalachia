@@ -6074,6 +6074,32 @@ button.tier-card.is-selected {
 .business-map-marker.is-featured { background: #c77b00; border-color: #fff3b0; }
 .business-map-marker-wrap .business-map-marker { line-height: 1; }
 
+.ride-event-marker-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.ride-event-marker {
+  align-items: center;
+  background: #f26a1b;
+  border: 2px solid #fff;
+  border-radius: 0.5rem 0.5rem 0.5rem 0;
+  box-shadow: 0 2px 9px #0009;
+  color: #130600;
+  display: flex;
+  font-size: 0.58rem;
+  font-weight: 950;
+  height: 28px;
+  justify-content: center;
+  transform: rotate(-12deg);
+  width: 38px;
+}
+
+.ride-event-marker.is-featured {
+  background: #ffc857;
+  border-color: #fff3b0;
+}
+
 .trail-layer-group {
   border-top: 1px solid #ffffff2b;
   padding-top: 0.35rem;
