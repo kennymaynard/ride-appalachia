@@ -8,8 +8,8 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base
 from app.models import Business, BusinessClaim
 from app.routes.admin import import_businesses, list_businesses, review_business_claim
-from app.routes.business import claim_business
-from app.schemas import MAX_EMBEDDED_PHOTO_CHARS, BusinessClaimRequest, BusinessClaimReview, BusinessDashboardRead, BusinessImportRequest, BusinessImportScanRequest
+from app.routes.business import claim_business, verify_business_claim_email
+from app.schemas import MAX_EMBEDDED_PHOTO_CHARS, BusinessClaimEmailVerify, BusinessClaimRequest, BusinessClaimReview, BusinessDashboardRead, BusinessImportRequest, BusinessImportScanRequest
 from app.services.business_import import category_for, find_duplicate, scan_openstreetmap
 
 
@@ -89,6 +89,24 @@ class BusinessImportTests(unittest.TestCase):
         reviewed = review_business_claim(claim.id, BusinessClaimReview(action="approve", admin_notes="Registration verified"), None, self.db)
         self.db.refresh(business)
         self.assertEqual(reviewed.status, "approved"); self.assertEqual(business.owner_email, "owner@example.com"); self.assertTrue(business.owner_access_token); send_email.assert_called_once()
+
+    @patch("app.routes.business.send_business_login_email")
+    @patch("app.routes.business.send_business_claim_code_email")
+    @patch("app.routes.business.secrets.randbelow", return_value=123456)
+    def test_matching_business_domain_uses_email_code_for_automatic_verification(self, _random, send_code, send_login):
+        business = Business(name="Trail Lodge", slug="trail-lodge", category="lodging", description="Lodge", phone="6065550101", location="Town", website_url="https://traillodge.com", photo_url="", is_approved=True)
+        self.db.add(business); self.db.commit()
+        claim = claim_business(business.id, BusinessClaimRequest(claimant_name="Taylor Owner", claimant_email="manager@traillodge.com", claimant_phone="", claimant_role="Manager", proof_url="", proof_notes="I manage this business website and listing.", subscription_tier="local_business"), self.db)
+        self.assertEqual(claim.verification_level, "automatic"); self.assertTrue(claim.email_domain_match); self.assertTrue(claim.requires_email_code); send_code.assert_called_once()
+        verified = verify_business_claim_email(claim.id, BusinessClaimEmailVerify(claimant_email="manager@traillodge.com", code="123456"), self.db)
+        self.db.refresh(business)
+        self.assertEqual(verified.status, "approved"); self.assertIsNotNone(verified.email_verified_at); self.assertEqual(business.owner_email, "manager@traillodge.com"); send_login.assert_called_once()
+
+    def test_public_phone_match_routes_claim_to_manual_review(self):
+        business = Business(name="Trail Fuel", slug="trail-fuel-claim", category="fuel", description="Fuel", phone="(606) 555-0101", location="Town", website_url="", photo_url="", is_approved=True)
+        self.db.add(business); self.db.commit()
+        claim = claim_business(business.id, BusinessClaimRequest(claimant_name="Taylor Manager", claimant_email="taylor@gmail.com", claimant_phone="606-555-0101", claimant_role="Manager", proof_url="", proof_notes="Call the published number and ask for Taylor.", subscription_tier="local_business"), self.db)
+        self.assertEqual(claim.verification_level, "manual"); self.assertTrue(claim.public_phone_match); self.assertFalse(claim.requires_email_code)
 
     def test_duplicate_by_nearby_normalized_name(self):
         existing = Business(name="Trail Fuel!", slug="trail-fuel", category="fuel", description="Fuel", phone="6065550101", location="Town", latitude=37.1, longitude=-82.1, photo_url="")

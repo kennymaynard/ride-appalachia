@@ -157,9 +157,21 @@ class BusinessClaim(Base):
     proof_notes: Mapped[str] = mapped_column(Text, default="")
     subscription_tier: Mapped[str] = mapped_column(String(40), default=SubscriptionTier.local_business.value)
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    verification_level: Mapped[str] = mapped_column(String(30), default="manual", index=True)
+    verification_reason: Mapped[str] = mapped_column(Text, default="")
+    email_domain_match: Mapped[bool] = mapped_column(Boolean, default=False)
+    public_phone_match: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_code_hash: Mapped[str] = mapped_column(String(64), default="")
+    email_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    email_verification_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     admin_notes: Mapped[str] = mapped_column(Text, default="")
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    @property
+    def requires_email_code(self) -> bool:
+        return self.status == "pending" and self.verification_level == "automatic" and self.email_verified_at is None
 
 
 class Deal(Base):

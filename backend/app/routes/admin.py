@@ -439,6 +439,8 @@ def review_business_claim(
     claim.admin_notes = payload.admin_notes
     claim.reviewed_at = datetime.utcnow()
     if payload.action == "approve":
+        if claim.verification_level == "escalated" and len(payload.admin_notes.strip()) < 10:
+            raise HTTPException(status_code=400, detail="Document how the escalated claim was independently verified before approval")
         if business.owner_email:
             raise HTTPException(status_code=409, detail="Business is already claimed")
         claim.status = "approved"

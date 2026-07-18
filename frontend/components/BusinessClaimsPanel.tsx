@@ -31,7 +31,7 @@ export function BusinessClaimsPanel({ adminPassword }: { adminPassword: string }
     {status ? <p>{status}</p> : null}
     <div className="admin-list">
       {claims.map((claim) => <article className="admin-business-card" key={claim.id}>
-        <div><strong>{claim.claimant_name}</strong> · {claim.claimant_role}<br />{claim.claimant_email} · {claim.claimant_phone}<p>{claim.proof_notes}</p>{claim.proof_url ? <a href={claim.proof_url} rel="noreferrer" target="_blank">Open proof</a> : <strong>No proof link — verify notes manually</strong>}</div>
+        <div><div className="listing-meta"><span>{claim.verification_level}</span>{claim.email_domain_match?<span>Domain match</span>:null}{claim.public_phone_match?<span>Published phone match</span>:null}</div><strong>{claim.claimant_name}</strong> · {claim.claimant_role}<br />{claim.claimant_email} · {claim.claimant_phone}<p><strong>Routing reason:</strong> {claim.verification_reason}</p><p>{claim.proof_notes}</p>{claim.proof_url ? <a href={claim.proof_url} rel="noreferrer" target="_blank">Open proof</a> : <strong>No proof link — verify notes manually</strong>}</div>
         <div className="admin-actions"><button disabled={workingId === claim.id} type="button" onClick={() => review(claim, "approve")}>Approve ownership</button><button disabled={workingId === claim.id} type="button" onClick={() => review(claim, "reject")}>Reject</button></div>
       </article>)}
       {!claims.length ? <p className="empty-state">No pending ownership claims.</p> : null}

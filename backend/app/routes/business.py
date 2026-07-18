@@ -1,6 +1,8 @@
 import secrets
 import re
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
@@ -10,6 +12,7 @@ from app.models import BookableListing, Business, BusinessClaim, Campaign, Deal,
 from app.schemas import (
     BusinessClaimRequest,
     BusinessClaimRead,
+    BusinessClaimEmailVerify,
     BusinessLoginRead,
     BusinessLoginRequest,
     BusinessCreate,
@@ -24,7 +27,7 @@ from app.schemas import (
     LodgingServiceRequestCreate,
     LodgingServiceRequestRead,
 )
-from app.services.email_service import send_business_approval_notification, send_business_login_email
+from app.services.email_service import send_business_approval_notification, send_business_claim_code_email, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import fallback_photo_for_category, is_oversized_embedded_photo, normalize_photo_url
 from app.services.sms_service import send_sms
@@ -258,10 +261,59 @@ def claim_business(
     ).first()
     if existing:
         return existing
-    claim = BusinessClaim(**payload.model_dump(exclude={"claimant_email"}), claimant_email=email, business_id=business_id)
+    website_domain = urlparse(business.website_url if "://" in business.website_url else f"https://{business.website_url}").hostname or ""
+    website_domain = website_domain.lower().removeprefix("www.")
+    email_domain = email.rsplit("@", 1)[-1] if "@" in email else ""
+    domain_match = bool(website_domain and (email_domain == website_domain or email_domain.endswith(f".{website_domain}")))
+    clean_phone = re.sub(r"\D", "", payload.claimant_phone)
+    listed_phone = re.sub(r"\D", "", business.phone)
+    phone_match = bool(len(clean_phone) >= 7 and clean_phone == listed_phone)
+    conflict = db.query(BusinessClaim).filter(BusinessClaim.business_id == business_id, BusinessClaim.status == "pending", BusinessClaim.claimant_email != email).first() is not None
+    if conflict:
+        level, reason = "escalated", "Another person has an active claim for this listing."
+    elif domain_match:
+        level, reason = "automatic", f"Claim email matches the published business website domain ({website_domain})."
+    elif phone_match:
+        level, reason = "manual", "Claimant phone matches the published listing phone; admin confirmation is required."
+    else:
+        level, reason = "escalated", "No business-domain email or published-phone match; documentation and manual investigation are required."
+    claim = BusinessClaim(**payload.model_dump(exclude={"claimant_email"}), claimant_email=email, business_id=business_id, verification_level=level, verification_reason=reason, email_domain_match=domain_match, public_phone_match=phone_match)
     db.add(claim)
+    db.flush()
+    if level == "automatic":
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        claim.email_code_hash = hashlib.sha256(f"{claim.id}:{code}".encode()).hexdigest()
+        claim.email_code_expires_at = datetime.utcnow() + timedelta(minutes=15)
+        delivery = send_business_claim_code_email(email, business.name, code)
+        if not delivery.sent:
+            claim.verification_level = "manual"
+            claim.verification_reason = "Business-domain email matched, but the verification code could not be delivered; admin review is required."
+            claim.email_code_hash = ""; claim.email_code_expires_at = None
     db.commit()
     db.refresh(claim)
+    return claim
+
+
+@router.post("/business-claims/{claim_id}/verify-email", response_model=BusinessClaimRead)
+def verify_business_claim_email(claim_id: int, payload: BusinessClaimEmailVerify, db: Session = Depends(get_db)) -> BusinessClaim:
+    claim = db.get(BusinessClaim, claim_id)
+    if not claim or claim.status != "pending" or claim.verification_level != "automatic": raise HTTPException(404, "Automatic claim verification not found")
+    if claim.claimant_email != payload.claimant_email.strip().lower(): raise HTTPException(400, "Email does not match this claim")
+    if claim.email_verification_attempts >= 5: raise HTTPException(429, "Too many verification attempts; admin review is required")
+    if not claim.email_code_expires_at or claim.email_code_expires_at < datetime.utcnow(): raise HTTPException(400, "Verification code expired")
+    claim.email_verification_attempts += 1
+    expected = hashlib.sha256(f"{claim.id}:{payload.code}".encode()).hexdigest()
+    if not secrets.compare_digest(expected, claim.email_code_hash):
+        if claim.email_verification_attempts >= 5:
+            claim.verification_level = "escalated"; claim.verification_reason = "Email verification failed five times; manual investigation required."
+        db.commit(); raise HTTPException(400, "Verification code is incorrect")
+    business = db.get(Business, claim.business_id)
+    if not business or business.owner_email: raise HTTPException(409, "This listing is already claimed")
+    claim.email_verified_at = datetime.utcnow(); claim.status = "approved"; claim.reviewed_at = datetime.utcnow(); claim.email_code_hash = ""
+    business.owner_email = claim.claimant_email; business.subscription_tier = claim.subscription_tier; business.owner_access_token = secrets.token_urlsafe(24); business.owner_passcode_hash = ""
+    db.commit(); db.refresh(claim)
+    access_url = f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
+    send_business_login_email(business.owner_email, business.name, access_url)
     return claim
 
 
