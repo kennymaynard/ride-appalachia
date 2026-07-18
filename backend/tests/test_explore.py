@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
-from app.explore_schemas import ExploreAdminUpdate, ExploreDestinationInput, ExploreModerationReview, ExploreOwnerUpdateCreate, ExploreOwnerUpdateReview
+from app.explore_schemas import ExploreAdminUpdate, ExploreDestinationInput, ExploreDestinationRead, ExploreModerationReview, ExploreOwnerUpdateCreate, ExploreOwnerUpdateReview
 from app.models import Business, ExploreDestination, ExploreDestinationReport, ExploreDestinationUpdateRequest, ExplorePhotoSubmission
 from app.routes.admin import review_admin_explore_photo, review_admin_explore_report, review_explore_update_request, update_admin_explore_destination
 from app.routes.business import submit_owner_explore_update
@@ -32,6 +32,16 @@ class ExploreTests(unittest.TestCase):
         rows = list_destinations(state="KY", category="museums", family_friendly=True, limit=100, db=self.db)
         self.assertEqual([row["slug"] for row in rows], ["heritage-museum"])
         self.assertEqual(get_destination("heritage-museum", self.db)["name"], "Heritage Museum")
+
+    def test_approved_local_businesses_fill_explore_without_duplicates_or_chains(self):
+        local = Business(name="Inez Trail Cafe", slug="inez-trail-cafe", category="food", description="Local meals for riders and families.", phone="606-555-0101", location="12 Main Street, Inez, KY 41224", photo_url="", website_url="https://example.com", source_provider=None, listing_status="approved", is_approved=True, is_search_only=False)
+        chain = Business(name="McDonald's", slug="mcdonalds-inez", category="food", description="Imported chain listing.", phone="606-555-0102", location="Inez, KY 41224", photo_url="", website_url="", source_provider="openstreetmap", listing_status="approved", is_approved=True, is_search_only=True)
+        self.db.add_all([local, chain]); self.db.commit()
+        rows = list_destinations(q="Inez", limit=100, db=self.db)
+        self.assertEqual([row["slug"] for row in rows], ["business-inez-trail-cafe"])
+        self.assertEqual(rows[0]["city"], "Inez")
+        ExploreDestinationRead.model_validate(rows[0])
+        self.assertEqual(get_destination("business-inez-trail-cafe", self.db)["claimed_by_business_id"], local.id)
 
     def test_ai_plan_falls_back_and_stays_grounded(self):
         row = ExploreDestination(name="Trail Cafe", slug="trail-cafe", category="local_food", short_description="Local food near the trail.", city="Inez", state="KY", status="approved")

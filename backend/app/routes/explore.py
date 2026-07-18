@@ -14,6 +14,7 @@ from app.routes.riders import require_rider_access
 router = APIRouter(tags=["explore"])
 CLAIMABLE_CATEGORIES = {"local_food", "lodging", "historic_sites", "museums", "local_shops", "country_stores", "ice_cream_desserts", "family_activities", "campgrounds", "events", "fuel", "repairs_recovery", "hospitals_urgent_care"}
 BUSINESS_CATEGORY_MAP = {"local_food":"food", "ice_cream_desserts":"food", "lodging":"lodging", "campgrounds":"lodging", "fuel":"fuel", "repairs_recovery":"repairs"}
+EXPLORE_BUSINESS_CATEGORY_MAP = {"food":"local_food", "lodging":"lodging", "fuel":"fuel", "repairs":"repairs_recovery", "rentals":"family_activities", "services":"family_activities"}
 
 
 @router.post("/explore/plan", response_model=ExplorePlanRead)
@@ -34,6 +35,50 @@ def destination_payload(row: ExploreDestination, distance_miles: float | None = 
     data["nearby_trail_slugs"] = [trail.trail_slug for trail in row.trails]
     data["distance_miles"] = distance_miles
     return data
+
+
+def business_location_parts(location: str) -> tuple[str, str, str, str]:
+    parts = [part.strip() for part in (location or "").split(",") if part.strip()]
+    state_match = re.search(r"\b([A-Z]{2})\b(?:\s+(\d{5}(?:-\d{4})?))?$", parts[-1] if parts else "")
+    state = state_match.group(1) if state_match else ""
+    postal_code = state_match.group(2) if state_match and state_match.group(2) else ""
+    city = parts[-2] if state and len(parts) >= 2 else ""
+    address = ", ".join(parts[:-2]) if city else location
+    return address, city, state, postal_code
+
+
+def business_explore_payload(row: Business, distance_miles: float | None = None) -> dict:
+    address, city, state, postal_code = business_location_parts(row.location)
+    now = row.created_at
+    return {"id": -row.id, "name": row.name, "slug": f"business-{row.slug}", "category": EXPLORE_BUSINESS_CATEGORY_MAP.get(row.category, "family_activities"), "short_description": row.description[:360] or "Approved local business serving Appalachian riders.", "full_description": row.description, "address": address, "city": city, "county": "", "state": state, "postal_code": postal_code, "latitude": row.latitude, "longitude": row.longitude, "phone": row.phone, "website": row.website_url, "email": "", "hours_json": {}, "admission_cost": "", "parking_info": "", "accessibility_info": "", "pet_policy": "", "seasonal_info": "", "family_friendly": False, "veteran_owned": row.subscription_tier == "veteran_owned", "free_admission": False, "indoor": row.category in {"food", "lodging", "rentals", "services"}, "outdoor": row.category in {"fuel", "repairs", "rentals", "services"}, "featured": row.is_featured, "verified": True, "status": "approved", "image_url": row.photo_url, "image_urls": [row.photo_url] if row.photo_url else [], "amenities_json": [], "specials_json": [deal.title for deal in row.deals if deal.is_active], "events_json": [], "submitted_by_rider_id": None, "claimed_by_business_id": row.id, "created_at": now, "updated_at": now, "nearby_trail_slugs": [], "distance_miles": distance_miles}
+
+
+def eligible_explore_businesses(db: Session) -> list[Business]:
+    linked_ids = db.query(ExploreDestination.claimed_by_business_id).filter(ExploreDestination.claimed_by_business_id.is_not(None))
+    return db.query(Business).options(selectinload(Business.deals)).filter(Business.is_approved.is_(True), Business.listing_status == "approved", Business.is_deleted.is_(False), Business.is_search_only.is_(False), or_(Business.source_provider.is_(None), Business.source_provider != "explore"), Business.category.in_(EXPLORE_BUSINESS_CATEGORY_MAP), ~Business.id.in_(linked_ids)).order_by(Business.is_featured.desc(), Business.name).limit(500).all()
+
+
+def filtered_business_payloads(db: Session, state: str, county: str, city: str, category: str, trail: str, q: str, family_friendly: bool | None, veteran_owned: bool | None, free_admission: bool | None, indoor: bool | None, outdoor: bool | None, latitude: float | None, longitude: float | None, distance: float) -> list[dict]:
+    if trail or family_friendly is True or free_admission is True: return []
+    results = []
+    for business in eligible_explore_businesses(db):
+        payload = business_explore_payload(business)
+        text = f"{payload['name']} {business.location} {payload['short_description']}".lower()
+        if state and payload["state"].upper() != state.upper(): continue
+        if county: continue
+        if city and payload["city"].lower() != city.lower(): continue
+        if category and payload["category"] != category: continue
+        if q and q.strip().lower() not in text: continue
+        if veteran_owned is not None and payload["veteran_owned"] != veteran_owned: continue
+        if indoor is not None and payload["indoor"] != indoor: continue
+        if outdoor is not None and payload["outdoor"] != outdoor: continue
+        if latitude is not None and longitude is not None:
+            if business.latitude is None or business.longitude is None: continue
+            miles = haversine_miles(latitude, longitude, business.latitude, business.longitude)
+            if miles > distance: continue
+            payload["distance_miles"] = round(miles, 1)
+        results.append(payload)
+    return results
 
 
 def haversine_miles(latitude: float, longitude: float, other_latitude: float, other_longitude: float) -> float:
@@ -70,15 +115,25 @@ def list_destinations(state: str = "", county: str = "", city: str = "", categor
             ExploreDestination.longitude.between(longitude - longitude_span, longitude + longitude_span),
         )
     rows = query.order_by(ExploreDestination.featured.desc(), ExploreDestination.verified.desc(), ExploreDestination.name).limit(250 if location_search else limit).all()
-    if not location_search: return [destination_payload(row) for row in rows]
+    if not location_search:
+        results = [destination_payload(row) for row in rows]
+        results.extend(filtered_business_payloads(db,state,county,city,category,trail,q,family_friendly,veteran_owned,free_admission,indoor,outdoor,latitude,longitude,distance))
+        results.sort(key=lambda row: (not row["featured"], not row["verified"], row["name"]))
+        return results[:limit]
     nearby = [(row, haversine_miles(latitude, longitude, row.latitude, row.longitude)) for row in rows]
     nearby = [(row, miles) for row, miles in nearby if miles <= distance]
     nearby.sort(key=lambda item: (not item[0].featured, item[1], not item[0].verified, item[0].name))
-    return [destination_payload(row, round(miles, 1)) for row, miles in nearby[:limit]]
+    results = [destination_payload(row, round(miles, 1)) for row, miles in nearby]
+    results.extend(filtered_business_payloads(db,state,county,city,category,trail,q,family_friendly,veteran_owned,free_admission,indoor,outdoor,latitude,longitude,distance))
+    results.sort(key=lambda row: (not row["featured"], row["distance_miles"] if row["distance_miles"] is not None else 999, not row["verified"], row["name"]))
+    return results[:limit]
 
 
 @router.get("/explore/{slug}", response_model=ExploreDestinationRead)
 def get_destination(slug: str, db: Session = Depends(get_db)) -> dict:
+    if slug.startswith("business-"):
+        business = db.query(Business).options(selectinload(Business.deals)).filter(Business.slug == slug.removeprefix("business-"), Business.is_approved.is_(True), Business.listing_status == "approved", Business.is_deleted.is_(False), Business.is_search_only.is_(False)).first()
+        if business and business.category in EXPLORE_BUSINESS_CATEGORY_MAP: return business_explore_payload(business)
     row = db.query(ExploreDestination).options(selectinload(ExploreDestination.trails)).filter(ExploreDestination.slug == slug, ExploreDestination.status == "approved").first()
     if not row: raise HTTPException(404, "Destination not found")
     return destination_payload(row)
