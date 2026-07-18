@@ -13,7 +13,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import type { Business, Category, RideMapFeature, TrailReview } from "../lib/types";
+import type { Business, Category, RideEvent, RideMapFeature, TrailReview } from "../lib/types";
 import type { MapConditionReport, MapPoint } from "./RideAreaMap";
 import { RiverGaugeReadout } from "./RiverGaugeReadout";
 import { KentuckyElkLayers } from "./KentuckyElkLayers";
@@ -25,6 +25,7 @@ type Props = {
   ohvCount: number;
   points: MapPoint[];
   businesses?: Business[];
+  events?: RideEvent[];
   features?: RideMapFeature[];
   riderPhotos?: TrailReview[];
   conditionReports?: MapConditionReport[];
@@ -58,6 +59,14 @@ function BusinessSearchFocus({ business }: { business?: Business }) {
   return null;
 }
 
+function UserLocationFocus({ location }: { location?: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (location) map.flyTo(location, Math.max(map.getZoom(), 14), { duration: 0.8 });
+  }, [location, map]);
+  return null;
+}
+
 function distanceMiles(points: [number, number][]) {
   return points.slice(1).reduce((total, point, index) => total + L.latLng(points[index]).distanceTo(L.latLng(point)) / 1609.344, 0);
 }
@@ -69,6 +78,38 @@ function businessIcon(business: Business) {
     html: `<span class="business-map-marker${business.is_featured ? " is-featured" : ""}">${symbols[getBusinessLayer(business)]}</span>`,
     iconAnchor: [16, 32], iconSize: [32, 32],
   });
+}
+
+function eventIcon(event: RideEvent) {
+  return L.divIcon({
+    className: "ride-event-marker-wrap",
+    html: `<span class="ride-event-marker${event.is_featured ? " is-featured" : ""}">RIDE</span>`,
+    iconAnchor: [20, 34],
+    iconSize: [40, 34],
+  });
+}
+
+function hasEventCoordinates(event: RideEvent) {
+  return Number.isFinite(event.latitude) && Number.isFinite(event.longitude);
+}
+
+function eventMarkerPosition(event: RideEvent, events: RideEvent[]): [number, number] {
+  const latitude = event.latitude as number;
+  const longitude = event.longitude as number;
+  const venueEvents = events.filter((item) => item.latitude === event.latitude && item.longitude === event.longitude);
+  if (venueEvents.length < 2) return [latitude, longitude];
+  const index = venueEvents.findIndex((item) => item.id === event.id);
+  const angle = (index / venueEvents.length) * Math.PI * 2;
+  const radius = 0.0018;
+  return [latitude + Math.sin(angle) * radius, longitude + Math.cos(angle) * radius];
+}
+
+function eventDateLabel(event: RideEvent) {
+  const start = new Date(`${event.start_date}T12:00:00`);
+  const end = new Date(`${event.end_date}T12:00:00`);
+  const startLabel = start.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const endLabel = end.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return event.start_date === event.end_date ? startLabel : `${startLabel}–${endLabel}`;
 }
 
 const intelligenceLayerOptions: { id: IntelligenceLayer; label: string }[] = [
@@ -334,6 +375,8 @@ function BusinessMarkerPane() {
   useEffect(() => {
     const pane = map.getPane("businessPane") ?? map.createPane("businessPane");
     pane.style.zIndex = "800";
+    const ridePane = map.getPane("rideEventPane") ?? map.createPane("rideEventPane");
+    ridePane.style.zIndex = "810";
   }, [map]);
 
   return null;
@@ -376,6 +419,7 @@ function getTrailDash(point: MapPoint) {
 export function TrailLeafletMap({
   bounds,
   businesses = [],
+  events = [],
   features = [],
   points,
   riderPhotos = [],
@@ -424,6 +468,16 @@ export function TrailLeafletMap({
     [points, selectedTrailId, showHiking, showOhv],
   );
   const visibleBusinesses = useMemo(() => businesses.filter(hasMapCoordinates), [businesses]);
+  const visibleEvents = useMemo(() => {
+    const seen = new Set<string>();
+    return events.filter((event) => {
+      if (!hasEventCoordinates(event)) return false;
+      const key = `${event.title.toLowerCase()}|${event.start_date}|${event.venue.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [events]);
   const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId);
   const matchingBusinesses = useMemo(() => {
     const query = businessQuery.trim().toLowerCase();
@@ -433,7 +487,6 @@ export function TrailLeafletMap({
   useEffect(() => {
     if (selectedBusinessId) businessMarkers.current.get(selectedBusinessId)?.openPopup();
   }, [selectedBusinessId]);
-  const businessesWithCoordinates = businesses.filter(hasMapCoordinates).length;
   const visibleFeatures = useMemo(
     () =>
       selectedTrailId
@@ -575,7 +628,7 @@ export function TrailLeafletMap({
       </div>
       <div className="trail-layer-controls" aria-label="Trail map layers">
         <small className="business-map-diagnostic">
-          Businesses loaded: {businesses.length} · Coordinates: {businessesWithCoordinates} · Visible markers: {visibleBusinesses.length}
+          {visibleEvents.length} upcoming rides · {visibleBusinesses.length} local businesses
         </small>
         <div className="trail-layer-primary">
           <button
@@ -596,7 +649,7 @@ export function TrailLeafletMap({
         </div>
         <div className={controlsOpen ? "trail-layer-drawer is-open" : "trail-layer-drawer"}>
           <button type="button" onClick={clearAllLayers}>
-            Turn all layers off
+            Clear trail layers
           </button>
           <button
             aria-pressed={showOhv}
@@ -699,6 +752,7 @@ export function TrailLeafletMap({
         )}
         <BusinessMarkerPane />
         <BusinessSearchFocus business={selectedBusiness} />
+        <UserLocationFocus location={userLocation} />
         <MapToolCapture activeTool={activeTool} onPoint={addToolPoint} />
         <FitBounds bounds={bounds} />
         <TrailFocus point={selectedTrail} />
@@ -860,6 +914,28 @@ export function TrailLeafletMap({
                   </p>
                 ) : null}
                 <a href={`/business/${business.slug}`}>View listing</a>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {visibleEvents.map((event) => (
+          <Marker
+            icon={eventIcon(event)}
+            key={`event-${event.id}`}
+            pane="rideEventPane"
+            position={eventMarkerPosition(event, visibleEvents)}
+          >
+            <Tooltip direction="top" offset={[0, -14]} opacity={1} sticky>
+              {event.title} · {eventDateLabel(event)}
+            </Tooltip>
+            <Popup>
+              <div className="trail-popup">
+                <strong>{event.title}</strong>
+                {event.is_featured ? <span>Featured ride</span> : null}
+                <span>{eventDateLabel(event)} · {event.venue || event.city}, {event.state}</span>
+                <p>{event.description}</p>
+                <a href={`/trail-talk/rides/${event.slug}`}>View ride details</a>
+                {event.registration_url ? <a href={event.registration_url} rel="noreferrer" target="_blank">Register</a> : null}
               </div>
             </Popup>
           </Marker>

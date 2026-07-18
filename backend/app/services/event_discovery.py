@@ -23,6 +23,15 @@ TERRITORY = {"KY", "WV", "VA", "TN", "NC"}
 SOURCE_TYPES = {"official_website", "official_event_calendar", "tourism_calendar", "rss", "ical", "public_api", "registration_platform", "approved_social_page", "manual"}
 KEYWORDS = ("trail ride", "night ride", "group ride", "utv", "sxs", "atv", "jeep", "poker run", "charity ride", "off road", "jamboree", "trail fest", "trailfest", "mud event", "rock crawl", "overland", "dual sport", "adventure rally")
 TRACKING_KEYS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
+OFFICIAL_VENUE_COORDINATES = {
+    ("TN", "Windrock Park"): (36.0521794, -84.3369551),
+    ("TN", "Pretty Place Offroad"): (35.1292509, -86.1866532),
+    ("TN", "DMRA Adventure Center"): (36.4745636, -81.8048380),
+    ("KY", "Leatherwood Off-Road Park"): (37.0453029, -83.1644889),
+    ("KY", "Rush Off-Road"): (38.3353600, -82.7815527),
+    ("NC", "Denton FarmPark"): (35.5858411, -80.0703203),
+    ("WV", "Hatfield-McCoy Trails"): (37.6108224, -81.8614230),
+}
 
 def safe_url(value: str) -> str:
     parsed = urlparse(value.strip())
@@ -180,7 +189,8 @@ def official_html_items(text: str, source: EventSource) -> list[dict]:
         if not title or not start: continue
         if host == "devilsbackbonewv.com" and "national trail" in title.lower():
             city, address = "Gilbert", "Gilbert, WV"
-        results.append({"external_id": sha256(f"{host}|{title}|{start}".encode()).hexdigest(), "source_url": source.base_url, "title": title, "organizer": source.organizer_name, "description": f"Official event at {venue}. Confirm current details with the organizer.", "state": source.state, "city": city, "venue": venue, "address": address, "start_date": start, "end_date": end or start, "official_url": source.base_url, "registration_url": "", "image_url": "", "structured": True, "raw_metadata": {"official_html_schedule": True}})
+        latitude, longitude = OFFICIAL_VENUE_COORDINATES.get((source.state, venue), (None, None))
+        results.append({"external_id": sha256(f"{host}|{title}|{start}".encode()).hexdigest(), "source_url": source.base_url, "title": title, "organizer": source.organizer_name, "description": f"Official event at {venue}. Confirm current details with the organizer.", "state": source.state, "city": city, "venue": venue, "address": address, "latitude": latitude, "longitude": longitude, "start_date": start, "end_date": end or start, "official_url": source.base_url, "registration_url": "", "image_url": "", "structured": True, "raw_metadata": {"official_html_schedule": True}})
     return results
 
 def rss_items(text: str, source: EventSource) -> list[dict]:
@@ -230,6 +240,8 @@ def fetch_source(source: EventSource, timeout: int = 12) -> tuple[list[dict], in
         items = jsonld_items(body, source)
         if urlparse(source.base_url).netloc.lower().removeprefix("www.") == "dmra.gov":
             items = [item for item in items if "night ride" in normalize_title(item.get("title", ""))]
+            for item in items:
+                item["latitude"], item["longitude"] = OFFICIAL_VENUE_COORDINATES[("TN", "DMRA Adventure Center")]
         return (items or official_html_items(body, source)), response.status
 
 def candidate_status(item: dict) -> str:
@@ -251,7 +263,7 @@ def scan_source(db: Session, source: EventSource, timeout: int = 12) -> EventSou
             item["end_date"] = item.get("end_date") or item.get("start_date")
             score, reasons = score_candidate(item, source); duplicate, similarity = find_duplicate(db, item); changes = event_changes(duplicate, item) if duplicate else {}
             existing = db.query(EventCandidate).filter_by(source_id=source.id, external_id=str(item["external_id"])[:240]).first()
-            values = dict(source_url=item["source_url"], title=item["title"][:180], organizer=item.get("organizer", "")[:180], description=item.get("description", "")[:1000], state=item["state"], city=item.get("city", "")[:120], venue=item.get("venue", "")[:180], address=item.get("address", "")[:240], start_date=item.get("start_date"), end_date=item.get("end_date"), official_url=item.get("official_url", ""), registration_url=item.get("registration_url", ""), image_url=item.get("image_url", ""), raw_text=item.get("description", "")[:1000], raw_metadata_json=item.get("raw_metadata", {}), confidence_score=score, confidence_reasons=reasons, duplicate_event_id=duplicate.id if duplicate else None, change_detected=bool(changes), change_summary={**similarity, "fields": changes}, status=("possible_update" if changes else "possible_duplicate") if duplicate else candidate_status(item), last_seen_at=now)
+            values = dict(source_url=item["source_url"], title=item["title"][:180], organizer=item.get("organizer", "")[:180], description=item.get("description", "")[:1000], state=item["state"], city=item.get("city", "")[:120], venue=item.get("venue", "")[:180], address=item.get("address", "")[:240], latitude=item.get("latitude"), longitude=item.get("longitude"), start_date=item.get("start_date"), end_date=item.get("end_date"), official_url=item.get("official_url", ""), registration_url=item.get("registration_url", ""), image_url=item.get("image_url", ""), raw_text=item.get("description", "")[:1000], raw_metadata_json=item.get("raw_metadata", {}), confidence_score=score, confidence_reasons=reasons, duplicate_event_id=duplicate.id if duplicate else None, change_detected=bool(changes), change_summary={**similarity, "fields": changes}, status=("possible_update" if changes else "possible_duplicate") if duplicate else candidate_status(item), last_seen_at=now)
             if existing:
                 for key, value in values.items(): setattr(existing, key, value)
                 scan.candidates_updated += 1
