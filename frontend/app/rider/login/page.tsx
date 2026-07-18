@@ -22,10 +22,15 @@ export default function RiderLoginPage() {
   const [showProfileDetails, setShowProfileDetails] = useState(false);
   const [showResetRequest, setShowResetRequest] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [returnTo, setReturnTo] = useState("");
+  const [isSignup, setIsSignup] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setResetToken(params.get("reset_token") || "");
+    const requestedReturn = params.get("return_to") || "";
+    setReturnTo(requestedReturn.startsWith("/") && !requestedReturn.startsWith("//") ? requestedReturn : "");
+    if (params.get("signup") === "1") { setShowProfileDetails(true); setIsSignup(true); }
     setSavedToken(window.localStorage.getItem("aoa_rider_token") || "");
   }, []);
 
@@ -58,7 +63,7 @@ export default function RiderLoginPage() {
         home_longitude: coordinates.longitude,
       });
       window.localStorage.setItem("aoa_rider_token", loginResult.access_token);
-      window.location.href = loginResult.access_url;
+      window.location.href = returnTo || loginResult.access_url;
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -113,11 +118,10 @@ export default function RiderLoginPage() {
   return (
     <main className="page">
       <section className="page-hero compact">
-        <p className="eyebrow">Rider login</p>
-        <h1>{resetToken ? "Reset your rider password." : "Open your rider profile."}</h1>
+        <p className="eyebrow">{isSignup ? "Free rider signup" : "Rider login"}</p>
+        <h1>{resetToken ? "Reset your rider password." : isSignup ? "Create your free rider account." : "Open your rider profile."}</h1>
         <p>
-          Returning riders only need email and password. Profile details stay
-          saved to your ride card and can be updated when you want.
+          {isSignup ? "A rider account is required to save plans, submit community information, or claim a listing. Public maps and browsing remain open." : "Returning riders only need email and password. Profile details stay saved to your ride card and can be updated when you want."}
         </p>
       </section>
 
@@ -236,7 +240,7 @@ export default function RiderLoginPage() {
             {error ? <p className="form-error">{error}</p> : null}
             {message ? <p className="form-success">{message}</p> : null}
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Opening..." : "Open Rider Profile"}
+              {isSubmitting ? "Opening..." : isSignup ? "Create Free Rider Account" : "Open Rider Profile"}
             </button>
             <button type="button" className="ghost-button" onClick={() => setShowResetRequest(true)}>
               Forgot Password?

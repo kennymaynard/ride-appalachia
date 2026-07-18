@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { claimBusiness as submitBusinessClaim, verifyBusinessClaimEmail } from "../lib/api";
 import { partnerTiers } from "../lib/sample-data";
 import type { Business, BusinessClaim, Tier } from "../lib/types";
+import { requireRiderToken } from "../lib/rider-auth";
 
 type Props = {
   business: Business;
@@ -32,6 +33,8 @@ export function ClaimBusiness({ business }: Props) {
     [tier],
   );
   async function claimBusiness() {
+    const riderToken = requireRiderToken(`/business/claim?id=${business.id}`);
+    if (!riderToken) return;
     setError("");
     setIsSubmitting(true);
 
@@ -44,7 +47,7 @@ export function ClaimBusiness({ business }: Props) {
         proof_url: proofUrl.trim(),
         proof_notes: proofNotes.trim(),
         subscription_tier: tier,
-      });
+      }, riderToken);
       setSubmitted(claim);
       setIsSubmitting(false);
     } catch (caughtError) {

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getExploreDestinations } from "../lib/api";
 import type { ExploreDestination } from "../lib/types";
 import { exploreTripStorageKey, type ExploreTripStop } from "./AddExploreToTrip";
+import { requireRiderToken } from "../lib/rider-auth";
 
 export type ExploreTrailOption = { slug: string; matchSlugs: string[]; plannerKey: string; name: string; area: string; latitude: number; longitude: number };
 type DraftStop = ExploreTripStop & { day: number; distanceMiles?: number };
@@ -36,7 +37,7 @@ export function ExplorePlanBuilder({ trails }: { trails: ExploreTrailOption[] })
   }
   function move(index:number,direction:number){const next=index+direction;if(next<0||next>=stops.length)return;setStops(current=>{const copy=[...current];[copy[index],copy[next]]=[copy[next],copy[index]];return copy})}
   function replace(index:number){const current=stops[index];const replacement=eligible.find(place=>place.category===current.category&&!stops.some(stop=>stop.id===place.id))||eligible.find(place=>!stops.some(stop=>stop.id===place.id));if(!replacement){setStatus("No unused matching destination is available.");return}setStops(items=>items.map((stop,i)=>i===index?asStop(replacement,current.day,replacement.distance_miles??undefined):stop));setStatus(`${current.name} was replaced with ${replacement.name}.`)}
-  function saveToPlanner(){try{localStorage.setItem(exploreTripStorageKey,JSON.stringify(stops));if(selectedTrail){const key="ride-appalachia-trip-planner-selections",current=JSON.parse(localStorage.getItem(key)||"{}");const trails=Array.isArray(current.trails)?current.trails:[];localStorage.setItem(key,JSON.stringify({trails:trails.includes(selectedTrail.plannerKey)?trails:[...trails,selectedTrail.plannerKey],stops:Array.isArray(current.stops)?current.stops:[],outdoors:Array.isArray(current.outdoors)?current.outdoors:[]}))}setStatus("Finished itinerary added to the main trip planner.")}catch{setStatus("This browser blocked saving the itinerary.")}}
+  function saveToPlanner(){if(!requireRiderToken("/explore/plan"))return;try{localStorage.setItem(exploreTripStorageKey,JSON.stringify(stops));if(selectedTrail){const key="ride-appalachia-trip-planner-selections",current=JSON.parse(localStorage.getItem(key)||"{}");const trails=Array.isArray(current.trails)?current.trails:[];localStorage.setItem(key,JSON.stringify({trails:trails.includes(selectedTrail.plannerKey)?trails:[...trails,selectedTrail.plannerKey],stops:Array.isArray(current.stops)?current.stops:[],outdoors:Array.isArray(current.outdoors)?current.outdoors:[]}))}setStatus("Finished itinerary added to the main trip planner.")}catch{setStatus("This browser blocked saving the itinerary.")}}
   const choices:[[boolean,(value:boolean)=>void,string],...Array<[boolean,(value:boolean)=>void,string]>]=[[family,setFamily,"Family trip"],[lodging,setLodging,"Lodging"],[food,setFood,"Local food"],[outdoor,setOutdoor,"Outdoor"],[indoor,setIndoor,"Indoor"]];
 
   return <section className="explore-plan-builder">

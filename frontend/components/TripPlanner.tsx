@@ -6,6 +6,7 @@ import { shareTripPlan } from "../lib/api";
 import type { Business, Category, OutdoorStop, RideArea, TrailInfo } from "../lib/types";
 import { TrackedAction } from "./TrackedAction";
 import { exploreTripStorageKey, type ExploreTripStop } from "./AddExploreToTrip";
+import { getRiderToken, requireRiderToken } from "../lib/rider-auth";
 
 type PlannerItem = {
   id: string;
@@ -647,15 +648,15 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   }, []);
 
   useEffect(() => {
-    writeStoredValue(storageKey, JSON.stringify(selected));
+    if (getRiderToken()) writeStoredValue(storageKey, JSON.stringify(selected));
   }, [selected]);
 
   useEffect(() => {
-    writeStoredValue(planSelectionKey, JSON.stringify(planSelections));
+    if (getRiderToken()) writeStoredValue(planSelectionKey, JSON.stringify(planSelections));
   }, [planSelections]);
 
   useEffect(() => {
-    writeStoredValue(exploreTripStorageKey, JSON.stringify(exploreStops));
+    if (getRiderToken()) writeStoredValue(exploreTripStorageKey, JSON.stringify(exploreStops));
   }, [exploreStops]);
 
   function toggleItem(id: string) {
@@ -822,6 +823,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   }
 
   function saveOfflinePack() {
+    if (!requireRiderToken("/planner")) return;
     const pack = buildOfflinePack();
     if (writeStoredValue(offlinePackKey, JSON.stringify(pack))) {
       setOfflineStatus("Offline pack saved on this device.");
@@ -831,6 +833,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   }
 
   function downloadOfflinePack() {
+    if (!requireRiderToken("/planner")) return;
     const pack = buildOfflinePack();
     const blob = new Blob([JSON.stringify(pack, null, 2)], {
       type: "application/json",

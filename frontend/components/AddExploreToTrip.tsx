@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { ExploreDestination } from "../lib/types";
+import { requireRiderToken } from "../lib/rider-auth";
 
 export const exploreTripStorageKey = "aoa_explore_trip_stops";
 
@@ -22,6 +23,7 @@ function readStops(): ExploreTripStop[] {
 export function AddExploreToTrip({ destination, compact = false }: { destination: ExploreDestination; compact?: boolean }) {
   const router = useRouter();
   function add() {
+    if (!requireRiderToken(`/explore/${destination.slug}`)) return;
     const stops = readStops();
     if (!stops.some((stop) => stop.id === destination.id)) {
       stops.push({ id: destination.id, name: destination.name, slug: destination.slug, category: destination.category, address: destination.address, city: destination.city, state: destination.state, latitude: destination.latitude, longitude: destination.longitude, hours_json: destination.hours_json, arrivalNotes: "", day: 1 });
