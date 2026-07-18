@@ -83,6 +83,8 @@ export default async function Home() {
 
       {events.length ? <section className="home-section" aria-labelledby="next-rides-title"><div className="home-section-heading"><p className="eyebrow">Upcoming events</p><h2 id="next-rides-title">Next verified rides</h2></div><div className="trip-flow-grid">{events.slice(0, 3).map((event) => <article key={event.id}>{event.is_featured ? <span>Featured</span> : null}<h3>{event.title}</h3><p>{event.start_date} • {event.city}, {event.state}</p><Link href={`/trail-talk/rides/${event.slug}`}>View ride</Link></article>)}</div><div className="home-hero-actions"><Link href="/ride-calendar">View Ride Calendar</Link></div></section> : null}
 
+      <section className="home-section" aria-labelledby="explore-home-title"><div className="home-section-heading"><p className="eyebrow">Explore more than the trail</p><h2 id="explore-home-title">Turn the ride into an Appalachian getaway.</h2><p>Find local food, lodging, waterfalls, historic places, family activities, and hidden destinations near the trails you already love.</p></div><div className="home-feature-strip"><span>Eat</span><span>Stay</span><span>See</span><span>Do</span><span>Shop</span></div><div className="home-hero-actions"><Link href="/explore">Explore Appalachia</Link></div></section>
+
       <section className="final-home-cta" aria-labelledby="final-cta-title">
         <h2 id="final-cta-title">Save the trip before you lose service.</h2>
         <div className="home-hero-actions" aria-label="Final actions">

@@ -738,3 +738,13 @@ export type EventsIntelligence = {
   possible_updates: number; source_failures: number; needs_reverification: number;
   starting_within_30_days: number;
 };
+
+export type ExploreDestination = {
+  id: number; name: string; slug: string; category: string; short_description: string; full_description: string;
+  address: string; city: string; county: string; state: string; postal_code: string; latitude?: number | null; longitude?: number | null;
+  phone: string; website: string; email: string; hours_json: Record<string, string>; admission_cost: string;
+  parking_info: string; accessibility_info: string; pet_policy: string; seasonal_info: string;
+  family_friendly: boolean; veteran_owned: boolean; free_admission: boolean; indoor: boolean; outdoor: boolean;
+  featured: boolean; verified: boolean; status: string; image_url: string; image_urls: string[]; nearby_trail_slugs: string[];
+  created_at: string; updated_at: string;
+};
