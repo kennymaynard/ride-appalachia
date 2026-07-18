@@ -5,10 +5,24 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.explore_schemas import ExploreDestinationInput, ExploreDestinationRead, ExplorePhotoCreate, ExploreReportCreate
+from app.explore_schemas import ExploreDestinationInput, ExploreDestinationRead, ExplorePhotoCreate, ExplorePlanRead, ExplorePlanRequest, ExploreReportCreate
 from app.models import ExploreDestination, ExploreDestinationReport, ExploreDestinationTrail, ExplorePhotoSubmission
+from app.services.explore_ai import build_ai_plan
 
 router = APIRouter(tags=["explore"])
+
+
+@router.post("/explore/plan", response_model=ExplorePlanRead)
+def create_explore_plan(payload: ExplorePlanRequest, db: Session = Depends(get_db)) -> dict:
+    rows = db.query(ExploreDestination).filter(ExploreDestination.id.in_(payload.destination_ids), ExploreDestination.status == "approved").limit(60).all()
+    if not rows: raise HTTPException(400, "No approved destinations were supplied")
+    preferences = {"family_trip": payload.family_trip, "lodging_needed": payload.lodging_needed, "food_needed": payload.food_needed, "indoor": payload.indoor, "outdoor": payload.outdoor}
+    try:
+        stops = build_ai_plan(rows, payload.days, preferences)
+    except Exception:
+        stops = [{"destination_id": row.id, "day": min(payload.days, index // 3 + 1), "notes": "Suggested from approved Explore destinations."} for index, row in enumerate(rows[: payload.days * 3])]
+        return {"source": "standard", "stops": stops, "message": "AI was unavailable, so the standard planner built this trip."}
+    return {"source": "ai", "stops": stops, "message": "AI plan created from approved Explore destinations."}
 
 
 def destination_payload(row: ExploreDestination) -> dict:
