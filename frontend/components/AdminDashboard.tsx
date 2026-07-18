@@ -684,11 +684,21 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
           <span>Queues</span>
         </article>
       </div>
-      <details className="admin-review-queue" open>
+      <nav className="admin-quick-nav" aria-label="Admin sections">
+        <a href="#admin-events">Rides</a>
+        <a href="#admin-profiles">Profiles</a>
+        <a href="#admin-reviews">Reviews</a>
+        <a href="#admin-featured">Featured</a>
+        <a href="#admin-businesses">Businesses</a>
+      </nav>
+      <details className="admin-review-queue" id="admin-events">
         <summary className="admin-section-summary">Create ride / manage events</summary>
         <AdminEventsPanel adminPassword={adminPassword} />
       </details>
-      <EventsIntelligencePanel adminPassword={adminPassword} />
+      <details className="admin-review-queue">
+        <summary className="admin-section-summary">Ride scanner and source review</summary>
+        <EventsIntelligencePanel adminPassword={adminPassword} />
+      </details>
 
       {analytics ? (
         <section className="dashboard-card admin-analytics-card">
@@ -772,7 +782,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         </section>
       ) : null}
 
-      <div className="admin-review-queue">
+      <div className="admin-review-queue" id="admin-profiles">
         <div className="section-heading">
           <p>Rider accounts</p>
           <h2>Profiles saved in the app</h2>
@@ -1135,7 +1145,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         )}
       </div>
 
-      <div className="admin-review-queue">
+      <div className="admin-review-queue" id="admin-reviews">
         <div className="section-heading">
           <p>Review queue</p>
           <h2>Pending trail reviews</h2>
@@ -1376,7 +1386,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         )}
       </div>
 
-      <section className="admin-review-queue">
+      <section className="admin-review-queue" id="admin-featured">
         <div className="section-heading">
           <p>Featured businesses</p>
           <h2>Priority partners and their click-throughs</h2>
@@ -1384,7 +1394,7 @@ export function AdminDashboard({ initialBusinesses = [] }: Props) {
         {featuredBusinesses.length ? <div className="admin-featured-businesses">{featuredBusinesses.map((business) => <article className="admin-business-card" key={`featured-${business.id}`}><div className="listing-meta"><span>{business.category}</span><span>Featured</span></div><h3>{business.name}</h3><p>{business.location}</p><dl><div><dt>Listing views</dt><dd>{business.view_clicks}</dd></div><div><dt>Action click-throughs</dt><dd>{business.action_clicks}</dd></div><div><dt>Total engagement</dt><dd>{business.view_clicks + business.action_clicks}</dd></div><div><dt>Bookings</dt><dd>{business.bookings?.length ?? 0}</dd></div></dl><div className="admin-actions"><a href={`/business/${business.slug}`} target="_blank" rel="noreferrer">Open listing</a><button type="button" disabled={workingId === business.id} onClick={() => runAction(business.id, () => setBusinessFeatured(business.id, false, adminPassword))}>Remove featured</button></div></article>)}</div> : <p className="empty-state">No businesses are featured yet. Search the directory and choose Mark Featured.</p>}
       </section>
 
-      <section className="admin-review-queue">
+      <section className="admin-review-queue" id="admin-businesses">
         <div className="section-heading">
           <p>Business directory</p>
           <h2>Search, approve, deny, and edit businesses</h2>
