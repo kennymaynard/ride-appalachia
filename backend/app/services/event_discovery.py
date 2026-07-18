@@ -21,7 +21,7 @@ from app.models import Event, EventCandidate, EventSource, EventSourceScan
 USER_AGENT = "AppalachiaOffroad-EventDiscovery/1.0 (+https://appalachiaoffroadapp.com/contact)"
 TERRITORY = {"KY", "WV", "VA", "TN", "NC"}
 SOURCE_TYPES = {"official_website", "official_event_calendar", "tourism_calendar", "rss", "ical", "public_api", "registration_platform", "approved_social_page", "manual"}
-KEYWORDS = ("trail ride", "group ride", "utv", "sxs", "atv", "jeep", "poker run", "charity ride", "off-road", "jamboree", "trail fest", "mud event", "rock crawl", "overland", "dual sport", "adventure rally")
+KEYWORDS = ("trail ride", "night ride", "group ride", "utv", "sxs", "atv", "jeep", "poker run", "charity ride", "off road", "jamboree", "trail fest", "trailfest", "mud event", "rock crawl", "overland", "dual sport", "adventure rally")
 TRACKING_KEYS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
 
 def safe_url(value: str) -> str:
@@ -101,7 +101,7 @@ def jsonld_items(text: str, source: EventSource) -> list[dict]:
             if "Event" not in types: continue
             location = node.get("location") or {}; address = location.get("address") or {}; organizer = node.get("organizer") or {}
             start = parse_date(node.get("startDate")); end = parse_date(node.get("endDate")) or start
-            results.append({"external_id": str(node.get("@id") or node.get("url") or sha256(json.dumps(node, sort_keys=True).encode()).hexdigest()), "source_url": node.get("url") or source.base_url, "title": str(node.get("name") or "").strip(), "organizer": organizer.get("name", "") if isinstance(organizer, dict) else str(organizer), "description": re.sub("<[^>]+>", " ", str(node.get("description") or ""))[:1000], "state": source.state, "city": address.get("addressLocality", "") if isinstance(address, dict) else "", "venue": location.get("name", "") if isinstance(location, dict) else "", "address": address.get("streetAddress", "") if isinstance(address, dict) else str(address), "start_date": start, "end_date": end, "official_url": node.get("url") or source.base_url, "registration_url": node.get("offers", {}).get("url", "") if isinstance(node.get("offers"), dict) else "", "image_url": (node.get("image") or "") if isinstance(node.get("image"), str) else "", "structured": True, "raw_metadata": node})
+            results.append({"external_id": str(node.get("@id") or node.get("url") or sha256(json.dumps(node, sort_keys=True).encode()).hexdigest()), "source_url": node.get("url") or source.base_url, "title": unescape(str(node.get("name") or "")).strip(), "organizer": organizer.get("name", "") if isinstance(organizer, dict) else str(organizer), "description": re.sub("<[^>]+>", " ", unescape(str(node.get("description") or "")))[:1000], "state": source.state, "city": address.get("addressLocality", "") if isinstance(address, dict) else "", "venue": location.get("name", "") if isinstance(location, dict) else "", "address": address.get("streetAddress", "") if isinstance(address, dict) else str(address), "start_date": start, "end_date": end, "official_url": node.get("url") or source.base_url, "registration_url": node.get("offers", {}).get("url", "") if isinstance(node.get("offers"), dict) else "", "image_url": (node.get("image") or "") if isinstance(node.get("image"), str) else "", "structured": True, "raw_metadata": node})
     return results
 
 def _plain_html(value: str) -> str:
@@ -142,6 +142,19 @@ def official_html_items(text: str, source: EventSource) -> list[dict]:
         pairs = re.findall(r'<h3 class="elementor-heading-title[^>]*>(.*?)</h3>.{0,700}?<h4 class="elementor-heading-title[^>]*>(.*?)</h4>', text, re.I | re.S)
         rows = [(date_text, title) for title, date_text in pairs]
         venue, city, address = "Windrock Park", "Oliver Springs", "921 Windrock Road, Oliver Springs, TN 37840"
+    elif host == "nationaltrailfest.com":
+        dates = re.findall(r'(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\s*[-–]\s*\d{1,2},\s*\d{4}', text, re.I)
+        rows = [(date_text, "National TrailFest") for date_text in dates[:1]]
+        venue, city, address = "Hatfield-McCoy Trails", "Gilbert", "1200 Larry Joe Harless Drive, Gilbert, WV 25621"
+    elif host == "nationalrockracing.com":
+        heading = re.search(r'<h2 class="h1 hero__title">(.*?)</h2>', text, re.I | re.S)
+        subtitle = re.search(r'<div class="hero__subtitle">(.*?)</div>\s*</div>', text, re.I | re.S)
+        raw_title = _plain_html(re.split(r'<br\s*/?>', heading.group(1), maxsplit=1, flags=re.I)[0]) if heading else ""
+        rows = [(_plain_html(subtitle.group(1)), f"{raw_title} Off-Road Race")] if raw_title and subtitle else []
+        if "/pretty-place" in urlparse(source.base_url).path:
+            venue, city, address = "Pretty Place Offroad", "Belvidere", "50 Circle E Lane, Belvidere, TN 37306"
+        else:
+            venue, city, address = "Windrock Park", "Oliver Springs", "555 Windrock Park Lane, Oliver Springs, TN 37840"
     elif host == "devilsbackbonewv.com":
         rows = []
         date_pattern = re.compile(r'((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+)?([A-Za-z]+\s+\d{1,2}(?:\s*[-–]\s*\d{1,2})?,\s*\d{4})', re.I)
@@ -215,6 +228,8 @@ def fetch_source(source: EventSource, timeout: int = 12) -> tuple[list[dict], in
         if source.source_type == "ical": return ical_items(body, source), response.status
         if source.source_type == "public_api": return public_api_items(body, source), response.status
         items = jsonld_items(body, source)
+        if urlparse(source.base_url).netloc.lower().removeprefix("www.") == "dmra.gov":
+            items = [item for item in items if "night ride" in normalize_title(item.get("title", ""))]
         return (items or official_html_items(body, source)), response.status
 
 def candidate_status(item: dict) -> str:
