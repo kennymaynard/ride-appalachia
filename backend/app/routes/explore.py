@@ -7,11 +7,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.explore_schemas import ExploreDestinationInput, ExploreDestinationRead, ExplorePhotoCreate, ExplorePlanRead, ExplorePlanRequest, ExploreReportCreate
-from app.models import ExploreDestination, ExploreDestinationReport, ExploreDestinationTrail, ExplorePhotoSubmission
+from app.models import Business, ExploreDestination, ExploreDestinationReport, ExploreDestinationTrail, ExplorePhotoSubmission
 from app.services.explore_ai import build_ai_plan
 from app.routes.riders import require_rider_access
 
 router = APIRouter(tags=["explore"])
+CLAIMABLE_CATEGORIES = {"local_food", "lodging", "historic_sites", "museums", "local_shops", "country_stores", "ice_cream_desserts", "family_activities", "campgrounds", "events", "fuel", "repairs_recovery", "hospitals_urgent_care"}
+BUSINESS_CATEGORY_MAP = {"local_food":"food", "ice_cream_desserts":"food", "lodging":"lodging", "campgrounds":"lodging", "fuel":"fuel", "repairs_recovery":"repairs"}
 
 
 @router.post("/explore/plan", response_model=ExplorePlanRead)
@@ -80,6 +82,24 @@ def get_destination(slug: str, db: Session = Depends(get_db)) -> dict:
     row = db.query(ExploreDestination).options(selectinload(ExploreDestination.trails)).filter(ExploreDestination.slug == slug, ExploreDestination.status == "approved").first()
     if not row: raise HTTPException(404, "Destination not found")
     return destination_payload(row)
+
+
+@router.post("/explore/{slug}/claim-target")
+def create_explore_claim_target(slug: str, db: Session = Depends(get_db), _rider=Depends(require_rider_access)) -> dict:
+    destination = db.query(ExploreDestination).filter(ExploreDestination.slug == slug, ExploreDestination.status == "approved").first()
+    if not destination: raise HTTPException(404, "Destination not found")
+    if destination.category not in CLAIMABLE_CATEGORIES: raise HTTPException(400, "This public or natural destination is not eligible for an ownership claim")
+    if destination.claimed_by_business_id:
+        business = db.get(Business, destination.claimed_by_business_id)
+        if business and business.owner_email: raise HTTPException(409, "This destination is already claimed")
+    business = db.query(Business).filter(Business.source_provider == "explore", Business.source_id == str(destination.id)).first()
+    if not business:
+        business_slug = destination.slug; suffix = 2
+        while db.query(Business.id).filter(Business.slug == business_slug).first(): business_slug, suffix = f"{destination.slug}-{suffix}", suffix + 1
+        location = ", ".join(value for value in [destination.address, destination.city, destination.state] if value)[:180] or "Address being verified"
+        business = Business(name=destination.name, slug=business_slug, category=BUSINESS_CATEGORY_MAP.get(destination.category, "services"), description=destination.full_description or destination.short_description, phone=destination.phone or "Not listed", location=location, latitude=destination.latitude, longitude=destination.longitude, photo_url=destination.image_url, website_url=destination.website, source_provider="explore", source_id=str(destination.id), source_url=f"/explore/{destination.slug}", listing_status="approved", is_approved=True, is_search_only=True, admin_notes="Claim target created from approved Explore destination; keep search-only to avoid duplicate map markers.")
+        db.add(business); db.commit(); db.refresh(business)
+    return {"business_id": business.id, "business_slug": business.slug, "claim_url": f"/business/claim?slug={business.slug}"}
 
 
 @router.post("/explore/suggestions", status_code=202)
