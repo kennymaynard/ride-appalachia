@@ -833,6 +833,12 @@ class BusinessClaimRead(BusinessClaimRequest):
     id: int
     business_id: int
     status: str
+    verification_level: str = "manual"
+    verification_reason: str = ""
+    email_domain_match: bool = False
+    public_phone_match: bool = False
+    email_verified_at: Optional[datetime] = None
+    requires_email_code: bool = False
     admin_notes: str = ""
     reviewed_at: Optional[datetime] = None
     created_at: datetime
@@ -848,6 +854,11 @@ class BusinessClaimReview(BaseModel):
         if value not in {"approve", "reject"}:
             raise ValueError("Action must be approve or reject")
         return value
+
+
+class BusinessClaimEmailVerify(BaseModel):
+    claimant_email: str = Field(min_length=5, max_length=180)
+    code: str = Field(pattern=r"^\d{6}$")
 
 
 class SubscriptionRequest(BaseModel):

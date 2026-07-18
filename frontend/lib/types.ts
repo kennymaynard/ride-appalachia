@@ -305,6 +305,12 @@ export type BusinessClaim = {
   proof_notes: string;
   subscription_tier: string;
   status: string;
+  verification_level: "automatic" | "manual" | "escalated";
+  verification_reason: string;
+  email_domain_match: boolean;
+  public_phone_match: boolean;
+  email_verified_at?: string | null;
+  requires_email_code: boolean;
   admin_notes: string;
   created_at: string;
   reviewed_at?: string | null;

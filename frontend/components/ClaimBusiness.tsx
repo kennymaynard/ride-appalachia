@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { claimBusiness as submitBusinessClaim } from "../lib/api";
+import { claimBusiness as submitBusinessClaim, verifyBusinessClaimEmail } from "../lib/api";
 import { partnerTiers } from "../lib/sample-data";
-import type { Business, Tier } from "../lib/types";
+import type { Business, BusinessClaim, Tier } from "../lib/types";
 
 type Props = {
   business: Business;
@@ -22,7 +22,8 @@ export function ClaimBusiness({ business }: Props) {
   const [claimantRole, setClaimantRole] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [proofNotes, setProofNotes] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<BusinessClaim|null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,7 +36,7 @@ export function ClaimBusiness({ business }: Props) {
     setIsSubmitting(true);
 
     try {
-      await submitBusinessClaim(business.id, {
+      const claim = await submitBusinessClaim(business.id, {
         claimant_name: claimantName.trim(),
         claimant_email: ownerEmail.trim().toLowerCase(),
         claimant_phone: claimantPhone.trim(),
@@ -44,7 +45,7 @@ export function ClaimBusiness({ business }: Props) {
         proof_notes: proofNotes.trim(),
         subscription_tier: tier,
       });
-      setSubmitted(true);
+      setSubmitted(claim);
       setIsSubmitting(false);
     } catch (caughtError) {
       setIsSubmitting(false);
@@ -55,6 +56,8 @@ export function ClaimBusiness({ business }: Props) {
       );
     }
   }
+
+  async function verifyCode(){if(!submitted)return;setError("");setIsSubmitting(true);try{const claim=await verifyBusinessClaimEmail(submitted.id,ownerEmail.trim().toLowerCase(),verificationCode);setSubmitted(claim)}catch(caughtError){setError(caughtError instanceof Error?caughtError.message:"Unable to verify code")}finally{setIsSubmitting(false)}}
 
   return (
     <section className="claim-shell">
@@ -146,14 +149,14 @@ export function ClaimBusiness({ business }: Props) {
           Ownership or management proof
           <textarea required minLength={10} value={proofNotes} onChange={(event) => setProofNotes(event.target.value)} placeholder="Explain the proof provided and how an admin can verify your authority." />
         </label>
-        {submitted ? <p className="form-success">Claim submitted. An admin must verify your proof before account access is granted.</p> : null}
+        {submitted ? <div className="claim-verification-result"><strong>Verification level: {submitted.verification_level}</strong><p>{submitted.verification_reason}</p>{submitted.requires_email_code?<><label>Six-digit code sent to your business email<input inputMode="numeric" maxLength={6} pattern="[0-9]{6}" value={verificationCode} onChange={event=>setVerificationCode(event.target.value.replace(/\D/g,""))}/></label><button disabled={isSubmitting||verificationCode.length!==6} type="button" onClick={verifyCode}>Verify Business Email</button></>:submitted.status==="approved"?<p className="form-success">Ownership verified. Check your email for secure business access.</p>:<p className="form-success">Claim submitted for admin verification. No account access is granted until it is approved.</p>}</div> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <button
           type="button"
-          disabled={isSubmitting || submitted || !claimantName.trim() || !ownerEmail.trim() || !claimantRole.trim() || proofNotes.trim().length < 10}
+          disabled={isSubmitting || Boolean(submitted) || !claimantName.trim() || !ownerEmail.trim() || !claimantRole.trim() || proofNotes.trim().length < 10}
           onClick={claimBusiness}
         >
-          {isSubmitting ? "Submitting proof…" : submitted ? "Claim pending review" : "Submit ownership claim"}
+          {isSubmitting ? "Submitting proof…" : submitted ? "Claim submitted" : "Submit ownership claim"}
         </button>
         <Link href={`/business/${business.slug}`}>Back to listing</Link>
       </div>

@@ -616,6 +616,12 @@ export async function claimBusiness(
   return response.json();
 }
 
+export async function verifyBusinessClaimEmail(claimId: number, claimantEmail: string, code: string): Promise<import("./types").BusinessClaim> {
+  const response = await fetch(`${getApiUrl()}/api/business-claims/${claimId}/verify-email`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claimant_email: claimantEmail, code }) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail || "Unable to verify the claim code");
+  return response.json();
+}
+
 export async function activateExistingImportedBusinesses(adminPassword: string): Promise<{ activated: number }> {
   const response = await fetch(`${getApiUrl()}/api/admin/business-import/activate-existing`, {
     method: "POST", headers: getAdminHeaders(adminPassword),

@@ -282,6 +282,20 @@ def send_business_login_email(to_email: str, business_name: str, access_url: str
     return EmailResult(sent=False, message="Unable to send login email.")
 
 
+def send_business_claim_code_email(to_email: str, business_name: str, code: str) -> EmailResult:
+    settings = get_settings()
+    if not settings.resend_api_key:
+        return EmailResult(sent=False, message="Claim verification email is not configured.")
+    payload = {"from": clean_email_setting(settings.email_from), "to": [clean_email_setting(to_email)], "subject": f"Verify your {business_name} listing claim", "html": f"<h1>Verify your listing claim</h1><p>Your six-digit Appalachia Offroad verification code is:</p><p style=\"font-size:28px;font-weight:bold\">{escape(code)}</p><p>This code expires in 15 minutes. If you did not request this claim, ignore this email.</p>", "text": f"Your Appalachia Offroad verification code for {business_name} is {code}. It expires in 15 minutes."}
+    request = Request("https://api.resend.com/emails", data=json.dumps(payload).encode("utf-8"), headers=get_resend_headers(settings.resend_api_key), method="POST")
+    try:
+        with urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300: return EmailResult(sent=True, message="Claim verification code sent.")
+    except HTTPError as exc: return EmailResult(sent=False, message=get_resend_error_message("claim verification email", exc, settings.email_from))
+    except (URLError, TimeoutError) as exc: return EmailResult(sent=False, message=f"Unable to send claim verification email: {exc}")
+    return EmailResult(sent=False, message="Unable to send claim verification email.")
+
+
 def send_rider_password_reset_email(to_email: str, display_name: str, reset_url: str) -> EmailResult:
     settings = get_settings()
     resend_api_key = clean_secret_setting(settings.resend_api_key)
