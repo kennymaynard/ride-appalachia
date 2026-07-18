@@ -7159,6 +7159,53 @@ button.tier-card.is-selected {
   margin: 1rem auto 0;
 }
 
+.admin-quick-nav {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 40;
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  margin: 0.85rem 0;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(9, 9, 9, 0.96);
+  padding: 0.5rem;
+  box-shadow: 0 0.7rem 1.8rem rgba(0, 0, 0, 0.35);
+}
+
+.admin-quick-nav a {
+  flex: 0 0 auto;
+  border: 1px solid rgba(242, 106, 27, 0.45);
+  border-radius: 999px;
+  color: var(--text);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.admin-quick-nav a:hover,
+.admin-quick-nav a:focus-visible {
+  background: var(--orange);
+  color: #160801;
+}
+
+.admin-shell .admin-list,
+.admin-shell .admin-listings,
+.admin-shell .admin-featured-businesses {
+  max-height: min(32rem, 62vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.35rem;
+  scrollbar-color: var(--orange) rgba(255, 255, 255, 0.08);
+}
+
+.admin-shell [id^="admin-"] {
+  scroll-margin-top: 5rem;
+}
+
 .admin-section-summary {
   cursor: pointer;
   padding: 1rem;
