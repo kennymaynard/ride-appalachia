@@ -68,6 +68,7 @@ class ExploreDestinationRead(ExploreDestinationInput):
     created_at: datetime
     updated_at: datetime
     distance_miles: float | None = None
+    claimed_by_business_id: int | None = None
 
 
 class ExploreReportCreate(BaseModel):

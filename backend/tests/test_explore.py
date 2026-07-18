@@ -6,8 +6,9 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.explore_schemas import ExploreDestinationInput
-from app.models import ExploreDestination
-from app.routes.explore import create_explore_plan, get_destination, list_destinations, suggest_destination
+from app.models import Business, ExploreDestination
+from app.routes.explore import create_explore_claim_target, create_explore_plan, get_destination, list_destinations, suggest_destination
+from app.services.business_claims import link_approved_explore_destination
 from app.explore_schemas import ExplorePlanRequest
 
 
@@ -45,6 +46,17 @@ class ExploreTests(unittest.TestCase):
         rows = list_destinations(latitude=37.8662, longitude=-82.5388, distance=25, limit=100, db=self.db)
         self.assertEqual([row["slug"] for row in rows], ["featured-lodge", "nearby-museum"])
         self.assertTrue(all(row["distance_miles"] <= 25 for row in rows))
+
+    def test_claimable_destination_reuses_hidden_business_and_links_only_after_approval(self):
+        destination = ExploreDestination(name="Heritage Cafe", slug="heritage-cafe", category="local_food", short_description="A local cafe for trail visitors.", city="Inez", state="KY", status="approved")
+        self.db.add(destination); self.db.commit()
+        first = create_explore_claim_target(destination.slug, self.db)
+        second = create_explore_claim_target(destination.slug, self.db)
+        self.assertEqual(first["business_id"], second["business_id"])
+        business = self.db.get(Business, first["business_id"])
+        self.assertTrue(business.is_search_only); self.assertFalse(bool(destination.claimed_by_business_id))
+        link_approved_explore_destination(self.db, business); self.db.commit(); self.db.refresh(destination)
+        self.assertEqual(destination.claimed_by_business_id, business.id)
 
 
 if __name__ == "__main__": unittest.main()

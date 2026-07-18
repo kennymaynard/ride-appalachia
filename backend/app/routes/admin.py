@@ -45,6 +45,7 @@ from app.services.email_service import (
     send_marketing_lead_status_email,
     send_resend_direct_test_email,
 )
+from app.services.business_claims import link_approved_explore_destination
 from app.services.booking_payouts import process_due_booking_transfers
 from app.services.calendar_sync import sync_active_calendars
 from app.services.passcodes import hash_passcode
@@ -448,6 +449,7 @@ def review_business_claim(
         business.subscription_tier = claim.subscription_tier
         business.owner_access_token = secrets.token_urlsafe(24)
         business.owner_passcode_hash = ""
+        link_approved_explore_destination(db, business)
         access_url = f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
         send_business_login_email(business.owner_email, business.name, access_url)
     else:

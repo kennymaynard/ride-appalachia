@@ -754,4 +754,5 @@ export type ExploreDestination = {
   featured: boolean; verified: boolean; status: string; image_url: string; image_urls: string[]; nearby_trail_slugs: string[];
   distance_miles?: number | null;
   created_at: string; updated_at: string;
+  claimed_by_business_id?: number | null;
 };

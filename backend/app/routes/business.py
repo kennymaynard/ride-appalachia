@@ -30,6 +30,7 @@ from app.schemas import (
 from app.services.email_service import send_business_approval_notification, send_business_claim_code_email, send_business_login_email
 from app.services.passcodes import hash_passcode, verify_passcode
 from app.services.photos import fallback_photo_for_category, is_oversized_embedded_photo, normalize_photo_url
+from app.services.business_claims import link_approved_explore_destination
 from app.routes.riders import require_rider_access
 from app.services.sms_service import send_sms
 
@@ -313,6 +314,7 @@ def verify_business_claim_email(claim_id: int, payload: BusinessClaimEmailVerify
     if not business or business.owner_email: raise HTTPException(409, "This listing is already claimed")
     claim.email_verified_at = datetime.utcnow(); claim.status = "approved"; claim.reviewed_at = datetime.utcnow(); claim.email_code_hash = ""
     business.owner_email = claim.claimant_email; business.subscription_tier = claim.subscription_tier; business.owner_access_token = secrets.token_urlsafe(24); business.owner_passcode_hash = ""
+    link_approved_explore_destination(db, business)
     db.commit(); db.refresh(claim)
     access_url = f"{get_settings().frontend_url}/business/access/{business.owner_access_token}"
     send_business_login_email(business.owner_email, business.name, access_url)
