@@ -84,3 +84,25 @@ class ExplorePhotoCreate(BaseModel):
     @classmethod
     def valid_url(cls, value: str) -> str:
         HttpUrl(value); return value
+
+
+class ExplorePlanRequest(BaseModel):
+    days: int = Field(default=2, ge=1, le=7)
+    family_trip: bool = True
+    lodging_needed: bool = True
+    food_needed: bool = True
+    indoor: bool = False
+    outdoor: bool = True
+    destination_ids: list[int] = Field(default_factory=list, max_length=60)
+
+
+class ExplorePlanStop(BaseModel):
+    destination_id: int
+    day: int = Field(ge=1, le=7)
+    notes: str = Field(default="", max_length=240)
+
+
+class ExplorePlanRead(BaseModel):
+    source: str
+    stops: list[ExplorePlanStop]
+    message: str = ""

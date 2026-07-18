@@ -7,7 +7,8 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base
 from app.explore_schemas import ExploreDestinationInput
 from app.models import ExploreDestination
-from app.routes.explore import get_destination, list_destinations, suggest_destination
+from app.routes.explore import create_explore_plan, get_destination, list_destinations, suggest_destination
+from app.explore_schemas import ExplorePlanRequest
 
 
 class ExploreTests(unittest.TestCase):
@@ -28,6 +29,13 @@ class ExploreTests(unittest.TestCase):
         rows = list_destinations(state="KY", category="museums", family_friendly=True, limit=100, db=self.db)
         self.assertEqual([row["slug"] for row in rows], ["heritage-museum"])
         self.assertEqual(get_destination("heritage-museum", self.db)["name"], "Heritage Museum")
+
+    def test_ai_plan_falls_back_and_stays_grounded(self):
+        row = ExploreDestination(name="Trail Cafe", slug="trail-cafe", category="local_food", short_description="Local food near the trail.", city="Inez", state="KY", status="approved")
+        self.db.add(row); self.db.commit()
+        result = create_explore_plan(ExplorePlanRequest(days=2, destination_ids=[row.id, 999999]), self.db)
+        self.assertEqual(result["source"], "standard")
+        self.assertEqual([stop["destination_id"] for stop in result["stops"]], [row.id])
 
 
 if __name__ == "__main__": unittest.main()

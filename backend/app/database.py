@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     printify_auto_submit_orders: bool = False
     printify_send_shipping_notification: bool = False
     overpass_url: str = "https://overpass-api.de/api/interpreter"
+    openai_api_key: str = ""
+    openai_trip_model: str = "gpt-5.4-mini"
 
 
 @lru_cache
