@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ExploreDestination } from "../lib/types";
 import { ExplorePlaceholder } from "./ExploreBrowser";
+import { AddExploreToTrip } from "./AddExploreToTrip";
 
 const groups = [
   ["Eat", ["local_food", "ice_cream_desserts"]],
@@ -43,7 +44,7 @@ export function ExploreNearTrail({ areaName, areaSlug, latitude, longitude, dest
       const items = nearby.filter((item) => (categories as readonly string[]).includes(item.category));
       return items.length ? <section key={label}><h3>{label}</h3><div>{items.map((item) => <article key={item.id}>
         {item.image_url ? <img src={item.image_url} alt="" /> : <ExplorePlaceholder item={item} />}
-        <div><p>{item.category.replaceAll("_", " ")}</p><h4>{item.name}</h4><span>{item.distance_miles} miles away · {item.city}, {item.state}</span>{item.featured ? <strong>Featured</strong> : null}<Link href={`/explore/${item.slug}`}>View Details</Link></div>
+        <div><p>{item.category.replaceAll("_", " ")}</p><h4>{item.name}</h4><span>{item.distance_miles} miles away · {item.city}, {item.state}</span>{item.featured ? <strong>Featured</strong> : null}<AddExploreToTrip compact destination={item}/><Link href={`/explore/${item.slug}`}>View Details</Link></div>
       </article>)}</div></section> : null;
     })}</div> : <p className="empty-state">No approved Explore destinations are within {radius} miles yet.</p>}
     <div className="explore-near-footer"><Link href={`/explore?${exploreQuery}`}>See Everything Near This Trail</Link></div>

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { shareTripPlan } from "../lib/api";
 import type { Business, Category, OutdoorStop, RideArea, TrailInfo } from "../lib/types";
 import { TrackedAction } from "./TrackedAction";
+import { exploreTripStorageKey, type ExploreTripStop } from "./AddExploreToTrip";
 
 type PlannerItem = {
   id: string;
@@ -83,6 +84,7 @@ type OfflineTripPack = {
     longitude?: number;
     url: string;
   }>;
+  exploreStops: ExploreTripStop[];
 };
 
 const plannerItems: PlannerItem[] = [
@@ -337,6 +339,20 @@ function getMapSearchUrl(destination: string, query: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query} near ${target}`)}`;
 }
 
+function exploreStopType(category: string) {
+  if (["lodging", "campgrounds"].includes(category)) return "Lodging";
+  if (["local_food", "ice_cream_desserts"].includes(category)) return "Food";
+  if (category === "fuel") return "Fuel";
+  if (["local_shops", "country_stores"].includes(category)) return "Shopping";
+  if (["hospitals_urgent_care", "repairs_recovery"].includes(category)) return "Emergency service";
+  if (["fishing", "hiking", "swimming", "family_activities", "parks", "events"].includes(category)) return "Activity";
+  return "Attraction";
+}
+
+function exploreStopCoordinates(stop: ExploreTripStop): Coordinates | undefined {
+  return typeof stop.latitude === "number" && typeof stop.longitude === "number" ? { latitude: stop.latitude, longitude: stop.longitude } : undefined;
+}
+
 function getNeedMapLinks(selectedIds: string[], destination: string) {
   const links = [
     selectedIds.includes("wash")
@@ -374,6 +390,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     stops: [],
     outdoors: [],
   });
+  const [exploreStops, setExploreStops] = useState<ExploreTripStop[]>([]);
 
   const searchCoordinates = findKnownCity(locationFilter);
   const selectedItems = useMemo(
@@ -543,6 +560,12 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     const outdoorText = planOutdoors
       .map((stop) => `- ${stop.name} (${getOutdoorKindLabel(stop.kind)}, ${stop.area.name})${stop.distanceMiles !== undefined ? ` - ${Math.round(stop.distanceMiles)} mi` : ""}\n  ${stop.access}\n  ${stop.url}`)
       .join("\n\n");
+    const exploreText = exploreStops.map((stop, index) => {
+      const previous = index ? exploreStopCoordinates(exploreStops[index - 1]) : undefined;
+      const current = exploreStopCoordinates(stop);
+      const leg = previous && current ? distanceMiles(previous, current) : undefined;
+      return `${index + 1}. ${stop.name} (${exploreStopType(stop.category)})${leg !== undefined ? ` - ${leg.toFixed(1)} mi from prior stop` : ""}\n  ${[stop.address, stop.city, stop.state].filter(Boolean).join(", ")}${stop.arrivalNotes ? `\n  Arrival notes: ${stop.arrivalNotes}` : ""}`;
+    }).join("\n\n");
 
     return [
       "Appalachia Offroad Trip Plan",
@@ -559,6 +582,9 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       "Local stops:",
       stopText || "- No local stops match yet",
       "",
+      "Explore itinerary stops:",
+      exploreText || "- No Explore destinations added yet",
+      "",
       "Parks, campgrounds, waterfalls, and photo stops:",
       outdoorText || "- No outdoor stops selected yet",
       "",
@@ -568,7 +594,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
       "Your directions:",
       directions || "- Add road notes, meetup points, parking, and backup routes.",
     ].join("\n");
-  }, [directions, locationFilter, mapLinks, planOutdoors, planStops, planTrails, radiusMiles, selectedItems]);
+  }, [directions, exploreStops, locationFilter, mapLinks, planOutdoors, planStops, planTrails, radiusMiles, selectedItems]);
 
   useEffect(() => {
     const savedValue = readStoredValue(storageKey);
@@ -608,6 +634,16 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     } catch {
       removeStoredValue(planSelectionKey);
     }
+
+    const savedExploreStops = readStoredValue(exploreTripStorageKey);
+    try {
+      if (savedExploreStops) {
+        const parsed = JSON.parse(savedExploreStops);
+        if (Array.isArray(parsed)) setExploreStops(parsed);
+      }
+    } catch {
+      removeStoredValue(exploreTripStorageKey);
+    }
   }, []);
 
   useEffect(() => {
@@ -617,6 +653,10 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
   useEffect(() => {
     writeStoredValue(planSelectionKey, JSON.stringify(planSelections));
   }, [planSelections]);
+
+  useEffect(() => {
+    writeStoredValue(exploreTripStorageKey, JSON.stringify(exploreStops));
+  }, [exploreStops]);
 
   function toggleItem(id: string) {
     setCopyStatus("");
@@ -646,8 +686,24 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
     setOfflineStatus("");
     setOpenSections(defaultOpenSections);
     setPlanSelections({ trails: [], stops: [], outdoors: [] });
+    setExploreStops([]);
     writeStoredValue(storageKey, JSON.stringify(defaultSelected));
     writeStoredValue(planSelectionKey, JSON.stringify({ trails: [], stops: [], outdoors: [] }));
+    writeStoredValue(exploreTripStorageKey, "[]");
+  }
+
+  function moveExploreStop(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= exploreStops.length) return;
+    setExploreStops((current) => {
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  }
+
+  function updateExploreNotes(id: number, arrivalNotes: string) {
+    setExploreStops((current) => current.map((stop) => stop.id === id ? { ...stop, arrivalNotes } : stop));
   }
 
   function toggleTrailPlan(trail: NearbyTrail) {
@@ -761,6 +817,7 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
         longitude: stop.longitude ?? stop.area.longitude,
         url: stop.url,
       })),
+      exploreStops,
     };
   }
 
@@ -941,6 +998,29 @@ export function TripPlanner({ areas, initialLocation = "", listings }: Props) {
           </div>
         </aside>
       </div>
+
+      <section className="planner-card explore-trip-planner" id="explore-trip-stops">
+        <div className="planner-section-heading">
+          <div className="section-heading"><p>Your itinerary</p><h2>Explore Appalachia trip stops</h2></div>
+          <Link href="/explore">Add more destinations</Link>
+        </div>
+        {exploreStops.length ? <ol className="explore-ordered-stops">{exploreStops.map((stop, index) => {
+          const previous = index ? exploreStopCoordinates(exploreStops[index - 1]) : undefined;
+          const current = exploreStopCoordinates(stop);
+          const legMiles = previous && current ? distanceMiles(previous, current) : undefined;
+          const minutes = legMiles !== undefined ? Math.max(1, Math.round(legMiles / 35 * 60)) : undefined;
+          const address = [stop.address, stop.city, stop.state].filter(Boolean).join(", ");
+          const hours = Object.entries(stop.hours_json || {}).map(([day, value]) => `${day}: ${value}`).join(" · ");
+          const directionsTarget = current ? `${current.latitude},${current.longitude}` : address;
+          return <li key={stop.id}>
+            <span className="explore-stop-number">{index + 1}</span>
+            <div className="explore-stop-body"><div><span>{exploreStopType(stop.category)}</span><h3>{stop.name}</h3><p>{address || "Address being verified"}</p>{legMiles !== undefined ? <strong>From previous stop: {legMiles.toFixed(1)} miles · about {minutes} minutes</strong> : null}{hours ? <small>Hours: {hours}</small> : null}</div>
+            <label>Arrival notes<textarea maxLength={500} placeholder="Meetup point, parking, check-in, or timing notes" value={stop.arrivalNotes || ""} onChange={(event) => updateExploreNotes(stop.id, event.target.value)}/></label>
+            <div className="trail-actions"><button disabled={index === 0} onClick={() => moveExploreStop(index, -1)} type="button">Move up</button><button disabled={index === exploreStops.length - 1} onClick={() => moveExploreStop(index, 1)} type="button">Move down</button><button onClick={() => setExploreStops((currentStops) => currentStops.filter((item) => item.id !== stop.id))} type="button">Remove</button><Link href={`/explore/${stop.slug}`}>Details</Link>{directionsTarget ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(directionsTarget)}`} rel="noreferrer" target="_blank">Directions</a> : null}</div></div>
+          </li>;
+        })}</ol> : <div className="empty-state"><strong>No Explore destinations added yet.</strong><p>Browse approved food, lodging, attractions, activities, shops, and essential services, then choose Add to Trip.</p><Link href="/explore">Explore Appalachia</Link></div>}
+        {exploreStops.length > 1 ? <p className="field-help">Driving time is an estimate based on straight-line mileage and a 35 mph local-road average. Use Directions for the actual route.</p> : null}
+      </section>
 
       <section className="planner-card">
         <div className="planner-section-heading">
