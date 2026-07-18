@@ -31,14 +31,35 @@ export function TrailMapShell(props: Props) {
   const [events, setEvents] = useState<RideEvent[]>([]);
 
   useEffect(() => {
-    if (businesses.length) return;
-    // The map intentionally keeps every approved business visible; search pages use bounded queries.
-    getListings("all").then(setBusinesses).catch(() => undefined);
-  }, [businesses.length]);
+    const [[minLatitude, minLongitude], [maxLatitude, maxLongitude]] = props.bounds;
+    getListings({
+      category: "all",
+      limit: 500,
+      minLatitude,
+      maxLatitude,
+      minLongitude,
+      maxLongitude,
+    }).then((loaded) => {
+      setBusinesses((current) => {
+        const merged = new Map(current.map((business) => [business.id, business]));
+        loaded.forEach((business) => merged.set(business.id, business));
+        return Array.from(merged.values());
+      });
+    }).catch(() => undefined);
+  }, [props.bounds]);
 
   useEffect(() => {
     getEvents().then(setEvents).catch(() => undefined);
   }, []);
 
-  return <TrailLeafletMap {...props} businesses={businesses} events={events} />;
+  const searchBusinesses = (query: string) => getListings({ category: "all", q: query, limit: 20 });
+
+  return (
+    <TrailLeafletMap
+      {...props}
+      businesses={businesses}
+      events={events}
+      onBusinessSearch={searchBusinesses}
+    />
+  );
 }

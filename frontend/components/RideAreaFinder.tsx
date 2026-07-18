@@ -135,6 +135,9 @@ function rankByText(areas: RideArea[], city: string): RankedArea[] {
 }
 
 function getBusinessCoordinates(business: Business, areas: RideArea[]) {
+  if (typeof business.latitude === "number" && typeof business.longitude === "number") {
+    return { latitude: business.latitude, longitude: business.longitude };
+  }
   const directCity = findCityInText(business.location);
   if (directCity) return directCity;
 
@@ -243,7 +246,7 @@ export function RideAreaFinder({ areas, listings }: Props) {
     });
 
     const filtered = searchCoordinates
-      ? ranked.filter((business) => business.distanceMiles === undefined || business.distanceMiles <= radiusMiles)
+      ? ranked.filter((business) => business.distanceMiles !== undefined && business.distanceMiles <= radiusMiles)
       : hasSearchedCity
         ? ranked.filter((business) =>
             [business.location, business.name, business.description]
